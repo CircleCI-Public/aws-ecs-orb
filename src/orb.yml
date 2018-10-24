@@ -1,0 +1,232 @@
+version: 2.1
+description: |
+  An orb for working with Amazon Elastic Container Service (ECS)
+orbs:
+  aws-cli: circleci/aws-cli@0.0.1
+
+commands:
+  wait-for-deployment-stability:
+    parameters:
+      family:
+        description:
+          "The family which will be used as a name for the task definition."
+        type: string
+      cluster-name:
+        description:
+          "The ECS cluster name"
+        type: string
+      task-definition-arn:
+        description:
+          "ARN of newly deployed task definition"
+        type: string
+      max-poll-attempts:
+        description:
+          "Maximum number of attempts to poll"
+        type: string
+        default: "50"
+      poll-interval:
+        description:
+          "Polling interval"
+        type: string
+        default: "20"
+    steps:
+      - run:
+          name: Wait for deployment to be stable
+          command: |
+            set -x
+            for attempt in {1..<< parameters.max-poll-attempts >>}; do
+                DEPLOYMENT_STATUS=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.family >> --output text --query 'services[0].deployments[].[taskDefinition, status]')
+                NUM_DEPLOYMENTS=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.family >> --output text --query 'length(services[0].deployments)')
+                TARGET_DEPLOYMENT_REVISION=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.family >> --output text --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
+                echo "Current deployment status: $DEPLOYMENT_STATUS"
+                if [[ $NUM_DEPLOYMENTS == 1 ]] && [[ $TARGET_DEPLOYMENT_REVISION == $CCI_ORB_AWS_ECS_DEPLOYED_REVISION ]]; then
+                    echo "Service updated: $DEPLOYED_REVISION"
+                    exit 0
+                else
+                    echo "Waiting for stale deployments.."
+                    sleep << parameters.poll-interval >>
+                fi
+            done
+            echo "Service update took too long - please check the status of the deployment on the AWS ECS console"
+            exit 1
+  deploy-service-update:
+    parameters:
+      family:
+        description:
+          "The family which will be used as a name for the task definition."
+        type: string
+      cluster-name:
+        description:
+          "The ECS cluster name"
+        type: string
+      container-image-name-updates:
+        description:
+          "Images and tags to be updated in container definitions."
+        type: string
+        default: ""
+      container-env-var-updates:
+        description:
+          "Environment variables to be updated in container definitions."
+        type: string
+        default: ""
+      verify-revision-deployment-stable:
+        description:
+          "Verify that the revision has been deployed and is stable"
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Prepare new task definition
+          command: |
+            set -x
+            export PREVIOUS_TASK_DEF=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
+            export CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
+            export CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
+
+            # Prepare script for updating container definitions
+            TEMP_FILE=$(mktemp _update_container_defs.py.XXXXXX)
+            cat > $TEMP_FILE \<<-EOF
+            import os, json
+            definition = json.loads(os.environ.get('PREVIOUS_TASK_DEF'))
+            container_definitions = definition['taskDefinition']['containerDefinitions']
+            container_map = {}
+
+            # Build a map of the original container definitions so that the
+            # array index positions can be easily looked up
+            for index, container_definition in enumerate(container_definitions):
+                env_var_map = {}
+                env_var_definitions = container_definition['environment']
+                for env_var_index, env_var_definition in enumerate(env_var_definitions):
+                    env_var_map[env_var_definition['name']] = {'index': env_var_index}
+                container_map[container_definition['name']] = {'image': container_definition['image'], 'index': index, 'environment_map': env_var_map}
+
+            # Expected format: container=...,name=...,value=...,container=...,name=...,value=
+            env_kv_pairs=os.environ.get('CONTAINER_ENV_VAR_UPDATES').split(',')
+            for index, kv_pair in enumerate(env_kv_pairs):
+                kv = kv_pair.split('=')
+                if kv[0] == 'container':
+                    container_name = kv[1]
+                    env_var_name_info_kv = env_kv_pairs[index+1].split('=')
+                    env_var_name = env_var_name_info_kv[1]
+                    env_var_value_info_kv = env_kv_pairs[index+2].split('=')
+                    env_var_value = env_var_value_info_kv[1]
+                    container_index = container_map[container_name]['index']
+                    env_var_index = container_map[container_name]['environment_map'][env_var_name]['index']
+                    container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
+
+            # Expected format: name=...,image-and-tag|image|tag=...,name=...,image-and-tag|image|tag=...,
+            image_kv_pairs=os.environ.get('CONTAINER_IMAGE_NAME_UPDATES').split(',')
+            for index, kv_pair in enumerate(image_kv_pairs):
+                kv = kv_pair.split('=')
+                if kv[0] == 'container':
+                    container_name = kv[1]
+                    image_info_kv = image_kv_pairs[index+1].split('=')
+                    container_index = container_map[container_name]['index']
+                    if image_info_kv[0] == 'image-and-tag':
+                        container_definitions[container_index]['image'] = image_info_kv[1]
+                    else:
+                        existing_image_name_arr = container_map[container_name]['image'].split(':')
+                        if image_info_kv[0] == 'image':
+                            tag = ''
+                            if len(existing_image_name_arr) == 2:
+                                tag = ':' + existing_image_name_arr[1]
+                            container_definitions[container_index]['image'] = image_info_kv[1] + tag
+                        elif image_info_kv[0] == 'tag':
+                            container_definitions[container_index]['image'] = existing_image_name_arr[0] + ':' + image_info_kv[1] 
+            print(json.dumps(container_definitions))
+            EOF
+
+            # Prepare container definitions
+            CONTAINER_DEFS=$(python $TEMP_FILE) && rm $TEMP_FILE
+            echo "export CCI_ORB_AWS_ECS_CONTAINER_DEFS='${CONTAINER_DEFS}'" >> $BASH_ENV
+
+            # Prepare script for getting other task definition values
+            TEMP_PARSE_SCRIPT=$(mktemp _update_other_task_def_values.py.XXXXXX)
+            cat > $TEMP_PARSE_SCRIPT \<<-EOF
+            import os, sys, json
+            definition = json.loads(os.environ.get('PREVIOUS_TASK_DEF'))
+            element_name = sys.argv[1]
+            task_definition = definition['taskDefinition']
+            if element_name == 'requiresCompatibilities':
+                element_value = '[]'
+            else:
+                element_value = ''
+            if element_name in task_definition:
+                if element_name == 'requiresCompatibilities':
+                    element_value = json.dumps(task_definition[element_name])
+                else:
+                    element_value = json.dumps(task_definition[element_name])[1:-1]
+            print(element_value)
+            EOF
+
+            # Get other task definition values
+            REQ_COMP=$(python $TEMP_PARSE_SCRIPT 'requiresCompatibilities')
+            TASK_MEMORY=$(python $TEMP_PARSE_SCRIPT 'memory')
+            TASK_CPU=$(python $TEMP_PARSE_SCRIPT 'cpu')
+            NETWORK_MODE=$(python $TEMP_PARSE_SCRIPT 'networkMode')
+            EXECUTION_ROLE=$(python $TEMP_PARSE_SCRIPT 'executionRoleArn')
+            TASK_ROLE=$(python $TEMP_PARSE_SCRIPT 'taskRoleArn')
+            VOLUMES=$(python $TEMP_PARSE_SCRIPT 'volumes')
+            PLACEMENT_CONSTRAINTS=$(python $TEMP_PARSE_SCRIPT 'placementConstraints')
+            rm $TEMP_PARSE_SCRIPT
+
+            # Make task definition values available as env variables
+            echo "export CCI_ORB_AWS_ECS_REQ_COMP='${REQ_COMP}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TASK_MEMORY='${TASK_MEMORY}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TASK_CPU='${TASK_CPU}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_NETWORK_MODE='${NETWORK_MODE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_EXECUTION_ROLE='${EXECUTION_ROLE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TASK_ROLE='${TASK_ROLE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_VOLUMES='${VOLUMES}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS='${PLACEMENT_CONSTRAINTS}'" >> $BASH_ENV
+      - run:
+          name: Register task definition
+          command: |
+            set -x
+            task_definition_args=()
+
+            if [[ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ]] && [[ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]]; then
+                task_definition_args+=(--requires-compatibilities "${CCI_ORB_AWS_ECS_REQ_COMP}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]]; then
+                task_definition_args+=(--network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]]; then
+                task_definition_args+=(--memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]]; then
+                task_definition_args+=(--cpu "${CCI_ORB_AWS_ECS_TASK_CPU}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}" ]]; then
+                task_definition_args+=(--execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]]; then
+                task_definition_args+=(--task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ]] && [[ "${CCI_ORB_AWS_ECS_VOLUMES}" != "[]" ]]; then
+                task_definition_args+=(--volumes "${CCI_ORB_AWS_ECS_VOLUMES}")
+            fi
+            if [[ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ]] && [[ "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]]; then
+                task_definition_args+=(--placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}")
+            fi
+
+            REVISION=$(aws ecs register-task-definition \
+                --family << parameters.family >> \
+                --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
+                "${task_definition_args[@]}" \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn')
+            echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
+      - run:
+          name: Update service
+          command: |
+            set -x
+            DEPLOYED_REVISION=$(aws ecs update-service --cluster "<< parameters.cluster-name >>" --service "<< parameters.family >>"  --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" --output text --query service.taskDefinition)
+            echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
+      - when:
+          condition: << parameters.verify-revision-deployment-stable >>
+          steps:
+            - wait-for-deployment-stability:
+                family: << parameters.family >>
+                cluster-name: << parameters.cluster-name >>
+                task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
