@@ -189,8 +189,8 @@ workflows:
           container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
+          max-poll-attempts: "40"
+          poll-interval: "10"
           enable-trace: true
           post-steps:
             - test-deployment
