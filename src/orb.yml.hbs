@@ -154,6 +154,7 @@ commands:
             one deployed for the service.
           command: |
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
+            echo "Verifying that << parameters.task-definition-arn >> is deployed.."
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
             do
@@ -173,7 +174,7 @@ commands:
                     --output text \
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
                 echo "Current deployments: $DEPLOYMENTS"
-                if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION" ]; then
+                if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "<< parameters.task-definition-arn >>" ]; then
                     echo "Service successfully updated to use revision $DEPLOYED_REVISION"
                     exit 0
                 else
