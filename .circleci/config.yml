@@ -5,7 +5,6 @@ jobs:
       - image: circleci/python:3.7.1
     steps:
       - checkout
-      - setup_remote_docker
       - restore_cache:
           keys:
             - cache-{{ checksum "tools/package-lock.json" }}

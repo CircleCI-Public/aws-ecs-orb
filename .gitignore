@@ -2,6 +2,9 @@
 .vscode
 node_modules
 
+# terraform
+**/.terraform/*
+
 # python
 htmlcov
 __pycache__
