@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-  build-orb
+  build-orb:
     docker:
       - image: circleci/python:3.7.1
     steps:
