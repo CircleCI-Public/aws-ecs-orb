@@ -5,5 +5,5 @@ variable "aws_region" {
   description = "AWS region e.g. us-east-1"
 }
 variable "aws_resource_prefix" {
-  description = "Prefix to be used in the naming of the created AWS resources e.g. demo-webapp"
+  description = "Prefix to be used in the naming of the created AWS resources e.g. ecs-ec2"
 }

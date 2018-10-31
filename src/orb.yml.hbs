@@ -175,15 +175,15 @@ commands:
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
                 echo "Current deployments: $DEPLOYMENTS"
                 if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "<< parameters.task-definition-arn >>" ]; then
-                    echo "Service successfully updated to use revision $DEPLOYED_REVISION"
+                    echo "Service successfully updated to use revision $TARGET_REVISION"
                     exit 0
                 else
-                    echo "Waiting for new revision to reach desired running count / older revisions to be stopped.."
+                    echo "Waiting for revision << parameters.task-definition-arn >> to reach desired running count / older revisions to be stopped.."
                     sleep << parameters.poll-interval >>
                 fi
                 attempt=$((attempt + 1))
             done
-            echo "Stopped waiting for deployment to be stable - please check the status of the deployment on the AWS ECS console."
+            echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
             exit 1
   update-service:
     description: |
