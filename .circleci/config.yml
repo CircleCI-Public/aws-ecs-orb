@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  aws-ecs: sandbox/aws-ecs@dev:0.0.1
 jobs:
   build-orb:
     docker:
@@ -84,6 +86,55 @@ jobs:
           root: .
           paths:
             - docker-image
+  test-ec2-launch-type-service-update:  
+    docker:
+      - image: circleci/python:3.7.1
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: workspace
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          region: "$AWS_DEFAULT_REGION"
+      - run:
+          name: Load image
+          command: |
+            docker load --input workspace/docker-image/image.tar
+      - run:
+          name: Setup common environment variables
+          command: |
+            echo 'export ECR_REPOSITORY_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}"' >> $BASH_ENV
+            echo 'export ECS_CLUSTER_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"' >> $BASH_ENV
+            echo 'export ECS_SERVICE_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}-service"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
+      - run:
+          name: Push image
+          command: |
+            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+            docker push $FULL_IMAGE_NAME
+      - aws-ecs/update-service:
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,image-and-tag=$FULL_IMAGE_NAME"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
+      - test-deployment
+commands:
+  test-deployment:
+    description: "Test the deployment"
+    steps:
+      - run:
+          name: Test deployment (Please manually tear down AWS resources after use, if desired)
+          command: |
+            set -x
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            for attempt in {1..25}; do
+              curl -s --retry 10 http://$ELB_DNS_NAME | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}"
+            done
 workflows:
   build-deploy:
     jobs:
@@ -91,3 +142,6 @@ workflows:
       - build-test-app:
           requires:
             - build-orb
+      - test-ec2-launch-type-service-update:
+          requires:
+            - build-test-app
