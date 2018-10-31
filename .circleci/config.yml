@@ -87,9 +87,13 @@ jobs:
           root: .
           paths:
             - docker-image
-  test-ec2-launch-type-service-update:  
+  test-service-update:  
     docker:
       - image: circleci/python:3.7.1
+    parameters:
+      aws-resource-name-prefix:
+          description: "Prefix that the AWS resources for this launch type share"
+          type: string
     steps:
       - checkout
       - setup_remote_docker
@@ -106,9 +110,9 @@ jobs:
       - run:
           name: Setup common environment variables
           command: |
-            echo 'export ECR_REPOSITORY_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}"' >> $BASH_ENV
-            echo 'export ECS_CLUSTER_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"' >> $BASH_ENV
-            echo 'export ECS_SERVICE_NAME="${AWS_RESOURCE_NAME_PREFIX_EC2}-service"' >> $BASH_ENV
+            echo 'export ECR_REPOSITORY_NAME="<< parameters.aws-resource-name-prefix >>"' >> $BASH_ENV
+            echo 'export ECS_CLUSTER_NAME="<< parameters.aws-resource-name-prefix >>-cluster"' >> $BASH_ENV
+            echo 'export ECS_SERVICE_NAME="<< parameters.aws-resource-name-prefix >>-service"' >> $BASH_ENV
             echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
       - run:
           name: Push image
@@ -116,10 +120,10 @@ jobs:
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $FULL_IMAGE_NAME
       - aws-ecs/update-service:
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,image-and-tag=$FULL_IMAGE_NAME"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          family: "<< parameters.aws-resource-name-prefix >>-service"
+          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+          container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
+          container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
       - test-deployment
 commands:
@@ -143,6 +147,13 @@ workflows:
       - build-test-app:
           requires:
             - build-orb
-      - test-ec2-launch-type-service-update:
+      - test-service-update:
+          name: test-service-update-for-ec2
           requires:
             - build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+      - test-service-update:
+          name: test-service-update-for-fargate
+          requires:
+            - build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
