@@ -4,47 +4,160 @@ description: |
 orbs:
   aws-cli: circleci/aws-cli@0.0.1
 
-commands:
-  wait-for-deployment-stability:
+jobs:
+  deploy-service-update:
+    docker:
+      - image: << parameters.docker-image-for-job >>
     parameters:
+      docker-image-for-job: 
+        description:
+          "The docker image to be used for running this job on CircleCI."
+        type: string
+        default: circleci/python:3.7.1
+      aws-profile-name:
+        description: "Profile name to be configured."
+        type: string
+        default: "default"
+      aws-access-key-id:
+        description: |
+          AWS access key id for IAM role. Set this to the name of
+          the environment variable you will set to hold this
+          value, i.e. $AWS_ACCESS_KEY.
+        type: string
+        default: $AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        description: |
+          AWS secret key for IAM role. Set this to the name of
+          the environment variable you will set to hold this
+          value, i.e. $AWS_SECRET_ACCESS_KEY.
+        type: string
+        default: $AWS_SECRET_ACCESS_KEY
+      aws-region:
+        description: 
+          "AWS region to operate in. Defaulted to the value of $AWS_REGION"
+        type: string
+        default: $AWS_REGION
       family:
         description:
-          "The family which will be used as a name for the task definition."
+          "Name of the task definition's family."
         type: string
       cluster-name:
         description:
-          "The ECS cluster name"
+          "The short name or full ARN of the cluster that hosts the service."
+        type: string
+      container-image-name-updates:
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. 
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used. 
+        type: string
+        default: ""
+      container-env-var-updates:
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition. 
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
+        type: string
+        default: ""
+      verify-revision-is-deployed:
+        description: |
+          Runs the verify-revision-is-deployed Orb command to verify that 
+          the revision has been deployed and is the only deployed revision
+          for the service. Note: enabling this may result in the build
+          being marked as failed if tasks for older revisions fail to be stopped
+          before the max number of polling attempts is reached.
+        type: boolean
+        default: false
+      max-poll-attempts:
+        description: |
+          The maximum number of attempts to poll the deployment status before giving up.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: string
+        default: "50"
+      poll-interval:
+        description: |
+          The polling interval, in seconds.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: string
+        default: "20"
+      enable-trace:
+        description: |
+           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
+           Do not enable this if you have sensitive variables that you do not
+           want appearing in the build output.
+        type: boolean
+        default: false
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          profile-name: << parameters.aws-profile-name >>
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          region: << parameters.aws-region >>
+      - update-service:
+          family: << parameters.family >>
+          cluster-name: << parameters.cluster-name >>
+          container-image-name-updates: << parameters.container-image-name-updates >>
+          container-env-var-updates: << parameters.container-env-var-updates >>
+          verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
+          max-poll-attempts: << parameters.max-poll-attempts >>
+          poll-interval: << parameters.poll-interval >>
+          enable-trace: << parameters.enable-trace >>
+
+commands:
+  verify-revision-is-deployed:
+    description: |
+      Polls the service's deployment status at intervals until the given task
+      definition revision is the only one deployed for the service, and for the
+      task definition revision's running task count to match the desired count.
+    parameters:
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      cluster-name:
+        description:
+          "The short name or full ARN of the cluster that hosts the service."
         type: string
       task-definition-arn:
         description:
-          "ARN of newly deployed task definition"
+          "ARN of the task definition whose deployment status is to be monitored."
         type: string
       max-poll-attempts:
         description:
-          "Maximum number of attempts to poll"
+          "The maximum number of attempts to poll for the deployment status before giving up."
         type: string
         default: "50"
       poll-interval:
         description:
-          "Polling interval"
+          "The polling interval, in seconds."
         type: string
         default: "20"
       enable-trace:
-        description:
-          "Commands will be run with the xtrace shell option enabled (set -x).
+        description: |
+           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
            Do not enable this if you have sensitive variables that you do not
-           want appearing in the build output."
+           want appearing in the build output.
         type: boolean
         default: false
     steps:
       - run:
-          name: Wait for deployment to be stable
+          name: Verify that the revision is deployed and older revisions are stopped
+          description: |
+            Poll the deployment status at intervals till the given task definition
+            revision has reached its desired running task count and is the only
+            one deployed for the service.
           command: |
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
             do
-                DEPLOYMENT_STATUS=$(aws ecs describe-services \
+                DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
                     --services << parameters.family >> \
                     --output text \
@@ -54,58 +167,90 @@ commands:
                     --services << parameters.family >> \
                     --output text \
                     --query 'length(services[0].deployments)')
-                TARGET_DEPLOYMENT_REVISION=$(aws ecs describe-services \
+                TARGET_REVISION=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
                     --services << parameters.family >> \
                     --output text \
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
-                echo "Current deployments: $DEPLOYMENT_STATUS"
-                if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_DEPLOYMENT_REVISION" = "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION" ]; then
-                    echo "Service updated: $DEPLOYED_REVISION"
+                echo "Current deployments: $DEPLOYMENTS"
+                if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION" ]; then
+                    echo "Service successfully updated to use revision $DEPLOYED_REVISION"
                     exit 0
                 else
-                    echo "Waiting for stale deployments.."
+                    echo "Waiting for new revision to reach desired running count / older revisions to be stopped.."
                     sleep << parameters.poll-interval >>
                 fi
                 attempt=$((attempt + 1))
             done
-            echo "Stopped waiting for deployment to be stable - please check the status of the deployment on the AWS ECS console"
+            echo "Stopped waiting for deployment to be stable - please check the status of the deployment on the AWS ECS console."
             exit 1
-  deploy-service-update:
+  update-service:
+    description: |
+      Registers a task definition for the given ECS service and updates the service to
+      use it. The new task definition is based on the last task definition, except
+      with the Docker image/tag names and environment variables of the containers
+      updated according to this command's parameters. Optionally polls the status of
+      the deployment until the created task definition revision has reached its
+      desired running task count and is the only revision deployed for the service.  
     parameters:
       family:
         description:
-          "The family which will be used as a name for the task definition."
+          "Name of the task definition's family."
         type: string
       cluster-name:
         description:
-          "The ECS cluster name"
+          "The short name or full ARN of the cluster that hosts the service."
         type: string
       container-image-name-updates:
-        description:
-          "Images and tags to be updated in container definitions."
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. 
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used. 
         type: string
         default: ""
       container-env-var-updates:
-        description:
-          "Environment variables to be updated in container definitions."
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition. 
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
         type: string
         default: ""
-      verify-revision-deployment-stable:
-        description:
-          "Verify that the revision has been deployed and is stable"
+      verify-revision-is-deployed:
+        description: |
+          Runs the verify-revision-is-deployed Orb command to verify that 
+          the revision has been deployed and is the only deployed revision
+          for the service. Note: enabling this may result in the build
+          being marked as failed if tasks for older revisions fail to be stopped
+          before the max number of polling attempts is reached.
         type: boolean
         default: false
+      max-poll-attempts:
+        description: |
+          The maximum number of attempts to poll the deployment status before giving up.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: string
+        default: "50"
+      poll-interval:
+        description: |
+          The polling interval, in seconds.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: string
+        default: "20"
       enable-trace:
-        description:
-          "Commands will be run with the xtrace shell option enabled (set -x).
+        description: |
+           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
            Do not enable this if you have sensitive variables that you do not
-           want appearing in the build output."
+           want appearing in the build output.
         type: boolean
         default: false
     steps:
       - run:
-          name: Prepare new task definition
+          name: Retrieve previous task definition and prepare new task definition values
           command: |
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
             PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
@@ -114,6 +259,7 @@ commands:
 
             # Prepare script for updating container definitions
             UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp _update_container_defs.py.XXXXXX)
+            chmod +x $UPDATE_CONTAINER_DEFS_SCRIPT_FILE
             cat > $UPDATE_CONTAINER_DEFS_SCRIPT_FILE \<<-EOF
             from __future__ import absolute_import
             import sys
@@ -236,7 +382,9 @@ commands:
             
             # Prepare script for getting task definition values
             GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
+            chmod +x $GET_TASK_DFN_VAL_SCRIPT_FILE
             cat > $GET_TASK_DFN_VAL_SCRIPT_FILE \<<-EOF
+            from __future__ import absolute_import
             import sys
             import json
             
@@ -300,45 +448,44 @@ commands:
 
             rm $UPDATE_CONTAINER_DEFS_SCRIPT_FILE $GET_TASK_DFN_VAL_SCRIPT_FILE
       - run:
-          name: Register task definition
+          name: Register new task definition
           command: |
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
-            task_definition_args=()
 
             if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
-                task_definition_args+=(--task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}")
+                set -- --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}" ]; then
-                task_definition_args+=(--execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}")
+                set -- --execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]; then
-                task_definition_args+=(--network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}")
+                set -- --network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ] && [ "${CCI_ORB_AWS_ECS_VOLUMES}" != "[]" ]; then
-                task_definition_args+=(--volumes "${CCI_ORB_AWS_ECS_VOLUMES}")
+                set -- --volumes "${CCI_ORB_AWS_ECS_VOLUMES}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]; then
-                task_definition_args+=(--placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}")
+                set -- --placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
-                task_definition_args+=(--requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP})
+                set -- --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
             fi
             if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then
-                task_definition_args+=(--cpu "${CCI_ORB_AWS_ECS_TASK_CPU}")
+                set -- --cpu "${CCI_ORB_AWS_ECS_TASK_CPU}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]; then
-                task_definition_args+=(--memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}")
+                set -- --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
             fi
 
             REVISION=$(aws ecs register-task-definition \
                 --family << parameters.family >> \
                 --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
-                "${task_definition_args[@]}" \
+                "$@" \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
       - run:
-          name: Update service
+          name: Update service with registered task definition
           command: |
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
             DEPLOYED_REVISION=$(aws ecs update-service \
@@ -349,10 +496,12 @@ commands:
                 --query service.taskDefinition)
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
-          condition: << parameters.verify-revision-deployment-stable >>
+          condition: << parameters.verify-revision-is-deployed >>
           steps:
-            - wait-for-deployment-stability:
+            - verify-revision-is-deployed:
                 family: << parameters.family >>
                 cluster-name: << parameters.cluster-name >>
                 task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
+                max-poll-attempts: << parameters.max-poll-attempts >>
+                poll-interval: << parameters.poll-interval >>
                 enable-trace: << parameters.enable-trace >>

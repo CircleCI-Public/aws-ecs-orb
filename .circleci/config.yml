@@ -1,0 +1,55 @@
+version: 2.1
+jobs:
+  build-orb
+    docker:
+      - image: circleci/python:3.7.1
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - cache-{{ checksum "tools/package-lock.json" }}
+      - restore_cache:
+          keys:
+            - cache-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Install Python dependencies
+          command: |
+            pipenv sync --dev
+      - run:
+          name: Install JS dependencies
+          command: |
+            sudo apt-get update 
+            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+            cd tools
+            npm install
+      - run:
+          name: Run unit tests
+          command: |
+            cd src/python
+            pipenv run pylint --py3k *.py
+            pipenv run coverage run -m pytest
+      - run:
+          name: Build orb
+          command: |
+            ./build_orb.sh
+      - run:
+          name: Validate orb
+          command: |
+            mkdir -p /tmp/circleci
+            curl -fLSs https://circle.ci/cli | DESTDIR=/tmp/circleci bash
+            /tmp/circleci/circleci orb validate dist/orb.yml
+      - save_cache:
+          key: cache-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ~/.local
+            - ~/.cache
+      - save_cache:
+          key: cache-{{ checksum "tools/package-lock.json" }}
+          paths:
+            - ~/tools/node_modules
+workflows:
+  build-deploy:
+    jobs:
+      - build-orb
