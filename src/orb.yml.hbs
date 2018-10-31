@@ -335,6 +335,7 @@ commands:
                 "$@" \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
+            echo "Registered task definition: ${REVISION}"
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
       - run:
           name: Update service with registered task definition

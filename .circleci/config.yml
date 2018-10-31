@@ -124,6 +124,7 @@ jobs:
           container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
+          enable-trace: true
       - test-deployment
 commands:
   test-deployment:
