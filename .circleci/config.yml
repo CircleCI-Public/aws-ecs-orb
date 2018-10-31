@@ -155,12 +155,42 @@ workflows:
             - build-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
       - test-service-update:
-          name: test-service-update-for-ec2
+          name: test-update-service-command-for-ec2
           requires:
             - build-test-app-for-ec2
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
       - test-service-update:
-          name: test-service-update-for-fargate
+          name: test-update-service-command-for-fargate
           requires:
             - build-test-app-for-fargate
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+      - aws-ecs/deploy-service-update:
+          name: test-update-service-job-for-ec2
+          requires:
+            - test-update-service-command-for-ec2
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
+          enable-trace: true
+          post-steps:
+            - test-deployment
+      - aws-ecs/deploy-service-update:
+          name: test-update-service-job-for-fargate
+          requires:
+            - test-update-service-command-for-fargate
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          enable-trace: true
+          post-steps:
+            - test-deployment
