@@ -305,28 +305,28 @@ commands:
             <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
 
             if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
-                set -- --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
+                set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}" ]; then
-                set -- --execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
+                set -- "$@" --execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]; then
-                set -- --network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}"
+                set -- "$@" --network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ] && [ "${CCI_ORB_AWS_ECS_VOLUMES}" != "[]" ]; then
-                set -- --volumes "${CCI_ORB_AWS_ECS_VOLUMES}"
+                set -- "$@" --volumes "${CCI_ORB_AWS_ECS_VOLUMES}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]; then
-                set -- --placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}"
+                set -- "$@" --placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
-                set -- --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
+                set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
             fi
             if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then
-                set -- --cpu "${CCI_ORB_AWS_ECS_TASK_CPU}"
+                set -- "$@" --cpu "${CCI_ORB_AWS_ECS_TASK_CPU}"
             fi
             if [ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]; then
-                set -- --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
+                set -- "$@" --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
             fi
 
             REVISION=$(aws ecs register-task-definition \
