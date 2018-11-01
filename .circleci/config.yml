@@ -31,11 +31,13 @@ jobs:
           command: |
             cd src/python
             pipenv run pylint --py3k *.py
-            pipenv run coverage run -m pytest
+            pipenv run coverage run --source . -m pytest
+            pipenv run coverage report --omit "*/test*"
       - run:
           name: Build orb
           command: |
             ./build_orb.sh
+            git status dist/orb.yml
       - run:
           name: Validate orb
           command: |
@@ -125,6 +127,7 @@ jobs:
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
           enable-trace: true
+          max-poll-attempts: "10"
       - test-deployment:
           service-name: "<< parameters.aws-resource-name-prefix >>-service"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
@@ -183,6 +186,7 @@ workflows:
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          fail-on-verification-timeout: false
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
