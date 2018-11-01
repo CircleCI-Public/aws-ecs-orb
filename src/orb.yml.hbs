@@ -85,6 +85,13 @@ jobs:
           Only in use when verify-revision-is-deployed is set to true.
         type: string
         default: "20"
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: boolean
+        default: true
       enable-trace:
         description: |
            Set this to true for commands to be run with the xtrace shell option enabled (set -x).
@@ -107,6 +114,7 @@ jobs:
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
           max-poll-attempts: << parameters.max-poll-attempts >>
           poll-interval: << parameters.poll-interval >>
+          fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
           enable-trace: << parameters.enable-trace >>
 
 commands:
@@ -138,6 +146,12 @@ commands:
           "The polling interval, in seconds."
         type: string
         default: "20"
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+        type: boolean
+        default: true
       enable-trace:
         description: |
            Set this to true for commands to be run with the xtrace shell option enabled (set -x).
@@ -153,7 +167,7 @@ commands:
             revision has reached its desired running task count and is the only
             one deployed for the service.
           command: |
-            <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
+            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             echo "Verifying that << parameters.task-definition-arn >> is deployed.."
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
@@ -184,7 +198,7 @@ commands:
                 attempt=$((attempt + 1))
             done
             echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
-            exit 1
+            <<# parameters.fail-on-verification-timeout >>exit 1<</ parameters.fail-on-verification-timeout >>
   update-service:
     description: |
       Registers a task definition for the given ECS service and updates the service to
@@ -242,6 +256,13 @@ commands:
           Only in use when verify-revision-is-deployed is set to true.
         type: string
         default: "20"
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: boolean
+        default: true
       enable-trace:
         description: |
            Set this to true for commands to be run with the xtrace shell option enabled (set -x).
@@ -253,7 +274,7 @@ commands:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
           command: |
-            <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
+            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
             CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
             CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
@@ -302,8 +323,7 @@ commands:
       - run:
           name: Register new task definition
           command: |
-            <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
-
+            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
                 set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
             fi
@@ -328,7 +348,6 @@ commands:
             if [ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]; then
                 set -- "$@" --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
             fi
-
             REVISION=$(aws ecs register-task-definition \
                 --family << parameters.family >> \
                 --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
@@ -340,7 +359,7 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            <<# parameters.enable-trace >> set -x <</ parameters.enable-trace >>
+            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             DEPLOYED_REVISION=$(aws ecs update-service \
                 --cluster "<< parameters.cluster-name >>" \
                 --service "<< parameters.family >>" \
@@ -357,4 +376,5 @@ commands:
                 task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
                 max-poll-attempts: << parameters.max-poll-attempts >>
                 poll-interval: << parameters.poll-interval >>
+                fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
                 enable-trace: << parameters.enable-trace >>

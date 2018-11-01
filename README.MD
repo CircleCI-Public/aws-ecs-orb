@@ -11,12 +11,13 @@ image name/tag and/or environment variables in a service's container definitions
 
 You can reference the following Jobs provided by this orb from a 2.1 Workflows configuration stanza. 
 
-- **deploy-service-update** - Update an ECS service.
+- [**deploy-service-update**](#deploy-service-update) - Update an ECS service.
 
 #### deploy-service-update
 
 ##### Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
+- The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`.
 
 ##### Parameters
 
@@ -34,6 +35,7 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 | verify-revision-is-deployed   | boolean  | false  | Runs the verify-revision-is-deployed Orb command to verify that the revision has been deployed and is the only deployed revision for the service. <br><br>**Note**: Enabling this may result in the build being marked as failed if tasks for older revisions fail to be stopped before the max number of polling attempts is reached. |
 | max-poll-attempts   | string  | "50"  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | string  | "20"  | The polling interval, in seconds. <br>Only in use when verify-revision-is-deployed is set to true. |
+| fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts. <br>Only in use when verify-revision-is-deployed is set to true. |
 | enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
@@ -61,9 +63,9 @@ workflows:
 ### Commands
 You may use the following commands provided by this orb directly from your own job.
 
-- **update-service** - Registers a task definition for the given ECS service and updates the service to use it. The new task definition is based on the last task definition, except with the Docker image/tag names and environment variables of the containers updated according to this command's parameters. Optionally polls the status of the deployment until the created task definition revision has reached its desired running task count and is the only revision deployed for the service.
+- [**update-service**](#update-service) - Registers a task definition for the given ECS service and updates the service to use it. The new task definition is based on the last task definition, except with the Docker image/tag names and environment variables of the containers updated according to this command's parameters. Optionally polls the status of the deployment until the created task definition revision has reached its desired running task count and is the only revision deployed for the service.
 
-- **verify-revision-is-deployed** - Polls the service's deployment status at intervals until the given task definition revision is the only one deployed for the service, and for the task definition revision's running task count to match the desired count.
+- [**verify-revision-is-deployed**](#verify-revision-is-deployed) - Polls the service's deployment status at intervals until the given task definition revision is the only one deployed for the service, and for the task definition revision's running task count to match the desired count.
 
 
 #### update-service
@@ -84,7 +86,8 @@ You may use the following commands provided by this orb directly from your own j
 | verify-revision-is-deployed   | boolean  | false  | Runs the verify-revision-is-deployed Orb command to verify that the revision has been deployed and is the only deployed revision for the service. <br><br>**Note**: Enabling this may result in the build being marked as failed if tasks for older revisions fail to be stopped before the max number of polling attempts is reached. |
 | max-poll-attempts   | string  | "50"  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | string  | "20"  | The polling interval, in seconds. <br>Only in use when verify-revision-is-deployed is set to true. |
-| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (set -x). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
+| fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts. <br>Only in use when verify-revision-is-deployed is set to true. |
+| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
 
@@ -126,7 +129,8 @@ workflows:
 | task-definition-arn      | string   |    | ARN of the task definition whose deployment status is to be monitored |
 | max-poll-attempts   | string  | "50"  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | string  | "20"  | The polling interval, in seconds |
-| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (set -x). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
+| fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.|
+| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
 
