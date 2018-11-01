@@ -126,8 +126,8 @@ jobs:
           container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
+          fail-on-verification-timeout: false
           enable-trace: true
-          max-poll-attempts: "10"
       - test-deployment:
           service-name: "<< parameters.aws-resource-name-prefix >>-service"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
@@ -203,7 +203,6 @@ workflows:
           verify-revision-is-deployed: true
           max-poll-attempts: "40"
           poll-interval: "10"
-          enable-trace: true
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
