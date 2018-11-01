@@ -90,7 +90,7 @@ jobs:
             - docker-image
   test-service-update:  
     docker:
-      - image: circleci/python:3.7.1
+      - image: circleci/python:3.6.7
     parameters:
       aws-resource-name-prefix:
           description: "Prefix that the AWS resources for this launch type share"
@@ -178,6 +178,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
       - aws-ecs/deploy-service-update:
           name: test-update-service-job-for-ec2
+          docker-image-name: circleci/python:3.5.6
           requires:
             - test-update-service-command-for-ec2
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
@@ -186,6 +187,7 @@ workflows:
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
           fail-on-verification-timeout: false
           post-steps:
             - test-deployment:
@@ -193,6 +195,7 @@ workflows:
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
       - aws-ecs/deploy-service-update:
           name: test-update-service-job-for-fargate
+          docker-image-name: circleci/python:3.4.9
           requires:
             - test-update-service-command-for-fargate
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
