@@ -17,14 +17,13 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 
 ##### Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
-- The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`.
+- The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`. The default profile of `aws` will be used.
 
 ##### Parameters
 
 | Parameter         | type    | default  |     description |
 |------------------|--------|-------------|----------------|
 | docker-image-for-job        | string  | "circleci/python:3.7.1"    | The docker image to be used for running this job on CircleCI |
-| aws-profile-name        | string  | "default"     | Profile name to be configured |
 | aws-access-key-id        | string  | $AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. $AWS_ACCESS_KEY. | 
 | aws-secret-access-key        | string  | $AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. $AWS_SECRET_ACCESS_KEY. | 
 | aws-region        | string  | $AWS_REGION    | AWS region to operate in. Defaulted to the value of $AWS_REGION | 
@@ -73,7 +72,7 @@ You may use the following commands provided by this orb directly from your own j
 
 ##### Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
-- The `aws` CLI should be available in `PATH` and configured with the necessary credentials and region information. The version of `aws` CLI used should support the launch type of the deployment.
+- The `aws` CLI should be available in `PATH` and configured with the necessary credentials and region information. The version of `aws` CLI used should support the launch type of the deployment. The default profile of `aws` will be used.
 
 ##### Parameters
 
@@ -118,7 +117,7 @@ workflows:
 
 ##### Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
-- The `aws` CLI should be available in `PATH` and configured with the necessary credentials and region information. The version of `aws` CLI used should support the launch type of the deployment.
+- The `aws` CLI should be available in `PATH` and configured with the necessary credentials and region information. The version of `aws` CLI used should support the launch type of the deployment. The default profile of `aws` will be used.
 
 ##### Parameters
 
