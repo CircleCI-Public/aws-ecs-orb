@@ -163,6 +163,10 @@ commands:
             one deployed for the service.
           command: |
             <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
+            if [ "<< parameters.task-definition-arn >>" = "" ]; then
+                echo "Invalid task-definition-arn parameter value: << parameters.task-definition-arn >>"
+                exit 1
+            fi
             echo "Verifying that << parameters.task-definition-arn >> is deployed.."
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]

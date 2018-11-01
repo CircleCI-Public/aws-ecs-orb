@@ -42,21 +42,22 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 ```
 version: 2.1
 orbs:
-  aws-ecr: circleci/aws-ecr@1.0.0
+  aws-ecr: circleci/aws-ecr@0.0.2
   aws-ecs: circleci/aws-ecs@0.0.1
 workflows:
   build-and-deploy:
     jobs:
       - aws-ecr/build_and_push_image:
-          account-url: "myAwsAccountId.dkr.ecr.myAwsRegion.amazonaws.com"
-          repo: "api"
+          account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          repo: "${MY_APP_PREFIX}"
+          region: ${AWS_REGION}
           tag: "${CIRCLE_SHA1}"
       - aws-ecs/deploy-service-update:
           requires:
             - aws-ecr/build_and_push_image
-          family: "api-service"
-          cluster-name: "api-cluster"
-          container-image-name-updates: "container=api-service,tag=${CIRCLE_SHA1}"
+          family: "${MY_APP_PREFIX}-service"
+          cluster-name: "${MY_APP_PREFIX}-cluster"
+          container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
 ```
 
 ### Commands
@@ -94,22 +95,26 @@ You may use the following commands provided by this orb directly from your own j
 version: 2.1
 
 orbs:
+  aws-cli: circleci/aws-cli@0.0.1
   aws-ecs: circleci/aws-ecs@0.0.1
 
 jobs:
-  update-env-var:  
+  update-tag:  
     docker:
       - image: circleci/python:3.7.1
     steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          region: "$AWS_REGION"
       - aws-ecs/update-service:
-          family: "api-service"
-          cluster-name: "api-cluster"
-          container-env-var-updates: "container=api-service,name=VERSION_INFO,value=${CIRCLE_BUILD_NUM}"
-
+          family: "${MY_APP_PREFIX}-service"
+          cluster-name: "${MY_APP_PREFIX}-cluster"
+          container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=stable"
 workflows:
   deploy:
     jobs:
-      - update-env-var
+      - update-tag
 ```
 
 
@@ -135,27 +140,34 @@ workflows:
 
 ```
 version: 2.1
-
 orbs:
-  aws-ecs: circleci/aws-ecs@0.0.1
+  aws-cli: circleci/aws-cli@0.0.1
+  aws-ecs: circleci/aws-ecs0.0.1
 
 jobs:
-  deploy:  
+  verify-deployment:  
     docker:
       - image: circleci/python:3.7.1
     steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          region: "$AWS_REGION"
       - run:
-          name: Run a deployment script
+          name: Get last task definition
           command: |
-            TASK_DEFINITION_ARN=./my-deploy-script.sh
-            echo 'export TASK_DEFINITION_ARN="${TASK_DEFINITION_ARN}"' >> $BASH_ENV
+            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                --task-definition ${MY_APP_PREFIX}-service \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn')
+            echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
       - aws-ecs/verify-revision-is-deployed:
-          family: "api-service"
-          cluster-name: "api-cluster"
+          family: "${MY_APP_PREFIX}-service"
+          cluster-name: "${MY_APP_PREFIX}-cluster"
           task-definition-arn: "${TASK_DEFINITION_ARN}"
 
 workflows:
   test-workflow:
     jobs:
-      - deploy
+      - verify-deployment
 ```
