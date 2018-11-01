@@ -126,15 +126,24 @@ jobs:
           verify-revision-is-deployed: true
           enable-trace: true
       - test-deployment
+          service-name: "<< parameters.aws-resource-name-prefix >>-service"
+          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
 commands:
   test-deployment:
     description: "Test the deployment"
+    parameters:
+      service-name:
+          description: "Name of the ECS service"
+          type: string
+      cluster-name:
+          description: "Name of the cluster"
+          type: string
     steps:
       - run:
           name: Test deployment (Please manually tear down AWS resources after use, if desired)
           command: |
             set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster $ECS_CLUSTER_NAME --services $ECS_SERVICE_NAME | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             for attempt in {1..25}; do
@@ -176,6 +185,8 @@ workflows:
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           post-steps:
             - test-deployment
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
       - aws-ecs/deploy-service-update:
           name: test-update-service-job-for-fargate
           requires:
@@ -191,3 +202,5 @@ workflows:
           enable-trace: true
           post-steps:
             - test-deployment
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
