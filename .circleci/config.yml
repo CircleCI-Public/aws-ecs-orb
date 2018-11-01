@@ -185,7 +185,6 @@ workflows:
           aws-region: "$AWS_DEFAULT_REGION"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-image-name-updates: "container=DummyContainer,image=jwilder/nginx-proxy"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
           fail-on-verification-timeout: false
