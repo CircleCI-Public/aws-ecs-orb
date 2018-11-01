@@ -188,7 +188,7 @@ commands:
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
                 echo "Current deployments: $DEPLOYMENTS"
                 if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "<< parameters.task-definition-arn >>" ]; then
-                    echo "Service successfully updated to use revision $TARGET_REVISION"
+                    echo "The task definition revision $TARGET_REVISION is the only deployment for the service and has attained the desired running task count."
                     exit 0
                 else
                     echo "Waiting for revision << parameters.task-definition-arn >> to reach desired running count / older revisions to be stopped.."
