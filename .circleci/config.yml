@@ -2,6 +2,7 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.0.1
   aws-ecs: sandbox/aws-ecs@dev:0.0.2
+  circleci-cli: circleci/circleci-cli@0.0.1
 jobs:
   build-orb:
     docker:
@@ -38,12 +39,11 @@ jobs:
           command: |
             ./build_orb.sh
             git status dist/orb.yml
+      - circleci-cli/install
       - run:
           name: Validate orb
           command: |
-            mkdir -p /tmp/circleci
-            curl -fLSs https://circle.ci/cli | DESTDIR=/tmp/circleci bash
-            /tmp/circleci/circleci orb validate dist/orb.yml
+            circleci orb validate dist/orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
