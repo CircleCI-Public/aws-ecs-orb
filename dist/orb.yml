@@ -73,14 +73,14 @@ jobs:
         description: |
           The maximum number of attempts to poll the deployment status before giving up.
           Only in use when verify-revision-is-deployed is set to true.
-        type: string
-        default: "50"
+        type: integer
+        default: 50
       poll-interval:
         description: |
           The polling interval, in seconds.
           Only in use when verify-revision-is-deployed is set to true.
-        type: string
-        default: "20"
+        type: integer
+        default: 20
       fail-on-verification-timeout:
         description: |
           Whether to exit with an error if the verification of the deployment
@@ -134,13 +134,13 @@ commands:
       max-poll-attempts:
         description:
           "The maximum number of attempts to poll for the deployment status before giving up."
-        type: string
-        default: "50"
+        type: integer
+        default: 50
       poll-interval:
         description:
           "The polling interval, in seconds."
-        type: string
-        default: "20"
+        type: integer
+        default: 20
       fail-on-verification-timeout:
         description: |
           Whether to exit with an error if the verification of the deployment
@@ -247,14 +247,14 @@ commands:
         description: |
           The maximum number of attempts to poll the deployment status before giving up.
           Only in use when verify-revision-is-deployed is set to true.
-        type: string
-        default: "50"
+        type: integer
+        default: 50
       poll-interval:
         description: |
           The polling interval, in seconds.
           Only in use when verify-revision-is-deployed is set to true.
-        type: string
-        default: "20"
+        type: integer
+        default: 20
       fail-on-verification-timeout:
         description: |
           Whether to exit with an error if the verification of the deployment
