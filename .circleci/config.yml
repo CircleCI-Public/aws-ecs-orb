@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.0.1
-  aws-ecs: sandbox/aws-ecs@dev:0.0.2
+  aws-ecs: sandbox/aws-ecs@dev:0.0.3
   circleci-cli: circleci/circleci-cli@0.0.1
 jobs:
   build-orb:
@@ -127,7 +127,6 @@ jobs:
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
           fail-on-verification-timeout: false
-          enable-trace: true
       - test-deployment:
           service-name: "<< parameters.aws-resource-name-prefix >>-service"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"

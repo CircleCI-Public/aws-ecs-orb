@@ -88,13 +88,6 @@ jobs:
           Only in use when verify-revision-is-deployed is set to true.
         type: boolean
         default: true
-      enable-trace:
-        description: |
-           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
-           Do not enable this if you have sensitive variables that you do not
-           want appearing in the build output.
-        type: boolean
-        default: false
     steps:
       - aws-cli/install
       - aws-cli/configure:
@@ -110,7 +103,6 @@ jobs:
           max-poll-attempts: << parameters.max-poll-attempts >>
           poll-interval: << parameters.poll-interval >>
           fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
-          enable-trace: << parameters.enable-trace >>
 
 commands:
   verify-revision-is-deployed:
@@ -147,13 +139,6 @@ commands:
           status does not complete within the number of polling attempts.
         type: boolean
         default: true
-      enable-trace:
-        description: |
-           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
-           Do not enable this if you have sensitive variables that you do not
-           want appearing in the build output.
-        type: boolean
-        default: false
     steps:
       - run:
           name: Verify that the revision is deployed and older revisions are stopped
@@ -162,7 +147,6 @@ commands:
             revision has reached its desired running task count and is the only
             one deployed for the service.
           command: |
-            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             if [ "<< parameters.task-definition-arn >>" = "" ]; then
                 echo "Invalid task-definition-arn parameter value: << parameters.task-definition-arn >>"
                 exit 1
@@ -262,18 +246,10 @@ commands:
           Only in use when verify-revision-is-deployed is set to true.
         type: boolean
         default: true
-      enable-trace:
-        description: |
-           Set this to true for commands to be run with the xtrace shell option enabled (set -x).
-           Do not enable this if you have sensitive variables that you do not
-           want appearing in the build output.
-        type: boolean
-        default: false
     steps:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
           command: |
-            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
             CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
             CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
@@ -471,7 +447,6 @@ commands:
       - run:
           name: Register new task definition
           command: |
-            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
                 set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
             fi
@@ -507,7 +482,6 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            <<# parameters.enable-trace >>set -x<</ parameters.enable-trace >>
             DEPLOYED_REVISION=$(aws ecs update-service \
                 --cluster "<< parameters.cluster-name >>" \
                 --service "<< parameters.family >>" \
@@ -525,4 +499,3 @@ commands:
                 max-poll-attempts: << parameters.max-poll-attempts >>
                 poll-interval: << parameters.poll-interval >>
                 fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
-                enable-trace: << parameters.enable-trace >>

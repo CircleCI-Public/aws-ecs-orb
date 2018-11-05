@@ -37,7 +37,6 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 | max-poll-attempts   | integer  | 50  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | integer  | 20  | The polling interval, in seconds. <br>Only in use when verify-revision-is-deployed is set to true. |
 | fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts. <br>Only in use when verify-revision-is-deployed is set to true. |
-| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
 
@@ -89,7 +88,6 @@ You may use the following commands provided by this orb directly from your own j
 | max-poll-attempts   | integer  | 50  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | integer  | 20  | The polling interval, in seconds. <br>Only in use when verify-revision-is-deployed is set to true. |
 | fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts. <br>Only in use when verify-revision-is-deployed is set to true. |
-| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
 
@@ -136,7 +134,6 @@ workflows:
 | max-poll-attempts   | integer  | 50  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
 | poll-interval   | integer  | 20  | The polling interval, in seconds |
 | fail-on-verification-timeout   | boolean  | true  | Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.|
-| enable-trace   | boolean  | false  | Set this to true for commands to be run with the xtrace shell option enabled (i.e. `set -x`). <br>Do *not* enable this if you have sensitive variables that you do not want appearing in the build output. |
 
 ##### Example
 
