@@ -1,8 +1,8 @@
 version: 2.1
 orbs:
-  aws-cli: circleci/aws-cli@0.0.1
+  aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: sandbox/aws-ecs@dev:0.0.3
-  circleci-cli: circleci/circleci-cli@0.0.1
+  circleci-cli: circleci/circleci-cli@0.1.2
 jobs:
   build-orb:
     docker:
@@ -22,7 +22,7 @@ jobs:
       - run:
           name: Install JS dependencies
           command: |
-            sudo apt-get update 
+            sudo apt-get update
             curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
             sudo apt-get install -y nodejs
             cd tools
@@ -53,7 +53,7 @@ jobs:
           key: cache-{{ checksum "tools/package-lock.json" }}
           paths:
             - ~/tools/node_modules
-  build-test-app:  
+  build-test-app:
     docker:
       - image: circleci/golang:1.8
     parameters:
@@ -88,7 +88,7 @@ jobs:
           root: .
           paths:
             - docker-image
-  test-service-update:  
+  test-service-update:
     docker:
       - image: circleci/python:3.7.1
     parameters:
