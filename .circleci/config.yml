@@ -103,7 +103,7 @@ jobs:
       - aws-cli/install
       - aws-cli/configure:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          region: "$AWS_DEFAULT_REGION"
+          aws-region: "$AWS_DEFAULT_REGION"
       - run:
           name: Load image
           command: |
