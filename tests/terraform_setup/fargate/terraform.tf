@@ -1,3 +1,12 @@
+terraform {
+  backend "s3" {
+    bucket = "aws-ecs-orb-terraform-state-bucket-fargate"
+    key    = "tf/state"
+    region = "us-east-1"
+    dynamodb_table = "aws-ecs-orb-terraform-state-lock-db-fargate"
+  }
+}
+
 provider "aws" {
   access_key = "${var.aws_access_key}"
   secret_key = "${var.aws_secret_key}"
