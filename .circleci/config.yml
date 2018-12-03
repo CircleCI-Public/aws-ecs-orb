@@ -125,7 +125,7 @@ jobs:
       - run:
           name: terraform apply
           command: |
-            cd $TF_BASE_DIR
+            cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
   test-service-update:
     docker:
