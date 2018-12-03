@@ -215,7 +215,7 @@ commands:
           type: string
     steps:
       - run:
-          name: Test deployment (Please manually tear down AWS resources after use, if desired)
+          name: Test deployment (for orb testing and is not part of the orb)
           command: |
             set -x
             TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
