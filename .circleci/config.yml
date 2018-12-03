@@ -120,7 +120,7 @@ jobs:
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
                 -out tfplan
       - run:
           name: terraform apply
