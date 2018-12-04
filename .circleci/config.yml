@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Validate orb
           command: |
-            circleci orb validate src/@orb.yml
+            circleci orb validate src/orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
@@ -61,7 +61,7 @@ jobs:
       - persist_to_workspace:
           root: src
           paths:
-            - @orb.yml
+            - orb.yml
 
   build-test-app:
     docker:
@@ -238,7 +238,7 @@ jobs:
       - unless:
           condition: <<parameters.to-prod>>
           steps:
-            - run: circleci orb publish workspace/@orb.yml circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
+            - run: circleci orb publish workspace/orb.yml circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
       - when:
           condition: <<parameters.to-prod>>
           steps:
