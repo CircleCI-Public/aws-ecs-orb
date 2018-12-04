@@ -272,6 +272,7 @@ workflows:
       - publish-orb:
           name: publish-dev-orb
           filepath: src/@orb.yml
+          context: orb-publishing
           requires:
             - build-orb
 
@@ -365,6 +366,10 @@ workflows:
       - publish-orb:
           name: publish-prod-orb
           to-prod: true
+          context: orb-publishing
           requires:
             - fargate_tear-down-test-env
             - ec2_test-update-service-job
+          filters:
+            branches:
+              only: master
