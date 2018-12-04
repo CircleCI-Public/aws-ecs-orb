@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Validate orb
           command: |
-            circleci orb validate src/orb.yml
+            circleci orb validate src/@orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
@@ -58,10 +58,6 @@ jobs:
           key: cache-{{ checksum "tools/package-lock.json" }}
           paths:
             - ~/tools/node_modules
-      - persist_to_workspace:
-          root: src
-          paths:
-            - orb.yml
 
   build-test-app:
     docker:
@@ -220,8 +216,12 @@ jobs:
   publish-orb:
     description: Publish the orb
     parameters:
+      filepath:
+        type: string
+        default: orb.yml
       to-prod:
         type: boolean
+        default: false
       release-type:
         type: enum
         description: If publishing to production, what type of release?
@@ -233,12 +233,10 @@ jobs:
     executor: cli
     steps:
       - checkout
-      - attach_workspace:
-          at: workspace
       - unless:
           condition: <<parameters.to-prod>>
           steps:
-            - run: circleci orb publish workspace/orb.yml circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
+            - run: circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
       - when:
           condition: <<parameters.to-prod>>
           steps:
@@ -270,43 +268,51 @@ workflows:
   build-deploy:
     jobs:
       - build-orb
+
       - publish-orb:
           name: publish-dev-orb
-          to-prod: false
+          filepath: src/@orb.yml
           requires:
             - build-orb
+
       - build-test-app:
           name: ec2_build-test-app
           requires:
             - build-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+
       - build-test-app:
           name: fargate_build-test-app
           requires:
             - build-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+
       - set-up-test-env:
           name: ec2_set-up-test-env
           requires:
             - ec2_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+
       - set-up-test-env:
           name: fargate_set-up-test-env
           requires:
             - fargate_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+
       - test-service-update:
           name: ec2_test-update-service-command
           requires:
             - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+
       - test-service-update:
           name: fargate_test-update-service-command
           requires:
             - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
           docker-image-for-job: circleci/python:2.7.15
@@ -323,6 +329,7 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
@@ -340,18 +347,21 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+
       - tear-down-test-env:
           name: ec2_tear-down-test-env
           requires:
             - ec2_test-update-service-job
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+
       - tear-down-test-env:
           name: fargate_tear-down-test-env
           requires:
             - fargate_test-update-service-job
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+
       - publish-orb:
           name: publish-prod-orb
           to-prod: true
