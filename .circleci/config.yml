@@ -271,6 +271,7 @@ workflows:
     jobs:
       - build-orb
       - publish-orb:
+          name: publish-dev-orb
           to-prod: false
           requires:
             - build-orb
@@ -352,6 +353,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
       - publish-orb:
+          name: publish-prod-orb
           to-prod: true
           requires:
             - fargate_tear-down-test-env
