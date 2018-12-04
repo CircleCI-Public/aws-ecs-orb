@@ -48,7 +48,7 @@ jobs:
       - run:
           name: Validate orb
           command: |
-            circleci orb validate src/@orb.yml
+            circleci orb validate src/orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
@@ -58,6 +58,11 @@ jobs:
           key: cache-{{ checksum "tools/package-lock.json" }}
           paths:
             - ~/tools/node_modules
+
+      - persist_to_workspace:
+          root: src
+          paths:
+            - orb.yml
 
   build-test-app:
     docker:
@@ -233,6 +238,8 @@ jobs:
     executor: cli
     steps:
       - checkout
+      - attach_workspace:
+          at: workspace
       - unless:
           condition: <<parameters.to-prod>>
           steps:
@@ -271,7 +278,7 @@ workflows:
 
       - publish-orb:
           name: publish-dev-orb
-          filepath: src/@orb.yml
+          filepath: workspace/orb.yml
           context: orb-publishing
           requires:
             - build-orb
@@ -279,13 +286,13 @@ workflows:
       - build-test-app:
           name: ec2_build-test-app
           requires:
-            - build-orb
+            - publish-dev-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: fargate_build-test-app
           requires:
-            - build-orb
+            - publish-dev-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - set-up-test-env:
