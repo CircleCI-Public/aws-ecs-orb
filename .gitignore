@@ -10,3 +10,6 @@ htmlcov
 __pycache__
 .coverage
 *.pyc
+
+# compiled orb source
+src/@orb.yml

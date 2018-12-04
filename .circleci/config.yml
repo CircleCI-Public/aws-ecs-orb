@@ -1,8 +1,15 @@
 version: 2.1
+
+executors:
+  cli:
+    docker:
+      - image: circleci/circleci-cli:0.1.2709
+
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: sandbox/aws-ecs@dev:0.0.4
   circleci-cli: circleci/circleci-cli@0.1.2
+
 jobs:
   build-orb:
     docker:
@@ -36,14 +43,12 @@ jobs:
             pipenv run coverage report --omit "*/test*"
       - run:
           name: Build orb
-          command: |
-            ./build_orb.sh
-            git status dist/orb.yml
+          command: ./build_orb.sh
       - circleci-cli/install
       - run:
           name: Validate orb
           command: |
-            circleci orb validate dist/orb.yml
+            circleci orb validate src/@orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
@@ -53,6 +58,11 @@ jobs:
           key: cache-{{ checksum "tools/package-lock.json" }}
           paths:
             - ~/tools/node_modules
+      - persist_to_workspace:
+          root: src
+          paths:
+            - @orb.yml
+
   build-test-app:
     docker:
       - image: circleci/golang:1.8
@@ -88,6 +98,7 @@ jobs:
           root: .
           paths:
             - docker-image
+
   set-up-test-env:
     parameters:
       aws-resource-name-prefix:
@@ -127,6 +138,7 @@ jobs:
           command: |
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
+
   test-service-update:
     docker:
       - image: circleci/python:3.7.1
@@ -169,6 +181,7 @@ jobs:
       - test-deployment:
           service-name: "<< parameters.aws-resource-name-prefix >>-service"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+
   tear-down-test-env:
     parameters:
       aws-resource-name-prefix:
@@ -203,6 +216,34 @@ jobs:
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
+
+  publish-orb:
+    description: Publish the orb
+    parameters:
+      to-prod:
+        type: boolean
+      release-type:
+        type: enum
+        description: If publishing to production, what type of release?
+        enum: ["patch", "minor", "major"]
+        default: "patch"
+      circle-token:
+        type: env_var_name
+        default: CIRCLE_TOKEN
+    executor: cli
+    steps:
+      - checkout
+      - attach_workspace:
+          at: workspace
+      - unless:
+          condition: <<parameters.to-prod>>
+          steps:
+            - run: circleci orb publish workspace/@orb.yml circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
+      - when:
+          condition: <<parameters.to-prod>>
+          steps:
+            - run: circleci orb publish promote circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 <<parameters.release-type>> --token $CIRCLE_TOKEN
+
 commands:
   test-deployment:
     description: "Test the deployment"
@@ -224,10 +265,15 @@ commands:
             for attempt in {1..25}; do
               curl -s --retry 10 http://$ELB_DNS_NAME | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}"
             done
+
 workflows:
   build-deploy:
     jobs:
       - build-orb
+      - publish-orb:
+          to-prod: false
+          requires:
+            - build-orb
       - build-test-app:
           name: ec2_build-test-app
           requires:
@@ -305,3 +351,8 @@ workflows:
             - fargate_test-update-service-job
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+      - publish-orb:
+          to-prod: true
+          requires:
+            - fargate_tear-down-test-env
+            - ec2_test-update-service-job
