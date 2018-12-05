@@ -103,9 +103,9 @@ jobs:
 
             docker save -o docker-images/$IMAGE_DIR/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
-          root: docker-images
+          root: .
           paths:
-            - <<parameters.docker-image-name>>
+            - docker-images
 
   set-up-test-env:
     parameters:
