@@ -9,7 +9,7 @@ jobs:
     docker:
       - image: << parameters.docker-image-for-job >>
     parameters:
-      docker-image-for-job: 
+      docker-image-for-job:
         description:
           "The docker image to be used for running this job on CircleCI."
         type: string
@@ -18,21 +18,21 @@ jobs:
         description: |
           AWS access key id for IAM role. Set this to the name of
           the environment variable you will set to hold this
-          value, i.e. $AWS_ACCESS_KEY.
-        type: string
-        default: $AWS_ACCESS_KEY_ID
+          value, i.e. AWS_ACCESS_KEY.
+        type: env_var_name
+        default: AWS_ACCESS_KEY_ID
       aws-secret-access-key:
         description: |
           AWS secret key for IAM role. Set this to the name of
           the environment variable you will set to hold this
-          value, i.e. $AWS_SECRET_ACCESS_KEY.
-        type: string
-        default: $AWS_SECRET_ACCESS_KEY
+          value, i.e. AWS_SECRET_ACCESS_KEY.
+        type: env_var_name
+        default: AWS_SECRET_ACCESS_KEY
       aws-region:
-        description: 
-          "AWS region to operate in. Defaulted to the value of $AWS_REGION"
-        type: string
-        default: $AWS_REGION
+        description:
+          "Name of environment variable for AWS region to operate in. Defaulted to AWS_REGION"
+        type: env_var_name
+        default: AWS_REGION
       family:
         description:
           "Name of the task definition's family."
@@ -47,22 +47,22 @@ jobs:
           containers that had been defined in the previous task definition.
           Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
           For each container, specify only either "image-and-tag" or "image" or "tag".
-          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. 
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
           If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
-          If "tag" is specified, the image name defined in the previous task definition will be used. 
+          If "tag" is specified, the image name defined in the previous task definition will be used.
         type: string
         default: ""
       container-env-var-updates:
         description: |
           Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition. 
+          defined for the containers in the previous task definition.
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string
         default: ""
       verify-revision-is-deployed:
         description: |
-          Runs the verify-revision-is-deployed Orb command to verify that 
+          Runs the verify-revision-is-deployed Orb command to verify that
           the revision has been deployed and is the only deployed revision
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
@@ -189,7 +189,7 @@ commands:
       with the Docker image/tag names and environment variables of the containers
       updated according to this command's parameters. Optionally polls the status of
       the deployment until the created task definition revision has reached its
-      desired running task count and is the only revision deployed for the service.  
+      desired running task count and is the only revision deployed for the service.
     parameters:
       family:
         description:
@@ -205,22 +205,22 @@ commands:
           containers that had been defined in the previous task definition.
           Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
           For each container, specify only either "image-and-tag" or "image" or "tag".
-          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. 
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
           If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
-          If "tag" is specified, the image name defined in the previous task definition will be used. 
+          If "tag" is specified, the image name defined in the previous task definition will be used.
         type: string
         default: ""
       container-env-var-updates:
         description: |
           Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition. 
+          defined for the containers in the previous task definition.
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string
         default: ""
       verify-revision-is-deployed:
         description: |
-          Runs the verify-revision-is-deployed Orb command to verify that 
+          Runs the verify-revision-is-deployed Orb command to verify that
           the revision has been deployed and is the only deployed revision
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
@@ -264,7 +264,7 @@ commands:
 
             # Prepare container definitions
             CONTAINER_DEFS=$(python $UPDATE_CONTAINER_DEFS_SCRIPT_FILE "$PREVIOUS_TASK_DEFINITION" "$CONTAINER_IMAGE_NAME_UPDATES" "$CONTAINER_ENV_VAR_UPDATES")
-            
+
             # Prepare script for getting task definition values
             GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
             chmod +x $GET_TASK_DFN_VAL_SCRIPT_FILE

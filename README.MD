@@ -11,7 +11,7 @@ A sample project that demonstrates using the orb is available on this GitHub rep
 
 ### Jobs
 
-You can reference the following Jobs provided by this orb from a 2.1 Workflows configuration stanza. 
+You can reference the following Jobs provided by this orb from a 2.1 Workflows configuration stanza.
 
 - [**deploy-service-update**](#deploy-service-update) - Update an ECS service.
 
@@ -26,10 +26,10 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 | Parameter         | type    | default  |     description |
 |------------------|--------|-------------|----------------|
 | docker-image-for-job        | string  | "circleci/python:3.7.1"    | The docker image to be used for running this job on CircleCI |
-| aws-access-key-id        | string  | $AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. $AWS_ACCESS_KEY. | 
-| aws-secret-access-key        | string  | $AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. $AWS_SECRET_ACCESS_KEY. | 
-| aws-region        | string  | $AWS_REGION    | AWS region to operate in. Defaulted to the value of $AWS_REGION | 
-| family        | string  |     | Name of the task definition's family | 
+| aws-access-key-id        | env_var_name  | AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_ACCESS_KEY. |
+| aws-secret-access-key        | env_var_name  | AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_SECRET_ACCESS_KEY. |
+| aws-region        | env_var_name  | AWS_REGION    | AWS region to operate in. Defaulted to the value of AWS_REGION |
+| family        | string  |     | Name of the task definition's family |
 | cluster-name   | string  |   | The short name or full ARN of the cluster that hosts the service |
 | container-image-name-updates      | string   | ""    | Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. <br>**Expected format**: container=\<container-name\>,image-and-tag=\<image-name\>:\<tag-name\>\|image=\<image-name\>\|tag=\<tag-name\>,container=...,image-and-tag\|image\|tag=... <br>For each container, specify only either `image-and-tag` or `image` or `tag`.<br>If `image-and-tag` is specified, the container image will be updated to the value of the name-value pair.<br>If `image` is specified, the image tag defined in the previous task definition will be retained, if exists.<br>If `tag` is specified, the image name defined in the previous task definition will be used. |
 | container-env-var-updates        | string  | ""   | Use this to update the values of (only) existing environment variables that had been defined for the containers in the previous task definition. <br>**Expected format**: container=\<container-name\>,name=\<env-var-name\>,value=\<env-var-value\>,container=...,name=...,value=...,<br>Values should not contain commas. |
@@ -80,7 +80,7 @@ You may use the following commands provided by this orb directly from your own j
 
 | Parameter         | type    | default  |     description |
 |------------------|--------|-------------|----------------|
-| family        | string  |     | Name of the task definition's family | 
+| family        | string  |     | Name of the task definition's family |
 | cluster-name   | string  |   | The short name or full ARN of the cluster that hosts the service |
 | container-image-name-updates      | string   | ""    | Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. <br>**Expected format**: container=\<container-name\>,image-and-tag=\<image-name\>:\<tag-name\>\|image=\<image-name\>\|tag=\<tag-name\>,container=...,image-and-tag\|image\|tag=... <br>For each container, specify only either `image-and-tag` or `image` or `tag`.<br>If `image-and-tag` is specified, the container image will be updated to the value of the name-value pair.<br>If `image` is specified, the image tag defined in the previous task definition will be retained, if exists.<br>If `tag` is specified, the image name defined in the previous task definition will be used. |
 | container-env-var-updates        | string  | ""   | Use this to update the values of (only) existing environment variables that had been defined for the containers in the previous task definition. <br>**Expected format**: container=\<container-name\>,name=\<env-var-name\>,value=\<env-var-value\>,container=...,name=...,value=...<br>Values should not contain commas. |
@@ -99,7 +99,7 @@ orbs:
   aws-ecs: circleci/aws-ecs@0.0.1
 
 jobs:
-  update-tag:  
+  update-tag:
     docker:
       - image: circleci/python:3.7.1
     steps:
@@ -118,7 +118,7 @@ workflows:
 ```
 
 
-#### verify-revision-is-deployed 
+#### verify-revision-is-deployed
 
 ##### Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
@@ -128,7 +128,7 @@ workflows:
 
 | Parameter         | type    | default  |     description |
 |------------------|--------|-------------|----------------|
-| family        | string  |     | Name of the task definition's family | 
+| family        | string  |     | Name of the task definition's family |
 | cluster-name   | string  |   | The short name or full ARN of the cluster that hosts the service |
 | task-definition-arn      | string   |    | ARN of the task definition whose deployment status is to be monitored |
 | max-poll-attempts   | integer  | 50  | The maximum number of attempts to poll the deployment status before giving up. <br>Only in use when verify-revision-is-deployed is set to true. |
@@ -144,7 +144,7 @@ orbs:
   aws-ecs: circleci/aws-ecs0.0.1
 
 jobs:
-  verify-deployment:  
+  verify-deployment:
     docker:
       - image: circleci/python:3.7.1
     steps:
