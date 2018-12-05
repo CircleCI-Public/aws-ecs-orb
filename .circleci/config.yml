@@ -172,7 +172,7 @@ jobs:
       - run:
           name: Load image
           command: |
-            docker load --input workspace/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar
+            docker load --input workspace/docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar
       - run:
           name: Setup common environment variables
           command: |
