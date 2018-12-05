@@ -1,5 +1,5 @@
 # aws-ecs Orb
-![CircleCI](https://circleci.com/gh/CircleCI-Public/aws-ecs-orb.svg?style=svg)](https://circleci.com/gh/CircleCI-Public/aws-ecs-orb)
+![CircleCI status](https://circleci.com/gh/CircleCI-Public/aws-ecs-orb.svg "CircleCI status")
 
 A CircleCI Orb to simplify deployments to Amazon Elastic Container Service (ECS). It supports EC2 and Fargate launch type deployments.
 
