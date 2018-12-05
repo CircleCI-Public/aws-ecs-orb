@@ -43,7 +43,7 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 ```
 version: 2.1
 orbs:
-  aws-ecr: circleci/aws-ecr@0.0.2
+  aws-ecr: circleci/aws-ecr@0.0.4
   aws-ecs: circleci/aws-ecs@0.0.1
 workflows:
   build-and-deploy:
@@ -95,7 +95,7 @@ You may use the following commands provided by this orb directly from your own j
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@0.0.1
+  aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs@0.0.1
 
 jobs:
@@ -140,7 +140,7 @@ workflows:
 ```
 version: 2.1
 orbs:
-  aws-cli: circleci/aws-cli@0.0.1
+  aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs0.0.1
 
 jobs:
