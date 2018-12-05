@@ -71,8 +71,11 @@ jobs:
     docker:
       - image: circleci/golang:1.8
     parameters:
+      docker-image-namespace:
+        description: "The namespace in which the built Docker image will be published"
+        type: string
       docker-image-name:
-        description: "The name with which the built docker image will be tagged"
+        description: "The name for the built Docker image"
         type: string
     steps:
       - checkout
@@ -86,7 +89,7 @@ jobs:
           name: Build image
           command: |
             cd tests/test_app
-            docker build -t << parameters.docker-image-name >> .
+            docker build -t <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>> .
       - run:
           name: Test image
           command: |
@@ -96,12 +99,13 @@ jobs:
       - run:
           name: Save image to an archive
           command: |
-            mkdir docker-image
-            docker save -o docker-image/<< parameters.docker-image-name >>.tar << parameters.docker-image-name >>
+            mkdir -p docker-image/<<parameters.docker-image-namespace>>
+            mkdir
+            docker save -o docker-image/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-name>>
       - persist_to_workspace:
-          root: .
+          root: docker-image
           paths:
-            - docker-image
+            - <<parameters.docker-image-namespace>>
 
   set-up-test-env:
     parameters:
@@ -150,8 +154,11 @@ jobs:
       aws-resource-name-prefix:
         description: "Prefix that the AWS resources for this launch type share"
         type: string
+      docker-image-namespace:
+        description: "The namespace in which the Docker image was published"
+        type: string
       docker-image-name:
-        description: "The name with which the built docker image will be tagged"
+        description: "The name for the previously built Docker image"
         type: string
     steps:
       - checkout
@@ -165,7 +172,7 @@ jobs:
       - run:
           name: Load image
           command: |
-            docker load --input workspace/docker-image/<< parameters.docker-image-name >>.tar
+            docker load --input workspace/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar
       - run:
           name: Setup common environment variables
           command: |
@@ -293,13 +300,15 @@ workflows:
           name: ec2_build-test-app
           requires:
             - publish-dev-orb
-          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: fargate_build-test-app
           requires:
             - publish-dev-orb
-          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - queue/block_workflow:
           consider-branch: false
@@ -326,14 +335,16 @@ workflows:
           requires:
             - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - test-service-update:
           name: fargate_test-update-service-command
           requires:
             - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
