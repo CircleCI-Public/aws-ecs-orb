@@ -9,6 +9,7 @@ orbs:
   aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs@dev:develop-16f31180e9c9612d7019181ae89ddbdaa01979a2
   circleci-cli: circleci/circleci-cli@0.1.2
+  queue: eddiewebb/queue@1.0.110
 
 jobs:
   build-orb:
@@ -69,8 +70,8 @@ jobs:
       - image: circleci/golang:1.8
     parameters:
       docker-image-name:
-          description: "The name with which the built docker image will be tagged"
-          type: string
+        description: "The name with which the built docker image will be tagged"
+        type: string
     steps:
       - checkout
       - setup_remote_docker
@@ -94,7 +95,7 @@ jobs:
           name: Save image to an archive
           command: |
             mkdir docker-image
-            docker save -o docker-image/image.tar << parameters.docker-image-name >>
+            docker save -o docker-image/<< parameters.docker-image-name >>.tar << parameters.docker-image-name >>
       - persist_to_workspace:
           root: .
           paths:
@@ -145,8 +146,11 @@ jobs:
       - image: circleci/python:3.7.1
     parameters:
       aws-resource-name-prefix:
-          description: "Prefix that the AWS resources for this launch type share"
-          type: string
+        description: "Prefix that the AWS resources for this launch type share"
+        type: string
+      docker-image-name:
+        description: "The name with which the built docker image will be tagged"
+        type: string
     steps:
       - checkout
       - setup_remote_docker
@@ -159,7 +163,7 @@ jobs:
       - run:
           name: Load image
           command: |
-            docker load --input workspace/docker-image/image.tar
+            docker load --input workspace/docker-image/<< parameters.docker-image-name >>.tar
       - run:
           name: Setup common environment variables
           command: |
@@ -295,17 +299,23 @@ workflows:
             - publish-dev-orb
           docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
+      - queue/block_workflow:
+          consider-branch: false
+          requires:
+            - ec2_set-up-test-env
+            - fargate_build-test-app
+
       - set-up-test-env:
           name: ec2_set-up-test-env
           requires:
-            - ec2_build-test-app
+            - queue/block_workflow
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
 
       - set-up-test-env:
           name: fargate_set-up-test-env
           requires:
-            - fargate_build-test-app
+            - queue/block_workflow
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
 
@@ -314,12 +324,14 @@ workflows:
           requires:
             - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - test-service-update:
           name: fargate_test-update-service-command
           requires:
             - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          docker-image-name: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
