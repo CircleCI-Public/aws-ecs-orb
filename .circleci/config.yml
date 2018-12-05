@@ -44,7 +44,9 @@ jobs:
             pipenv run coverage report --omit "*/test*"
       - run:
           name: Build orb
-          command: ./build_orb.sh
+          command: |
+            ./build_orb.sh
+            cat src/orb.yml
       - circleci-cli/install
       - run:
           name: Validate orb
@@ -302,7 +304,7 @@ workflows:
       - queue/block_workflow:
           consider-branch: false
           requires:
-            - ec2_set-up-test-env
+            - ec2_build-test-app
             - fargate_build-test-app
 
       - set-up-test-env:
