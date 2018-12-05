@@ -93,15 +93,14 @@ jobs:
       - run:
           name: Test image
           command: |
-            docker run -d -p 8080:8080 --name built-image << parameters.docker-image-name >>
+            docker run -d -p 8080:8080 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
             sleep 10
             docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:8080 | grep "Hello World!"
       - run:
           name: Save image to an archive
           command: |
             mkdir -p docker-image/<<parameters.docker-image-namespace>>
-            mkdir
-            docker save -o docker-image/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-name>>
+            docker save -o docker-image/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
           root: docker-image
           paths:
