@@ -1,0 +1,15 @@
+.DS_Store
+.vscode
+node_modules
+
+# terraform
+**/.terraform/*
+
+# python
+htmlcov
+__pycache__
+.coverage
+*.pyc
+
+# compiled orb source
+src/@orb.yml

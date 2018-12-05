@@ -1,0 +1,442 @@
+version: 2.1
+description: |
+  An orb for working with Amazon Elastic Container Service (ECS)
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.4
+
+examples:
+  deploy-service-update:
+    description: Update an ECS service.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-ecr: circleci/aws-ecr@0.0.2
+        aws-ecs: circleci/aws-ecs@0.0.1
+
+      workflows:
+        build-and-deploy:
+          jobs:
+            - aws-ecr/build_and_push_image:
+                account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                repo: "${MY_APP_PREFIX}"
+                region: ${AWS_REGION}
+                tag: "${CIRCLE_SHA1}"
+            - aws-ecs/deploy-service-update:
+                requires:
+                  - aws-ecr/build_and_push_image
+                family: "${MY_APP_PREFIX}-service"
+                cluster-name: "${MY_APP_PREFIX}-cluster"
+                container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
+
+  update-service:
+    description: Use the AWS CLI and this orb to update an ECS service.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.0.1
+        aws-ecs: circleci/aws-ecs@0.0.1
+
+      jobs:
+        update-tag:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-cli/install
+            - aws-cli/configure:
+                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+                region: "$AWS_REGION"
+            - aws-ecs/update-service:
+                family: "${MY_APP_PREFIX}-service"
+                cluster-name: "${MY_APP_PREFIX}-cluster"
+                container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=stable"
+
+      workflows:
+        deploy:
+          jobs:
+            - update-tag
+
+  verify-revision-deployment:
+    description: Verify the deployment of an ECS revision.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.0.1
+        aws-ecs: circleci/aws-ecs0.0.1
+
+      jobs:
+        verify-deployment:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-cli/install
+            - aws-cli/configure:
+                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+                region: "$AWS_REGION"
+            - run:
+                name: Get last task definition
+                command: |
+                  TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                      --task-definition ${MY_APP_PREFIX}-service \
+                      --output text \
+                      --query 'taskDefinition.taskDefinitionArn')
+                  echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
+            - aws-ecs/verify-revision-is-deployed:
+                family: "${MY_APP_PREFIX}-service"
+                cluster-name: "${MY_APP_PREFIX}-cluster"
+                task-definition-arn: "${TASK_DEFINITION_ARN}"
+
+      workflows:
+        test-workflow:
+          jobs:
+            - verify-deployment
+
+jobs:
+  deploy-service-update:
+    docker:
+      - image: << parameters.docker-image-for-job >>
+    parameters:
+      docker-image-for-job:
+        description:
+          "The docker image to be used for running this job on CircleCI."
+        type: string
+        default: circleci/python:3.7.1
+      aws-access-key-id:
+        description: |
+          AWS access key id for IAM role. Set this to the name of
+          the environment variable you will set to hold this
+          value, i.e. AWS_ACCESS_KEY.
+        type: env_var_name
+        default: AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        description: |
+          AWS secret key for IAM role. Set this to the name of
+          the environment variable you will set to hold this
+          value, i.e. AWS_SECRET_ACCESS_KEY.
+        type: env_var_name
+        default: AWS_SECRET_ACCESS_KEY
+      aws-region:
+        description:
+          "Name of environment variable for AWS region to operate in. Defaulted to AWS_REGION"
+        type: env_var_name
+        default: AWS_REGION
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      cluster-name:
+        description:
+          "The short name or full ARN of the cluster that hosts the service."
+        type: string
+      container-image-name-updates:
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used.
+        type: string
+        default: ""
+      container-env-var-updates:
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition.
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
+        type: string
+        default: ""
+      verify-revision-is-deployed:
+        description: |
+          Runs the verify-revision-is-deployed Orb command to verify that
+          the revision has been deployed and is the only deployed revision
+          for the service. Note: enabling this may result in the build
+          being marked as failed if tasks for older revisions fail to be stopped
+          before the max number of polling attempts is reached.
+        type: boolean
+        default: false
+      max-poll-attempts:
+        description: |
+          The maximum number of attempts to poll the deployment status before giving up.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 50
+      poll-interval:
+        description: |
+          The polling interval, in seconds.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 20
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: boolean
+        default: true
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          aws-region: << parameters.aws-region >>
+      - update-service:
+          family: << parameters.family >>
+          cluster-name: << parameters.cluster-name >>
+          container-image-name-updates: << parameters.container-image-name-updates >>
+          container-env-var-updates: << parameters.container-env-var-updates >>
+          verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
+          max-poll-attempts: << parameters.max-poll-attempts >>
+          poll-interval: << parameters.poll-interval >>
+          fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
+
+commands:
+  verify-revision-is-deployed:
+    description: |
+      Polls the service's deployment status at intervals until the given task
+      definition revision is the only one deployed for the service, and for the
+      task definition revision's running task count to match the desired count.
+    parameters:
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      cluster-name:
+        description:
+          "The short name or full ARN of the cluster that hosts the service."
+        type: string
+      task-definition-arn:
+        description:
+          "ARN of the task definition whose deployment status is to be monitored."
+        type: string
+      max-poll-attempts:
+        description:
+          "The maximum number of attempts to poll for the deployment status before giving up."
+        type: integer
+        default: 50
+      poll-interval:
+        description:
+          "The polling interval, in seconds."
+        type: integer
+        default: 20
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+        type: boolean
+        default: true
+    steps:
+      - run:
+          name: Verify that the revision is deployed and older revisions are stopped
+          description: |
+            Poll the deployment status at intervals till the given task definition
+            revision has reached its desired running task count and is the only
+            one deployed for the service.
+          command: |
+            if [ "<< parameters.task-definition-arn >>" = "" ]; then
+                echo "Invalid task-definition-arn parameter value: << parameters.task-definition-arn >>"
+                exit 1
+            fi
+            echo "Verifying that << parameters.task-definition-arn >> is deployed.."
+            attempt=0
+            while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
+            do
+                DEPLOYMENTS=$(aws ecs describe-services \
+                    --cluster << parameters.cluster-name >> \
+                    --services << parameters.family >> \
+                    --output text \
+                    --query 'services[0].deployments[].[taskDefinition, status]')
+                NUM_DEPLOYMENTS=$(aws ecs describe-services \
+                    --cluster << parameters.cluster-name >> \
+                    --services << parameters.family >> \
+                    --output text \
+                    --query 'length(services[0].deployments)')
+                TARGET_REVISION=$(aws ecs describe-services \
+                    --cluster << parameters.cluster-name >> \
+                    --services << parameters.family >> \
+                    --output text \
+                    --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
+                echo "Current deployments: $DEPLOYMENTS"
+                if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "<< parameters.task-definition-arn >>" ]; then
+                    echo "The task definition revision $TARGET_REVISION is the only deployment for the service and has attained the desired running task count."
+                    exit 0
+                else
+                    echo "Waiting for revision << parameters.task-definition-arn >> to reach desired running count / older revisions to be stopped.."
+                    sleep << parameters.poll-interval >>
+                fi
+                attempt=$((attempt + 1))
+            done
+            echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
+            <<# parameters.fail-on-verification-timeout >>exit 1<</ parameters.fail-on-verification-timeout >>
+  update-service:
+    description: |
+      Registers a task definition for the given ECS service and updates the service to
+      use it. The new task definition is based on the last task definition, except
+      with the Docker image/tag names and environment variables of the containers
+      updated according to this command's parameters. Optionally polls the status of
+      the deployment until the created task definition revision has reached its
+      desired running task count and is the only revision deployed for the service.
+    parameters:
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      cluster-name:
+        description:
+          "The short name or full ARN of the cluster that hosts the service."
+        type: string
+      container-image-name-updates:
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used.
+        type: string
+        default: ""
+      container-env-var-updates:
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition.
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
+        type: string
+        default: ""
+      verify-revision-is-deployed:
+        description: |
+          Runs the verify-revision-is-deployed Orb command to verify that
+          the revision has been deployed and is the only deployed revision
+          for the service. Note: enabling this may result in the build
+          being marked as failed if tasks for older revisions fail to be stopped
+          before the max number of polling attempts is reached.
+        type: boolean
+        default: false
+      max-poll-attempts:
+        description: |
+          The maximum number of attempts to poll the deployment status before giving up.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 50
+      poll-interval:
+        description: |
+          The polling interval, in seconds.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 20
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: boolean
+        default: true
+    steps:
+      - run:
+          name: Retrieve previous task definition and prepare new task definition values
+          command: |
+            PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
+            CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
+            CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
+
+            # Prepare script for updating container definitions
+            UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp _update_container_defs.py.XXXXXX)
+            chmod +x $UPDATE_CONTAINER_DEFS_SCRIPT_FILE
+            cat > $UPDATE_CONTAINER_DEFS_SCRIPT_FILE \<<-EOF
+            {{> UPDATE_CONTAINER_DEFS_SCRIPT_SRC}}
+
+            EOF
+
+            # Prepare container definitions
+            CONTAINER_DEFS=$(python $UPDATE_CONTAINER_DEFS_SCRIPT_FILE "$PREVIOUS_TASK_DEFINITION" "$CONTAINER_IMAGE_NAME_UPDATES" "$CONTAINER_ENV_VAR_UPDATES")
+
+            # Prepare script for getting task definition values
+            GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
+            chmod +x $GET_TASK_DFN_VAL_SCRIPT_FILE
+            cat > $GET_TASK_DFN_VAL_SCRIPT_FILE \<<-EOF
+            {{> GET_TASK_DFN_VAL_SCRIPT_SRC}}
+
+            EOF
+
+            # Get other task definition values
+            TASK_ROLE=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'taskRoleArn' "$PREVIOUS_TASK_DEFINITION")
+            EXECUTION_ROLE=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'executionRoleArn' "$PREVIOUS_TASK_DEFINITION")
+            NETWORK_MODE=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'networkMode' "$PREVIOUS_TASK_DEFINITION")
+            VOLUMES=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'volumes' "$PREVIOUS_TASK_DEFINITION")
+            PLACEMENT_CONSTRAINTS=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'placementConstraints' "$PREVIOUS_TASK_DEFINITION")
+            REQ_COMP=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'requiresCompatibilities' "$PREVIOUS_TASK_DEFINITION")
+            TASK_CPU=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'cpu' "$PREVIOUS_TASK_DEFINITION")
+            TASK_MEMORY=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'memory' "$PREVIOUS_TASK_DEFINITION")
+
+            # Make task definition values available as env variables
+            echo "export CCI_ORB_AWS_ECS_TASK_ROLE='${TASK_ROLE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_EXECUTION_ROLE='${EXECUTION_ROLE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_NETWORK_MODE='${NETWORK_MODE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_CONTAINER_DEFS='${CONTAINER_DEFS}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_VOLUMES='${VOLUMES}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS='${PLACEMENT_CONSTRAINTS}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_REQ_COMP='${REQ_COMP}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TASK_CPU='${TASK_CPU}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TASK_MEMORY='${TASK_MEMORY}'" >> $BASH_ENV
+
+            rm $UPDATE_CONTAINER_DEFS_SCRIPT_FILE $GET_TASK_DFN_VAL_SCRIPT_FILE
+      - run:
+          name: Register new task definition
+          command: |
+            if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
+                set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}" ]; then
+                set -- "$@" --execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]; then
+                set -- "$@" --network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ] && [ "${CCI_ORB_AWS_ECS_VOLUMES}" != "[]" ]; then
+                set -- "$@" --volumes "${CCI_ORB_AWS_ECS_VOLUMES}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]; then
+                set -- "$@" --placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
+                set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then
+                set -- "$@" --cpu "${CCI_ORB_AWS_ECS_TASK_CPU}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]; then
+                set -- "$@" --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
+            fi
+            REVISION=$(aws ecs register-task-definition \
+                --family << parameters.family >> \
+                --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
+                "$@" \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn')
+            echo "Registered task definition: ${REVISION}"
+            echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
+      - run:
+          name: Update service with registered task definition
+          command: |
+            DEPLOYED_REVISION=$(aws ecs update-service \
+                --cluster "<< parameters.cluster-name >>" \
+                --service "<< parameters.family >>" \
+                --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                --output text \
+                --query service.taskDefinition)
+            echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
+      - when:
+          condition: << parameters.verify-revision-is-deployed >>
+          steps:
+            - verify-revision-is-deployed:
+                family: << parameters.family >>
+                cluster-name: << parameters.cluster-name >>
+                task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
+                max-poll-attempts: << parameters.max-poll-attempts >>
+                poll-interval: << parameters.poll-interval >>
+                fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
