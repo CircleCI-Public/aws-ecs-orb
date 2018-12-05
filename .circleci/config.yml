@@ -7,7 +7,7 @@ executors:
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@dev:volatile
+  aws-ecs: circleci/aws-ecs@dev:develop-16f31180e9c9612d7019181ae89ddbdaa01979a2
   circleci-cli: circleci/circleci-cli@0.1.2
 
 jobs:
