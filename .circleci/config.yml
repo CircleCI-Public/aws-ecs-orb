@@ -101,7 +101,7 @@ jobs:
           command: |
             mkdir -p docker-images/<<parameters.docker-image-name>>
 
-            docker save -o docker-image/$IMAGE_DIR/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            docker save -o docker-images/$IMAGE_DIR/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
           root: docker-images
           paths:
