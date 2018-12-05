@@ -376,7 +376,7 @@ workflows:
           context: orb-publishing
           requires:
             - fargate_tear-down-test-env
-            - ec2_test-update-service-job
+            - ec2_tear-down-test-env
           filters:
             branches:
               only: master
