@@ -99,12 +99,13 @@ jobs:
       - run:
           name: Save image to an archive
           command: |
-            mkdir -p docker-image/<<parameters.docker-image-namespace>>
-            docker save -o docker-image/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            mkdir -p docker-images/<<parameters.docker-image-name>>
+
+            docker save -o docker-image/$IMAGE_DIR/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
-          root: docker-image
+          root: docker-images
           paths:
-            - <<parameters.docker-image-namespace>>
+            - <<parameters.docker-image-name>>
 
   set-up-test-env:
     parameters:
@@ -171,7 +172,7 @@ jobs:
       - run:
           name: Load image
           command: |
-            docker load --input workspace/<<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>.tar
+            docker load --input workspace/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar
       - run:
           name: Setup common environment variables
           command: |
