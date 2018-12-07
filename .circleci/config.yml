@@ -352,8 +352,8 @@ workflows:
           docker-image-for-job: circleci/python:2.7.15
           requires:
             - ec2_test-update-service-command
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-region: AWS_DEFAULT_REGION
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}
+          aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
@@ -369,8 +369,8 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - fargate_test-update-service-command
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-region: AWS_DEFAULT_REGION
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
