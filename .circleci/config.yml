@@ -257,6 +257,7 @@ jobs:
           condition: <<parameters.to-prod>>
           steps:
             - run: circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
+            - run: circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:volatile --token $CIRCLE_TOKEN
       - when:
           condition: <<parameters.to-prod>>
           steps:
