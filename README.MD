@@ -26,9 +26,9 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 | Parameter         | type    | default  |     description |
 |------------------|--------|-------------|----------------|
 | docker-image-for-job        | string  | "circleci/python:3.7.1"    | The docker image to be used for running this job on CircleCI |
-| aws-access-key-id        | env_var_name  | AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_ACCESS_KEY. |
-| aws-secret-access-key        | env_var_name  | AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Set this to the name of the environment variable you will set to hold this value, i.e. AWS_SECRET_ACCESS_KEY. |
-| aws-region        | env_var_name  | AWS_REGION    | AWS region to operate in. Defaulted to the value of AWS_REGION |
+| aws-access-key-id        | string  | $AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY. |
+| aws-secret-access-key        | string  | $AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY. |
+| aws-region        | string  | $AWS_REGION    | AWS region to operate in. Defaulted to $AWS_REGION. |
 | family        | string  |     | Name of the task definition's family |
 | cluster-name   | string  |   | The short name or full ARN of the cluster that hosts the service |
 | container-image-name-updates      | string   | ""    | Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. <br>**Expected format**: container=\<container-name\>,image-and-tag=\<image-name\>:\<tag-name\>\|image=\<image-name\>\|tag=\<tag-name\>,container=...,image-and-tag\|image\|tag=... <br>For each container, specify only either `image-and-tag` or `image` or `tag`.<br>If `image-and-tag` is specified, the container image will be updated to the value of the name-value pair.<br>If `image` is specified, the image tag defined in the previous task definition will be retained, if exists.<br>If `tag` is specified, the image name defined in the previous task definition will be used. |
@@ -44,14 +44,14 @@ You can reference the following Jobs provided by this orb from a 2.1 Workflows c
 version: 2.1
 orbs:
   aws-ecr: circleci/aws-ecr@0.0.4
-  aws-ecs: circleci/aws-ecs@0.0.1
+  aws-ecs: circleci/aws-ecs@0.0.3
 workflows:
   build-and-deploy:
     jobs:
       - aws-ecr/build_and_push_image:
           account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           repo: "${MY_APP_PREFIX}"
-          region: ${AWS_REGION}
+          region: "${AWS_REGION}"
           tag: "${CIRCLE_SHA1}"
       - aws-ecs/deploy-service-update:
           requires:
@@ -96,7 +96,7 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@0.0.1
+  aws-ecs: circleci/aws-ecs@0.0.3
 
 jobs:
   update-tag:
@@ -106,7 +106,7 @@ jobs:
       - aws-cli/install
       - aws-cli/configure:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          region: "$AWS_REGION"
+          aws-region: "$AWS_REGION"
       - aws-ecs/update-service:
           family: "${MY_APP_PREFIX}-service"
           cluster-name: "${MY_APP_PREFIX}-cluster"
@@ -141,7 +141,7 @@ workflows:
 version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs0.0.1
+  aws-ecs: circleci/aws-ecs@0.0.3
 
 jobs:
   verify-deployment:
@@ -151,7 +151,7 @@ jobs:
       - aws-cli/install
       - aws-cli/configure:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          region: "$AWS_REGION"
+          aws-region: "$AWS_REGION"
       - run:
           name: Get last task definition
           command: |
