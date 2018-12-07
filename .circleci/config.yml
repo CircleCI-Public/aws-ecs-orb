@@ -352,7 +352,7 @@ workflows:
           docker-image-for-job: circleci/python:2.7.15
           requires:
             - ec2_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
