@@ -261,7 +261,13 @@ jobs:
       - when:
           condition: <<parameters.to-prod>>
           steps:
-            - run: circleci orb publish promote circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 <<parameters.release-type>> --token $CIRCLE_TOKEN
+            - run:
+                name: Promote orb to production
+                command: |
+                  if [ "${SKIP_PROD_PUBLISH}" != "true" ]
+                  then
+                    circleci orb publish promote circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 <<parameters.release-type>> --token $CIRCLE_TOKEN
+                  fi
 
 commands:
   test-deployment:
