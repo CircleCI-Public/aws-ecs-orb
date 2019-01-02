@@ -2,13 +2,19 @@ version: 2.1
 
 executors:
   cli:
+    resource_class: small
     docker:
-      - image: circleci/circleci-cli:0.1.2709
+      - image: circleci/circleci-cli
+  node:
+    resource_class: small
+    docker:
+      - image: circleci/node
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs@dev:volatile
   circleci-cli: circleci/circleci-cli@0.1.2
+  circle-compare-url: iynere/compare-url@0.3.1
   queue: eddiewebb/queue@1.0.110
 
 jobs:
@@ -256,12 +262,67 @@ jobs:
       - unless:
           condition: <<parameters.to-prod>>
           steps:
-            - run: circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 --token $CIRCLE_TOKEN
-            - run: circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:volatile --token $CIRCLE_TOKEN
+            - run: |
+                # for integration testing
+                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:alpha --token $CIRCLE_TOKEN
+
+                # for transparency
+                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
+
+                # for potentially promoting to prod
+                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
+
       - when:
           condition: <<parameters.to-prod>>
           steps:
-            - run: circleci orb publish promote circleci/aws-ecs@dev:$CIRCLE_BRANCH-$CIRCLE_SHA1 <<parameters.release-type>> --token $CIRCLE_TOKEN
+            - run: |
+                # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
+
+                if [[ echo $CIRCLE_TAG | grep "integration-" ]]; then
+                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:integration-::')
+                elif [[ echo $CIRCLE_TAG | grep "master-" ]]; then
+                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:master-::')
+                fi
+
+                if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
+                  circleci orb publish promote circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} <<parameters.release-type>> --token $CIRCLE_TOKEN
+                fi
+
+  trigger-integration:
+    executor: node
+    parameters:
+      tag:
+        type: enum
+        default: "integration"
+        enum: ["integration", master]
+    steps:
+      - checkout
+
+      - attach_workspace:
+          at: workspace
+
+      - add_ssh_keys:
+          fingerprints:
+            - "fc:22:bf:38:f5:27:ea:6a:98:a3:d1:ce:ae:17:56:8a"
+
+      - run:
+          name: git config
+          command: |
+            git config --global user.email "$CIRCLE_USERNAME@users.noreply.github.com"
+            git config --global user.name "$CIRCLE_USERNAME"
+
+      - run: |
+          # save value stored in file to a local env var
+          CIRCLE_COMPARE_URL=$(cat workspace/CIRCLE_COMPARE_URL.txt)
+
+          # borrowed from https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos
+
+          COMMIT_RANGE=$(echo $CIRCLE_COMPARE_URL | sed 's:^.*/compare/::g')
+          echo "Commit range: $COMMIT_RANGE"
+
+          INTEGRATION_TAG=<<parameters.tag>>-$COMMIT_RANGE
+          git tag $INTEGRATION_TAG
+          git push origin $INTEGRATION_TAG
 
 commands:
   test-deployment:
@@ -286,7 +347,7 @@ commands:
             done
 
 workflows:
-  build-deploy:
+  build_deploy-dev:
     jobs:
       - build-orb
 
@@ -297,61 +358,116 @@ workflows:
           requires:
             - build-orb
 
-      - build-test-app:
-          name: ec2_build-test-app
+      - circle-compare-url/reconstruct:
+          name: reconstruct_compare_url
+          resource-class: small
+
+      - trigger-integration:
+          name: trigger-integration-dev
           requires:
-            - publish-dev-orb
+            - reconstruct_compare_url
+          filters:
+            branches:
+              ignore: master
+
+      - trigger-integration:
+          name: trigger-integration-master
+          tag: master
+          requires:
+            - reconstruct_compare_url
+          filters:
+            branches:
+              only: master
+
+  integration_test-prod_deploy:
+    jobs:
+      - build-test-app:
+          name: ec2_build-test-app-dev
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - build-test-app:
-          name: fargate_build-test-app
-          requires:
-            - publish-dev-orb
+          name: fargate_build-test-app-dev
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - queue/block_workflow:
+          name: queue/block_workflow-dev
           consider-branch: false
           requires:
-            - ec2_build-test-app
-            - fargate_build-test-app
+            - ec2_build-test-app-dev
+            - fargate_build-test-app-dev
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - set-up-test-env:
-          name: ec2_set-up-test-env
+          name: ec2_set-up-test-env-dev
           requires:
-            - queue/block_workflow
+            - queue/block_workflow-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - set-up-test-env:
-          name: fargate_set-up-test-env
+          name: fargate_set-up-test-env-dev
           requires:
-            - queue/block_workflow
+            - queue/block_workflow-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - test-service-update:
-          name: ec2_test-update-service-command
+          name: ec2_test-update-service-command-dev
           requires:
-            - ec2_set-up-test-env
+            - ec2_set-up-test-env-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - test-service-update:
-          name: fargate_test-update-service-command
+          name: fargate_test-update-service-command-dev
           requires:
-            - fargate_set-up-test-env
+            - fargate_set-up-test-env-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - aws-ecs/deploy-service-update:
-          name: ec2_test-update-service-job
+          name: ec2_test-update-service-job-dev
           docker-image-for-job: circleci/python:2.7.15
           requires:
-            - ec2_test-update-service-command
+            - ec2_test-update-service-command-dev
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
@@ -363,12 +479,17 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-job
+          name: fargate_test-update-service-job-dev
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - fargate_test-update-service-command
+            - fargate_test-update-service-command-dev
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
@@ -381,28 +502,196 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - tear-down-test-env:
-          name: ec2_tear-down-test-env
+          name: ec2_tear-down-test-env-dev
           requires:
-            - ec2_test-update-service-job
+            - ec2_test-update-service-job-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
 
       - tear-down-test-env:
-          name: fargate_tear-down-test-env
+          name: fargate_tear-down-test-env-dev
           requires:
-            - fargate_test-update-service-job
+            - fargate_test-update-service-job-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
+      - build-test-app:
+          name: ec2_build-test-app-master
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - build-test-app:
+          name: fargate_build-test-app-master
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - queue/block_workflow:
+          name: queue/block_workflow-master
+          consider-branch: false
+          requires:
+            - ec2_build-test-app-master
+            - fargate_build-test-app-master
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - set-up-test-env:
+          name: ec2_set-up-test-env-master
+          requires:
+            - queue/block_workflow-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - set-up-test-env:
+          name: fargate_set-up-test-env-master
+          requires:
+            - queue/block_workflow-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - test-service-update:
+          name: ec2_test-update-service-command-master
+          requires:
+            - ec2_set-up-test-env-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - test-service-update:
+          name: fargate_test-update-service-command-master
+          requires:
+            - fargate_set-up-test-env-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - aws-ecs/deploy-service-update:
+          name: ec2_test-update-service-job-master
+          docker-image-for-job: circleci/python:2.7.15
+          requires:
+            - ec2_test-update-service-command-master
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
+          fail-on-verification-timeout: false
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-job-master
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - fargate_test-update-service-command-master
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - tear-down-test-env:
+          name: ec2_tear-down-test-env-master
+          requires:
+            - ec2_test-update-service-job-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env-master
+          requires:
+            - fargate_test-update-service-job-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
 
       - publish-orb:
           name: publish-prod-orb
           to-prod: true
           context: orb-publishing
           requires:
-            - fargate_tear-down-test-env
-            - ec2_tear-down-test-env
+            - fargate_tear-down-test-env-master
+            - ec2_tear-down-test-env-master
           filters:
             branches:
-              only: master
+              ignore: /.*/
+            tags:
+              only: /master-.*/
