@@ -361,6 +361,8 @@ workflows:
       - circle-compare-url/reconstruct:
           name: reconstruct_compare_url
           resource-class: small
+          requires:
+            - publish-dev-orb
 
       - trigger-integration:
           name: trigger-integration-dev
