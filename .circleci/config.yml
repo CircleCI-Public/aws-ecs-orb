@@ -364,10 +364,15 @@ workflows:
           requires:
             - publish-dev-orb
 
+      - queue/block_workflow:
+          consider-branch: false
+          requires:
+            - reconstruct_compare_url
+
       - trigger-integration:
           name: trigger-integration-dev
           requires:
-            - reconstruct_compare_url
+            - queue/block_workflow
           filters:
             branches:
               ignore: master
@@ -376,7 +381,7 @@ workflows:
           name: trigger-integration-master
           tag: master
           requires:
-            - reconstruct_compare_url
+            - queue/block_workflow
           filters:
             branches:
               only: master
@@ -397,18 +402,6 @@ workflows:
           name: fargate_build-test-app-dev
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
-
-      - queue/block_workflow:
-          name: queue/block_workflow-dev
-          consider-branch: false
-          requires:
-            - ec2_build-test-app-dev
-            - fargate_build-test-app-dev
           filters:
             branches:
               ignore: /.*/
@@ -548,18 +541,6 @@ workflows:
           name: fargate_build-test-app-master
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - queue/block_workflow:
-          name: queue/block_workflow-master
-          consider-branch: false
-          requires:
-            - ec2_build-test-app-master
-            - fargate_build-test-app-master
           filters:
             branches:
               ignore: /.*/
