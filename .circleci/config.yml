@@ -411,7 +411,7 @@ workflows:
       - set-up-test-env:
           name: ec2_set-up-test-env-dev
           requires:
-            - queue/block_workflow-dev
+            - ec2_build-test-app-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           filters:
@@ -423,7 +423,7 @@ workflows:
       - set-up-test-env:
           name: fargate_set-up-test-env-dev
           requires:
-            - queue/block_workflow-dev
+            - fargate_build-test-app-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           filters:
@@ -550,7 +550,7 @@ workflows:
       - set-up-test-env:
           name: ec2_set-up-test-env-master
           requires:
-            - queue/block_workflow-master
+            - ec2_build-test-app-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           filters:
@@ -562,7 +562,7 @@ workflows:
       - set-up-test-env:
           name: fargate_set-up-test-env-master
           requires:
-            - queue/block_workflow-master
+            - fargate_build-test-app-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           filters:
