@@ -279,9 +279,9 @@ jobs:
                 # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
 
                 if [[ echo $CIRCLE_TAG | grep "integration-" ]]; then
-                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:integration-::')
+                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:integration-::' | sed 's:._.:...:')
                 elif [[ echo $CIRCLE_TAG | grep "master-" ]]; then
-                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:master-::')
+                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:master-::' | sed 's:._.:...:')
                 fi
 
                 if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
@@ -320,7 +320,7 @@ jobs:
           COMMIT_RANGE=$(echo $CIRCLE_COMPARE_URL | sed 's:^.*/compare/::g')
           echo "Commit range: $COMMIT_RANGE"
 
-          INTEGRATION_TAG=<<parameters.tag>>-$COMMIT_RANGE
+          INTEGRATION_TAG=<<parameters.tag>>-$(echo $COMMIT_RANGE | sed 's:...:._.:')
           git tag $INTEGRATION_TAG
           git push origin $INTEGRATION_TAG
 
