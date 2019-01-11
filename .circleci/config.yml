@@ -278,10 +278,10 @@ jobs:
             - run: |
                 # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
 
-                if [[ echo $CIRCLE_TAG | grep "integration-" ]]; then
-                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:integration-::' | sed 's:\._\.:...:')
-                elif [[ echo $CIRCLE_TAG | grep "master-" ]]; then
-                  COMMIT_RANGE=$(echo $CIRCLE_TAG | sed 's:master-::' | sed 's:\._\.:...:')
+                if [[ $(echo "$CIRCLE_TAG" | grep "integration-") ]]; then
+                  COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:integration-::' | sed 's:\._\.:...:')
+                elif [[ $(echo "$CIRCLE_TAG" | grep "master-") ]]; then
+                  COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:master-::' | sed 's:\._\.:...:')
                 fi
 
                 if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
