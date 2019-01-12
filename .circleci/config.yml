@@ -262,31 +262,35 @@ jobs:
       - unless:
           condition: <<parameters.to-prod>>
           steps:
-            - run: |
-                # for integration testing
-                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:alpha --token $CIRCLE_TOKEN
+            - run:
+                name: publish dev versions
+                command: |
+                  # for integration testing
+                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:alpha --token $CIRCLE_TOKEN
 
-                # for transparency
-                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
+                  # for transparency
+                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
 
-                # for potentially promoting to prod
-                circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
+                  # for potentially promoting to prod
+                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
 
       - when:
           condition: <<parameters.to-prod>>
           steps:
-            - run: |
-                # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
+            - run:
+                name: use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
+                command: |
+                  # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
 
-                if [[ $(echo "$CIRCLE_TAG" | grep "integration-") ]]; then
-                  COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:integration-::' | sed 's:\._\.:...:')
-                elif [[ $(echo "$CIRCLE_TAG" | grep "master-") ]]; then
-                  COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:master-::' | sed 's:\._\.:...:')
-                fi
+                  if [[ $(echo "$CIRCLE_TAG" | grep "integration-") ]]; then
+                    COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:integration-::' | sed 's:\._\.:...:')
+                  elif [[ $(echo "$CIRCLE_TAG" | grep "master-") ]]; then
+                    COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:master-::' | sed 's:\._\.:...:')
+                  fi
 
-                if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
-                  circleci orb publish promote circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} <<parameters.release-type>> --token $CIRCLE_TOKEN
-                fi
+                  if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
+                    circleci orb publish promote circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} <<parameters.release-type>> --token $CIRCLE_TOKEN
+                  fi
 
   trigger-integration:
     executor: node
