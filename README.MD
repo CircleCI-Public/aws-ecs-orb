@@ -2,6 +2,8 @@
 
 A CircleCI Orb to simplify deployments to Amazon Elastic Container Service (ECS). It supports EC2 and Fargate launch type deployments.
 
+CircleCI orbs registry page: https://circleci.com/orbs/registry/orb/circleci/aws-ecs
+
 ## Features
 
 This orb allows convenient updating of ECS services when only the Docker
