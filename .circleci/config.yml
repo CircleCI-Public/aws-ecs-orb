@@ -193,6 +193,7 @@ jobs:
             docker push $FULL_IMAGE_NAME
       - aws-ecs/update-service:
           family: "<< parameters.aws-resource-name-prefix >>-service"
+          service-name: "<< parameters.aws-resource-name-prefix >>-service"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
           container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
@@ -470,6 +471,7 @@ workflows:
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
@@ -609,6 +611,7 @@ workflows:
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
@@ -631,6 +634,7 @@ workflows:
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
