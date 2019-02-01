@@ -249,29 +249,23 @@ commands:
                 exit 1
             fi
 
-            SERVICE_NAME="$(echo << parameters.service-name >>)"
-
-            if [ -z "${SERVICE_NAME}" ]; then
-                SERVICE_NAME="$(echo << parameters.family >>)"
-            fi
-
             echo "Verifying that << parameters.task-definition-arn >> is deployed.."
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
             do
                 DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services ${SERVICE_NAME} \
+                    --services << parameters.service-name >> \
                     --output text \
                     --query 'services[0].deployments[].[taskDefinition, status]')
                 NUM_DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services ${SERVICE_NAME} \
+                    --services << parameters.service-name >> \
                     --output text \
                     --query 'length(services[0].deployments)')
                 TARGET_REVISION=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services ${SERVICE_NAME} \
+                    --services << parameters.service-name >> \
                     --output text \
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
                 echo "Current deployments: $DEPLOYMENTS"
@@ -442,14 +436,9 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            SERVICE_NAME="$(echo << parameters.service-name >>)"
-
-            if [ -z "${SERVICE_NAME}" ]; then
-                SERVICE_NAME="$(echo << parameters.family >>)"
-            fi
             DEPLOYED_REVISION=$(aws ecs update-service \
                 --cluster "<< parameters.cluster-name >>" \
-                --service "${SERVICE_NAME}" \
+                --service "<< parameters.service-name >>" \
                 --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
                 --output text \
                 --query service.taskDefinition)
