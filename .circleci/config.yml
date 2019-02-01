@@ -12,7 +12,7 @@ executors:
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@dev:volatile
+  aws-ecs: circleci/aws-ecs@dev:alpha
   circleci-cli: circleci/circleci-cli@0.1.2
   circle-compare-url: iynere/compare-url@0.3.1
   queue: eddiewebb/queue@1.0.110
