@@ -131,6 +131,7 @@ jobs:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -214,6 +215,7 @@ commands:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: ""
       task-definition-arn:
         description:
           "ARN of the task definition whose deployment status is to be monitored."
@@ -305,6 +307,7 @@ commands:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -457,6 +460,7 @@ commands:
             - verify-revision-is-deployed:
                 family: << parameters.family >>
                 cluster-name: << parameters.cluster-name >>
+                service-name: << parameters.service-name >>
                 task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
                 max-poll-attempts: << parameters.max-poll-attempts >>
                 poll-interval: << parameters.poll-interval >>
