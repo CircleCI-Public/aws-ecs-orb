@@ -131,6 +131,7 @@ jobs:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: << parameters.family >>
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -214,6 +215,7 @@ commands:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: << parameters.family >>
       task-definition-arn:
         description:
           "ARN of the task definition whose deployment status is to be monitored."
@@ -305,6 +307,7 @@ commands:
         description:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
+        default: << parameters.family >>
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
