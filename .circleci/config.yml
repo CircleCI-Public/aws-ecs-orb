@@ -160,6 +160,12 @@ jobs:
       aws-resource-name-prefix:
         description: "Prefix that the AWS resources for this launch type share"
         type: string
+      family-name:
+        description: "Family name"
+        type: string
+      service-name:
+        description: "Service name"
+        type: string
       docker-image-namespace:
         description: "The namespace in which the Docker image was published"
         type: string
@@ -192,7 +198,8 @@ jobs:
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $FULL_IMAGE_NAME
       - aws-ecs/update-service:
-          family: "<< parameters.aws-resource-name-prefix >>-service"
+          family: "<< parameters.family-name >>"
+          service-name: "<< parameters.service-name >>"
           cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
           container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
           container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
@@ -441,6 +448,8 @@ workflows:
           requires:
             - ec2_set-up-test-env-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           filters:
@@ -454,6 +463,8 @@ workflows:
           requires:
             - fargate_set-up-test-env-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           filters:
@@ -469,8 +480,8 @@ workflows:
             - ec2_test-update-service-command-dev
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          service: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
@@ -581,6 +592,8 @@ workflows:
           requires:
             - ec2_set-up-test-env-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           filters:
@@ -594,6 +607,8 @@ workflows:
           requires:
             - fargate_set-up-test-env-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           filters:
@@ -609,7 +624,8 @@ workflows:
             - ec2_test-update-service-command-master
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
