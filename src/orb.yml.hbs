@@ -127,6 +127,11 @@ jobs:
         description:
           "The short name or full ARN of the cluster that hosts the service."
         type: string
+      service-name:
+        description:
+          "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
+        type: string
+        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -183,6 +188,7 @@ jobs:
       - update-service:
           family: << parameters.family >>
           cluster-name: << parameters.cluster-name >>
+          service-name: << parameters.service-name >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
@@ -205,6 +211,11 @@ commands:
         description:
           "The short name or full ARN of the cluster that hosts the service."
         type: string
+      service-name:
+        description:
+          "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
+        type: string
+        default: ""
       task-definition-arn:
         description:
           "ARN of the task definition whose deployment status is to be monitored."
@@ -237,23 +248,30 @@ commands:
                 echo "Invalid task-definition-arn parameter value: << parameters.task-definition-arn >>"
                 exit 1
             fi
+
+            SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+            if [ -z "${SERVICE_NAME}" ]; then
+                SERVICE_NAME="$(echo << parameters.family >>)"
+            fi
+
             echo "Verifying that << parameters.task-definition-arn >> is deployed.."
             attempt=0
             while [ "$attempt" -lt << parameters.max-poll-attempts >> ]
             do
                 DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services << parameters.family >> \
+                    --services ${SERVICE_NAME} \
                     --output text \
                     --query 'services[0].deployments[].[taskDefinition, status]')
                 NUM_DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services << parameters.family >> \
+                    --services ${SERVICE_NAME} \
                     --output text \
                     --query 'length(services[0].deployments)')
                 TARGET_REVISION=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
-                    --services << parameters.family >> \
+                    --services ${SERVICE_NAME} \
                     --output text \
                     --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
                 echo "Current deployments: $DEPLOYMENTS"
@@ -285,6 +303,11 @@ commands:
         description:
           "The short name or full ARN of the cluster that hosts the service."
         type: string
+      service-name:
+        description:
+          "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
+        type: string
+        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -419,9 +442,14 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
+            SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+            if [ -z "${SERVICE_NAME}" ]; then
+                SERVICE_NAME="$(echo << parameters.family >>)"
+            fi
             DEPLOYED_REVISION=$(aws ecs update-service \
                 --cluster "<< parameters.cluster-name >>" \
-                --service "<< parameters.family >>" \
+                --service "${SERVICE_NAME}" \
                 --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
                 --output text \
                 --query service.taskDefinition)
@@ -432,6 +460,7 @@ commands:
             - verify-revision-is-deployed:
                 family: << parameters.family >>
                 cluster-name: << parameters.cluster-name >>
+                service-name: << parameters.service-name >>
                 task-definition-arn: "$CCI_ORB_AWS_ECS_DEPLOYED_REVISION"
                 max-poll-attempts: << parameters.max-poll-attempts >>
                 poll-interval: << parameters.poll-interval >>
