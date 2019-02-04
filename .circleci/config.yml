@@ -463,8 +463,8 @@ workflows:
           requires:
             - fargate_set-up-test-env-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           filters:
@@ -607,8 +607,8 @@ workflows:
           requires:
             - fargate_set-up-test-env-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           filters:
