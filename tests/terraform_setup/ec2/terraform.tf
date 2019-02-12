@@ -25,6 +25,8 @@ locals {
   aws_ecs_cluster_name = "${var.aws_resource_prefix}-cluster"
   # The name of the ECS service to be created
   aws_ecs_service_name = "${var.aws_resource_prefix}-service"
+  # The name of the ECS task definition family to be created
+  aws_ecs_family_name = "${var.aws_resource_prefix}-family"
 }
 
 resource "aws_ecr_repository" "demo-app-repository" {
@@ -54,6 +56,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
     ContainerPort = 8080
     StackName = "${local.aws_vpc_stack_name}"
     ServiceName = "${local.aws_ecs_service_name}"
+    FamilyName = "${local.aws_ecs_family_name}"
     # Note: Since ImageUrl parameter is not specified, the Service
     # will be deployed with the 1st container using the
     # nginx image when created

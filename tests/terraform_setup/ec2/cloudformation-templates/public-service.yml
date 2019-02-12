@@ -10,6 +10,10 @@ Parameters:
     Type: String
     Default: nginx
     Description: A name for the service
+  FamilyName:
+    Type: String
+    Default: nginx
+    Description: A name for the task definition family
   ImageUrl:
     Type: String
     Default: nginx
@@ -59,7 +63,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Ref 'ServiceName'
+      Family: !Ref 'FamilyName'
       Cpu: !Ref 'TaskCpu'
       Memory: !Ref 'TaskMemory'
       TaskRoleArn:
