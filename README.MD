@@ -15,6 +15,7 @@ A sample project that demonstrates using the orb is available on this GitHub rep
 You can reference the following Jobs provided by this orb from a 2.1 Workflows configuration stanza.
 
 - [**deploy-service-update**](#deploy-service-update) - Update an ECS service.
+- [**update-task-definition**](#update-task-definition) - Update an ECS task definition without modifying a service.
 
 #### deploy-service-update
 
@@ -64,12 +65,53 @@ workflows:
           container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
 ```
 
+#### update-task-definition
+
+##### Requirements
+- `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
+- The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`. The default profile of `aws` will be used.
+- `bash` to be present in `/bin/bash`. Otherwise, `/bin/sh` will be used, but the orb has not been tested for compatibility with other shells.
+
+##### Parameters
+
+| Parameter         | type    | default  |     description |
+|------------------|--------|-------------|----------------|
+| docker-image-for-job        | string  | "circleci/python:3.7.1"    | The docker image to be used for running this job on CircleCI |
+| aws-access-key-id        | string  | $AWS_ACCESS_KEY_ID     | AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY. |
+| aws-secret-access-key        | string  | $AWS_SECRET_ACCESS_KEY    | AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY. |
+| aws-region        | string  | $AWS_REGION    | AWS region to operate in. Defaulted to $AWS_REGION. |
+| family        | string  |     | Name of the task definition's family |
+| container-image-name-updates      | string   | ""    | Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. <br>**Expected format**: container=\<container-name\>,image-and-tag=\<image-name\>:\<tag-name\>\|image=\<image-name\>\|tag=\<tag-name\>,container=...,image-and-tag\|image\|tag=... <br>For each container, specify only either `image-and-tag` or `image` or `tag`.<br>If `image-and-tag` is specified, the container image will be updated to the value of the name-value pair.<br>If `image` is specified, the image tag defined in the previous task definition will be retained, if exists.<br>If `tag` is specified, the image name defined in the previous task definition will be used. |
+| container-env-var-updates        | string  | ""   | Use this to update the values of (only) existing environment variables that had been defined for the containers in the previous task definition. <br>**Expected format**: container=\<container-name\>,name=\<env-var-name\>,value=\<env-var-value\>,container=...,name=...,value=...,<br>Values should not contain commas. |
+
+```
+version: 2.1
+orbs:
+  aws-ecr: circleci/aws-ecr@0.0.4
+  aws-ecs: circleci/aws-ecs@0.0.3
+workflows:
+  build-and-deploy:
+    jobs:
+      - aws-ecr/build_and_push_image:
+          account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          repo: "${MY_APP_PREFIX}"
+          region: "${AWS_REGION}"
+          tag: "${CIRCLE_SHA1}"
+      - aws-ecs/update-task-definition:
+          requires:
+            - aws-ecr/build_and_push_image
+          family: "${MY_APP_PREFIX}-service"
+          container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
+```
+
 ### Commands
 You may use the following commands provided by this orb directly from your own job.
 
 - [**update-service**](#update-service) - Registers a task definition for the given ECS service and updates the service to use it. The new task definition is based on the last task definition, except with the Docker image/tag names and environment variables of the containers updated according to this command's parameters. Optionally polls the status of the deployment until the created task definition  has reached its desired running task count and is the only one deployed for the service.
 
 - [**verify-revision-is-deployed**](#verify-revision-is-deployed) - Polls the service's deployment status at intervals until the given task definition is the only one deployed for the service, and the task definition's running task count matches the desired count.
+
+- [**update-task-definition**](#update-task-definition) - Updates a task definition without modifying a serivce. Useful for updating single run tasks.
 
 
 #### update-service
@@ -174,4 +216,46 @@ workflows:
   test-workflow:
     jobs:
       - verify-deployment
+```
+
+#### update-task-definition
+
+
+##### Requirements
+- `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
+- The `aws` CLI should be available in `PATH` and configured with the necessary credentials and region information. The version of `aws` CLI used should support the launch type of the deployment. The default profile of `aws` will be used.
+
+##### Parameters
+
+| Parameter         | type    | default  |     description |
+|------------------|--------|-------------|----------------|
+| family        | string  |     | Name of the task definition's family |
+| container-image-name-updates      | string   | ""    | Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. <br>**Expected format**: container=\<container-name\>,image-and-tag=\<image-name\>:\<tag-name\>\|image=\<image-name\>\|tag=\<tag-name\>,container=...,image-and-tag\|image\|tag=... <br>For each container, specify only either `image-and-tag` or `image` or `tag`.<br>If `image-and-tag` is specified, the container image will be updated to the value of the name-value pair.<br>If `image` is specified, the image tag defined in the previous task definition will be retained, if exists.<br>If `tag` is specified, the image name defined in the previous task definition will be used. |
+| container-env-var-updates        | string  | ""   | Use this to update the values of (only) existing environment variables that had been defined for the containers in the previous task definition. <br>**Expected format**: container=\<container-name\>,name=\<env-var-name\>,value=\<env-var-value\>,container=...,name=...,value=...<br>Values should not contain commas. |
+
+##### Example
+
+```
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@0.1.4
+  aws-ecs: circleci/aws-ecs@0.0.3
+
+jobs:
+  update-tag:
+    docker:
+      - image: circleci/python:3.7.1
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_REGION"
+      - aws-ecs/update-service:
+          family: "${MY_APP_PREFIX}-service"
+          container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=stable"
+workflows:
+  deploy:
+    jobs:
+      - update-tag
 ```
