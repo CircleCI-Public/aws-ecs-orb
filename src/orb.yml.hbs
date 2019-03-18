@@ -286,7 +286,7 @@ commands:
             done
             echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
             <<# parameters.fail-on-verification-timeout >>exit 1<</ parameters.fail-on-verification-timeout >>
-  register-task-definition:
+  update-task-definition:
     description: Registers a task definition based on the last task definition, except
       with the Docker image/tag names and environment variables of the containers
       updated according to this command's parameters.
@@ -466,7 +466,7 @@ commands:
         type: boolean
         default: true
     steps:
-      - register-task-definition:
+      - update-task-definition:
           family: << parameters.family >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
