@@ -13,3 +13,4 @@ __pycache__
 
 # compiled orb source
 src/@orb.yml
+src/orb.yml

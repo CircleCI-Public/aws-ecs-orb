@@ -195,6 +195,63 @@ jobs:
           max-poll-attempts: << parameters.max-poll-attempts >>
           poll-interval: << parameters.poll-interval >>
           fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
+  update-task-definition:
+    docker:
+      - image: << parameters.docker-image-for-job >>
+    parameters:
+      docker-image-for-job:
+        description:
+          "The docker image to be used for running this job on CircleCI."
+        type: string
+        default: circleci/python:3.7.1
+      aws-access-key-id:
+        description: |
+          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+        type: string
+        default: $AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        description: |
+          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+        type: string
+        default: $AWS_SECRET_ACCESS_KEY
+      aws-region:
+        description:
+          AWS region to operate in. Defaulted to $AWS_REGION
+        type: string
+        default: $AWS_REGION
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      container-image-name-updates:
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used.
+        type: string
+        default: ""
+      container-env-var-updates:
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition.
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
+        type: string
+        default: ""
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          aws-region: << parameters.aws-region >>
+      - update-task-definition:
+          family: << parameters.family >>
+          container-image-name-updates: << parameters.container-image-name-updates >>
+          container-env-var-updates: << parameters.container-env-var-updates >>
 
 commands:
   verify-revision-is-deployed:
@@ -286,28 +343,15 @@ commands:
             done
             echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
             <<# parameters.fail-on-verification-timeout >>exit 1<</ parameters.fail-on-verification-timeout >>
-  update-service:
-    description: |
-      Registers a task definition for the given ECS service and updates the service to
-      use it. The new task definition is based on the last task definition, except
+  update-task-definition:
+    description: Registers a task definition based on the last task definition, except
       with the Docker image/tag names and environment variables of the containers
-      updated according to this command's parameters. Optionally polls the status of
-      the deployment until the created task definition revision has reached its
-      desired running task count and is the only revision deployed for the service.
+      updated according to this command's parameters.
     parameters:
       family:
         description:
           "Name of the task definition's family."
         type: string
-      cluster-name:
-        description:
-          "The short name or full ARN of the cluster that hosts the service."
-        type: string
-      service-name:
-        description:
-          "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
-        type: string
-        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -327,34 +371,6 @@ commands:
           Values should not contain commas.
         type: string
         default: ""
-      verify-revision-is-deployed:
-        description: |
-          Runs the verify-revision-is-deployed Orb command to verify that
-          the revision has been deployed and is the only deployed revision
-          for the service. Note: enabling this may result in the build
-          being marked as failed if tasks for older revisions fail to be stopped
-          before the max number of polling attempts is reached.
-        type: boolean
-        default: false
-      max-poll-attempts:
-        description: |
-          The maximum number of attempts to poll the deployment status before giving up.
-          Only in use when verify-revision-is-deployed is set to true.
-        type: integer
-        default: 50
-      poll-interval:
-        description: |
-          The polling interval, in seconds.
-          Only in use when verify-revision-is-deployed is set to true.
-        type: integer
-        default: 20
-      fail-on-verification-timeout:
-        description: |
-          Whether to exit with an error if the verification of the deployment
-          status does not complete within the number of polling attempts.
-          Only in use when verify-revision-is-deployed is set to true.
-        type: boolean
-        default: true
     steps:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
@@ -439,6 +455,78 @@ commands:
                 --query 'taskDefinition.taskDefinitionArn')
             echo "Registered task definition: ${REVISION}"
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
+  update-service:
+    description: |
+      Registers a task definition for the given ECS service and updates the service to
+      use it. Optionally polls the status of the deployment until the created task
+      definition revision has reached its desired running task count and is the only
+      revision deployed for the service.
+    parameters:
+      family:
+        description:
+          "Name of the task definition's family."
+        type: string
+      cluster-name:
+        description:
+          "The short name or full ARN of the cluster that hosts the service."
+        type: string
+      service-name:
+        description:
+          "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
+        type: string
+        default: ""
+      container-image-name-updates:
+        description: |
+          Use this to update the Docker image names and/or tag names of existing
+          containers that had been defined in the previous task definition.
+          Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+          For each container, specify only either "image-and-tag" or "image" or "tag".
+          If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+          If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+          If "tag" is specified, the image name defined in the previous task definition will be used.
+        type: string
+        default: ""
+      container-env-var-updates:
+        description: |
+          Use this to update the values of (only) existing environment variables that had been
+          defined for the containers in the previous task definition.
+          Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+          Values should not contain commas.
+        type: string
+        default: ""
+      verify-revision-is-deployed:
+        description: |
+          Runs the verify-revision-is-deployed Orb command to verify that
+          the revision has been deployed and is the only deployed revision
+          for the service. Note: enabling this may result in the build
+          being marked as failed if tasks for older revisions fail to be stopped
+          before the max number of polling attempts is reached.
+        type: boolean
+        default: false
+      max-poll-attempts:
+        description: |
+          The maximum number of attempts to poll the deployment status before giving up.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 50
+      poll-interval:
+        description: |
+          The polling interval, in seconds.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: integer
+        default: 20
+      fail-on-verification-timeout:
+        description: |
+          Whether to exit with an error if the verification of the deployment
+          status does not complete within the number of polling attempts.
+          Only in use when verify-revision-is-deployed is set to true.
+        type: boolean
+        default: true
+    steps:
+      - update-task-definition:
+          family: << parameters.family >>
+          container-image-name-updates: << parameters.container-image-name-updates >>
+          container-env-var-updates: << parameters.container-env-var-updates >>
       - run:
           name: Update service with registered task definition
           command: |
