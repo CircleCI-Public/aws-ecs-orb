@@ -30,6 +30,7 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
         for index, kv_pair in enumerate(env_kv_pairs):
             kv = kv_pair.split('=')
             key = kv[0].strip()
+
             if key == 'container':
                 container_name = kv[1].strip()
                 env_var_name_kv = env_kv_pairs[index+1].split('=')
@@ -45,13 +46,21 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
                     raise ValueError('The container ' + container_name +
                                      ' is not defined in the existing task definition')
                 container_index = container_entry['index']
-                env_var_entry = container_entry['environment_map'].get(
-                    env_var_name)
+
+                # Exception is raised when trying to update env vars of a container with an empty env var list
+                if container_entry['environment_map'] == {}:
+                    # update env vars of a container with an empty env var list
+                    raise ValueError(
+                        'Attempting to update environment variables of a container with an empty list of environment variables; ' +
+                        'please check your configuration and try again')
+
+                env_var_entry = container_entry['environment_map'].get(env_var_name)
+                
                 if env_var_entry is None:
-                    raise ValueError('Environment variable ' + env_var_name +
-                                     ' is not defined for container ' + container_name + ' in the existing task definition')
-                env_var_index = env_var_entry['index']
-                container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
+                    container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
+                else:
+                    env_var_index = env_var_entry['index']
+                    container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
             elif key and key not in ['container', 'name', 'value']:
                 raise ValueError(
                     'Incorrect key found in environment variable update parameter: ' + key)
