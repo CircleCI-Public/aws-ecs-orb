@@ -145,8 +145,8 @@ jobs:
         default: ""
       container-env-var-updates:
         description: |
-          Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition.
+          Use this to update or set the values of environment variables that will be defined for the containers. 
+          (Existing environment variables not included in this parameter will not be removed)
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string
@@ -236,8 +236,8 @@ jobs:
         default: ""
       container-env-var-updates:
         description: |
-          Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition.
+          Use this to update or set the values of environment variables that will be defined for the containers. 
+          (Existing environment variables not included in this parameter will not be removed)
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string
@@ -365,8 +365,8 @@ commands:
         default: ""
       container-env-var-updates:
         description: |
-          Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition.
+          Use this to update or set the values of environment variables that will be defined for the containers. 
+          (Existing environment variables not included in this parameter will not be removed)
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string
@@ -488,8 +488,8 @@ commands:
         default: ""
       container-env-var-updates:
         description: |
-          Use this to update the values of (only) existing environment variables that had been
-          defined for the containers in the previous task definition.
+          Use this to update or set the values of environment variables that will be defined for the containers. 
+          (Existing environment variables not included in this parameter will not be removed)
           Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
           Values should not contain commas.
         type: string

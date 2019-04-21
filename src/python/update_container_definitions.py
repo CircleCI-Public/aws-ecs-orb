@@ -30,6 +30,7 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
         for index, kv_pair in enumerate(env_kv_pairs):
             kv = kv_pair.split('=')
             key = kv[0].strip()
+
             if key == 'container':
                 container_name = kv[1].strip()
                 env_var_name_kv = env_kv_pairs[index+1].split('=')
@@ -48,10 +49,14 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
                 env_var_entry = container_entry['environment_map'].get(
                     env_var_name)
                 if env_var_entry is None:
-                    raise ValueError('Environment variable ' + env_var_name +
-                                     ' is not defined for container ' + container_name + ' in the existing task definition')
-                env_var_index = env_var_entry['index']
-                container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
+                    # The existing container definition did not contain environment variables
+                    if container_definitions[container_index].get('environment') is None:
+                        container_definitions[container_index]['environment'] = []
+                    # This env var did not exist in the existing container definition
+                    container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
+                else:
+                    env_var_index = env_var_entry['index']
+                    container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
             elif key and key not in ['container', 'name', 'value']:
                 raise ValueError(
                     'Incorrect key found in environment variable update parameter: ' + key)

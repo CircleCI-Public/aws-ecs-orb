@@ -85,11 +85,6 @@ Resources:
           Image: !Ref 'ImageUrl'
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
-          Environment:
-            - Name: VERSION_INFO
-              Value: 'v0'
-            - Name: BUILD_DATE
-              Value: '-'
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
