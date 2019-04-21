@@ -46,17 +46,13 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
                     raise ValueError('The container ' + container_name +
                                      ' is not defined in the existing task definition')
                 container_index = container_entry['index']
-
-                # Exception is raised when trying to update env vars of a container with an empty env var list
-                if container_entry['environment_map'] == {}:
-                    # update env vars of a container with an empty env var list
-                    raise ValueError(
-                        'Attempting to update environment variables of a container with an empty list of environment variables; ' +
-                        'please check your configuration and try again')
-
-                env_var_entry = container_entry['environment_map'].get(env_var_name)
-                
+                env_var_entry = container_entry['environment_map'].get(
+                    env_var_name)
                 if env_var_entry is None:
+                    # The existing container definition did not contain environment variables
+                    if container_definitions[container_index].get('environment') is None:
+                        container_definitions[container_index]['environment'] = []
+                    # This env var did not exist in the existing container definition
                     container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
                 else:
                     env_var_index = env_var_entry['index']

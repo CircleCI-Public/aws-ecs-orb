@@ -65,15 +65,6 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
                               run, task_dfn,
                               'container=web,image-and-tag=golang', 'container=web,name=a,value=b')
 
-    def test_update_empty_environment(self):
-        """Exception is raised when trying to update env vars of a container with an empty env var list"""
-        task_dfns = [TestContainerDefinitionsUpdate.task_dfn_multi_containers,
-                     TestContainerDefinitionsUpdate.task_dfn_empty_volumes]
-        for task_dfn in task_dfns:
-            self.assertRaises(ValueError,
-                              run, task_dfn,
-                              'container=web,image-and-tag=golang', 'container=web,name=a,value=b')
-
     def test_update_non_existent_container(self):
         """Exception is raised when trying to update a non-existent container"""
         task_dfns = [TestContainerDefinitionsUpdate.task_dfn_multi_containers,
@@ -214,6 +205,32 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         self._test_image_update(task_dfn,
                                 image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
 
+    def test_adding_env_vars_to_empty_list(self):
+        """Env vars are correctly added"""
+        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers
+        new_images = ['ruby:latest', 'python:3.7.1']
+        image_update_param = 'container=web,image-and-tag=%s,container=timer,image-and-tag=%s' % (
+            new_images[0], new_images[1])
+        env_var_update_param = 'container=web,name=%s,value=%s,container=timer,name=%s,value=%s,container=web,name=%s,value=%s,' % (
+            'protocol', 'https', 'scheduled', 'every week', 'hostname', '127.0.0.1')
+        updated_containers = ['web', 'timer']
+        expected_diff = '{"0": {"image": "ruby:latest", "environment": [{"name": "protocol", "value": "https"}, {"name": "hostname", "value": "127.0.0.1"}]}, "1": {"image": "python:3.7.1", "environment": [{"name": "scheduled", "value": "every week"}]}}'
+        self._test_image_update(task_dfn,
+            image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
+
+    def test_adding_new_env_vars(self):
+        """New/existing env vars are correctly added/modified and unmodified env vars are preserved"""
+        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers_with_env_vars
+        new_images = ['ruby:latest', 'python:3.7.1']
+        image_update_param = 'container=web,image-and-tag=%s,container=timer,image-and-tag=%s' % (
+            new_images[0], new_images[1])
+        env_var_update_param = 'container=web,name=%s,value=%s,container=timer,name=%s,value=%s,container=web,name=%s,value=%s,container=web,name=%s,value=%s,container=web,name=%s,value=%s' % (
+            'protocol', 'https', 'scheduled', 'every week', 'hostname', '127.0.0.1', 'maxThreads', '100', 'minThreads', '20')
+        updated_containers = ['web', 'timer']
+        expected_diff = '{"0": {"image": "ruby:latest", "environment": {"0": {"value": "127.0.0.1"}, "2": {"value": "https"}, "$insert": [[3, {"name": "maxThreads", "value": "100"}], [4, {"name": "minThreads", "value": "20"}]]}}, "1": {"image": "python:3.7.1", "environment": {"1": {"value": "every week"}}}}'
+        self._test_image_update(task_dfn,
+            image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
+
     def _test_tag_only_update(self, task_dfn, image_update_param, ev_update_param, updated_containers, existing_images, new_tags, expected_diff):
         """Image names are correctly updated"""
         expected_image_names = [existing_images[i] + ':' +
@@ -333,7 +350,15 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def get_diff(self, input_task_definition, processed_container_definitions, return_as_str=False):
         result = diff(json.loads(input_task_definition)[
             'taskDefinition']['containerDefinitions'], processed_container_definitions)
-        return json.dumps(result) if return_as_str else result
+        result_json = ''
+        if return_as_str:
+            try:
+                result_json = json.dumps(result)
+            except:
+                # Ensure the result is valid json
+                result_json = diff(json.loads(input_task_definition)[
+            'taskDefinition']['containerDefinitions'], processed_container_definitions, dump=True)
+        return result_json if return_as_str else result
 
     def execute_script(self, command, result_item_index):
         process = subprocess.Popen(
