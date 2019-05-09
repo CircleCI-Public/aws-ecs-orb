@@ -259,3 +259,16 @@ workflows:
     jobs:
       - update-tag
 ```
+
+## Permissions
+
+You will need to add an IAM policy to your CircleCI IAM user to allow the following permissions:
+
+| Permission |
+| ---- |
+| `ecs:DescribeTaskDefinition` |
+| `ecs:RegisterTaskDefinition` |
+| `ecs:UpdateService` |
+| `iam:PassRole` |
+
+- `iam:PassRole` is required to (re)set any container roles or task execution roles during the deployment that you have already configured via the UI. These are resource-based so you can whitelist which roles your CircleCI IAM role can set, if desired.
