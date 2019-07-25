@@ -120,7 +120,8 @@ jobs:
       terraform-config-dir:
         type: string
     docker:
-      - image: hashicorp/terraform
+      # Pin to terraform 0.11
+      - image: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
     steps:
       - run:
           name: Check if test env should be set up
@@ -216,7 +217,8 @@ jobs:
       terraform-config-dir:
         type: string
     docker:
-      - image: hashicorp/terraform
+      # Pin to terraform 0.11
+      - image: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
     steps:
       - run:
           name: Check if test env should be destroyed
