@@ -37,7 +37,7 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
                 env_var_name = env_var_name_kv[1].strip()
                 env_var_value_kv = env_kv_pairs[index+2].split('=')
                 env_var_value = env_var_value_kv[1].strip()
-                if env_var_name_kv[0].strip() != 'name' or env_var_value_kv[0].strip() != 'value':
+                if env_var_name_kv[0].strip() not in ['name', 'value', 'valueFrom']:
                     raise ValueError(
                         'Environment variable update parameter format is incorrect: ' + container_env_var_updates)
 
@@ -53,11 +53,11 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
                     if container_definitions[container_index].get('environment') is None:
                         container_definitions[container_index]['environment'] = []
                     # This env var did not exist in the existing container definition
-                    container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
+                    container_definitions[container_index]['environment'].append({'name': env_var_name, env_var_value_kv[0]: env_var_value})
                 else:
                     env_var_index = env_var_entry['index']
-                    container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
-            elif key and key not in ['container', 'name', 'value']:
+                    container_definitions[container_index]['environment'][env_var_index][env_var_value_kv[0]] = env_var_value
+            elif key and key not in ['container', 'name', 'value', 'valueFrom']:
                 raise ValueError(
                     'Incorrect key found in environment variable update parameter: ' + key)
     except ValueError as value_error:
