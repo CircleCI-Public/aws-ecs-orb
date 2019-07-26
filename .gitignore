@@ -4,6 +4,9 @@ node_modules
 
 # terraform
 **/.terraform/*
+*.tfvars
+*.tfstate
+*.tfstate.backup
 
 # python
 htmlcov
