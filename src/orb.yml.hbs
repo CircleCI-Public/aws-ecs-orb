@@ -375,7 +375,7 @@ commands:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
           command: |
-            PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >>)
+            PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >> --include TAGS)
             CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
             CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
 
@@ -407,6 +407,10 @@ commands:
             REQ_COMP=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'requiresCompatibilities' "$PREVIOUS_TASK_DEFINITION")
             TASK_CPU=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'cpu' "$PREVIOUS_TASK_DEFINITION")
             TASK_MEMORY=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'memory' "$PREVIOUS_TASK_DEFINITION")
+            PID_MODE=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'pidMode' "$PREVIOUS_TASK_DEFINITION")
+            IPC_MODE=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'ipcMode' "$PREVIOUS_TASK_DEFINITION")
+            TAGS=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'tags' "$PREVIOUS_TASK_DEFINITION")
+            PROXY_CONFIGURATION=$(python $GET_TASK_DFN_VAL_SCRIPT_FILE 'proxyConfiguration' "$PREVIOUS_TASK_DEFINITION")
 
             # Make task definition values available as env variables
             echo "export CCI_ORB_AWS_ECS_TASK_ROLE='${TASK_ROLE}'" >> $BASH_ENV
@@ -418,6 +422,10 @@ commands:
             echo "export CCI_ORB_AWS_ECS_REQ_COMP='${REQ_COMP}'" >> $BASH_ENV
             echo "export CCI_ORB_AWS_ECS_TASK_CPU='${TASK_CPU}'" >> $BASH_ENV
             echo "export CCI_ORB_AWS_ECS_TASK_MEMORY='${TASK_MEMORY}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_PID_MODE='${PID_MODE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_IPC_MODE='${IPC_MODE}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_TAGS='${TAGS}'" >> $BASH_ENV
+            echo "export CCI_ORB_AWS_ECS_PROXY_CONFIGURATION='${PROXY_CONFIGURATION}'" >> $BASH_ENV
 
             rm $UPDATE_CONTAINER_DEFS_SCRIPT_FILE $GET_TASK_DFN_VAL_SCRIPT_FILE
       - run:
@@ -446,6 +454,18 @@ commands:
             fi
             if [ -n "${CCI_ORB_AWS_ECS_TASK_MEMORY}" ]; then
                 set -- "$@" --memory "${CCI_ORB_AWS_ECS_TASK_MEMORY}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_PID_MODE}" ]; then
+                set -- "$@" --pid-mode "${CCI_ORB_AWS_ECS_PID_MODE}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_IPC_MODE}" ]; then
+                set -- "$@" --ipc-mode "${CCI_ORB_AWS_ECS_IPC_MODE}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_TAGS}" ] && [ "${CCI_ORB_AWS_ECS_TAGS}" != "[]" ]; then
+                set -- "$@" --tags "${CCI_ORB_AWS_ECS_TAGS}"
+            fi
+            if [ -n "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" ] && [ "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" != "{}" ]; then
+                set -- "$@" --proxy-configuration "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}"
             fi
             REVISION=$(aws ecs register-task-definition \
                 --family << parameters.family >> \
