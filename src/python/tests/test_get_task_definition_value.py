@@ -13,6 +13,7 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
     task_dfn_volumes = '{"taskDefinition": {"family": "web-timer", "containerDefinitions": [ { "name": "web", "image": "nginx:v0", "cpu": 99, "memory": 100, "portMappings": [{ "containerPort": 80, "hostPort": 80 }], "essential": true, "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/usr/share/nginx/html", "readOnly": true }] }, { "name": "timer", "image": "busybox:v1", "cpu": 10, "memory": 20, "entryPoint": ["sh", "-c"], "command": ["while true; do date > /nginx/index.html; sleep 1; done"], "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/nginx/" }] }], "volumes": [{ "name": "webdata", "host": { "sourcePath": "/ecs/webdata" }} ] }}'
     task_dfn_placement_constraints = '{"taskDefinition":{"volumes":[],"placementConstraints":[{"expression":"attribute:ecs.instance-type =~ t2.*","type":"memberOf"}],"taskDefinitionArn":"arn:aws:ecs:us-east-1:123456:task-definition/sleep360:19","containerDefinitions":[{"environment":[],"name":"sleep","mountPoints":[],"image":"busybox","cpu":10,"portMappings":[],"command":["sleep","360"],"memory":10,"essential":true,"volumesFrom":[]}],"family":"sleep360","revision":1}}'
     task_dfn_ec2_fargate_compatibilities = '{"taskDefinition":{"containerDefinitions":[{"command":[],"entryPoint":["sh","-c"],"essential":true,"image":"httpd:2.4","logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/fargate-task-definition","awslogs-region":"us-east-1","awslogs-stream-prefix":"ecs"}},"name":"sample-fargate-app","portMappings":[{"containerPort":80,"hostPort":80,"protocol":"tcp"}]}],"cpu":"256","executionRoleArn":"arn:aws:iam::012345678910:role/ecsTaskExecutionRole","family":"fargate-task-definition","memory":"512","networkMode":"awsvpc","requiresCompatibilities":["EC2", "FARGATE"]}}'
+    task_dfn_proxy_configuration_tags_modes = '{"taskDefinition":{"taskDefinitionArn":"arn:aws:ecs:ap-southeast-2:123456789012:task-definition/ecsorbtest1:1","containerDefinitions":[{"name":"sleep","image":"busybox","cpu":10,"memory":10,"portMappings":[],"essential":true,"command":["sleep","360"],"environment":[],"mountPoints":[],"volumesFrom":[],"dependsOn":[{"containerName":"envoy","condition":"HEALTHY"}]},{"name":"envoy","image":"111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.9.1.0-prod","cpu":10,"memory":10,"portMappings":[],"essential":true,"environment":[],"mountPoints":[],"volumesFrom":[],"user":"1337","healthCheck":{"command":["echo test"],"interval":5,"timeout":2,"retries":3,"startPeriod":10}}],"family":"ecsorbtest1","networkMode":"awsvpc","revision":1,"volumes":[],"status":"ACTIVE","requiresAttributes":[{"name":"com.amazonaws.ecs.capability.ecr-auth"},{"name":"ecs.capability.pid-ipc-namespace-sharing"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.17"},{"name":"ecs.capability.aws-appmesh"},{"name":"ecs.capability.container-ordering"},{"name":"ecs.capability.container-health-check"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.18"},{"name":"ecs.capability.task-eni"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.29"}],"placementConstraints":[],"compatibilities":["EC2"],"pidMode":"task","ipcMode":"host","proxyConfiguration":{"type":"APPMESH","containerName":"envoy","properties":[{"name":"ProxyIngressPort","value":"15000"},{"name":"AppPorts","value":"8080"},{"name":"IgnoredUID","value":"1337"},{"name":"ProxyEgressPort","value":"15001"}]}},"tags":[{"key":"purpose","value":"orbstest"}]}'
 
     def test_get_task_role(self):
         """Gets the correct value from a task definition"""
@@ -35,6 +36,20 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
         self.get_literal_value(
             'networkMode', TestGetTaskDefinitionValue.task_dfn, '')
 
+    def test_get_ipc_mode(self):
+        """Gets the correct value from a task definition"""
+        self.get_literal_value(
+            'ipcMode', TestGetTaskDefinitionValue.task_dfn_proxy_configuration_tags_modes, 'host')
+        self.get_literal_value(
+            'ipcMode', TestGetTaskDefinitionValue.task_dfn, '')
+
+    def test_get_pid_mode(self):
+        """Gets the correct value from a task definition"""
+        self.get_literal_value(
+            'pidMode', TestGetTaskDefinitionValue.task_dfn_proxy_configuration_tags_modes, 'task')
+        self.get_literal_value(
+            'pidMode', TestGetTaskDefinitionValue.task_dfn, '')
+
     def test_get_volumes(self):
         """Gets the correct value from a task definition"""
         self.get_json_value('volumes', TestGetTaskDefinitionValue.task_dfn_volumes,
@@ -48,6 +63,20 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
                             '[{"expression":"attribute:ecs.instance-type =~ t2.*","type":"memberOf"}]')
         self.get_json_value('placementConstraints',
                             TestGetTaskDefinitionValue.task_dfn, '[]')
+
+    def test_get_tags(self):
+        """Gets the correct value from a task definition"""
+        self.get_json_value('tags', TestGetTaskDefinitionValue.task_dfn_proxy_configuration_tags_modes,
+                            '[{"key":"purpose","value":"orbstest"}]')
+        self.get_json_value('tags',
+                            TestGetTaskDefinitionValue.task_dfn, '[]')
+
+    def test_get_proxy_configuration(self):
+        """Gets the correct value from a task definition"""
+        self.get_json_value('proxyConfiguration', TestGetTaskDefinitionValue.task_dfn_proxy_configuration_tags_modes,
+                            '{"type":"APPMESH","containerName":"envoy","properties":[{"name":"ProxyIngressPort","value":"15000"},{"name":"AppPorts","value":"8080"},{"name":"IgnoredUID","value":"1337"},{"name":"ProxyEgressPort","value":"15001"}]}')
+        self.get_json_value('proxyConfiguration',
+                            TestGetTaskDefinitionValue.task_dfn, '{}')
 
     def test_get_requires_compatibilities(self):
         """Gets the correct value from a task definition"""
