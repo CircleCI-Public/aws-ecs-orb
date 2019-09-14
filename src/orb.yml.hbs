@@ -495,6 +495,31 @@ commands:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: string
+        default: "ECS"
+      application-name:
+        description:
+          "The name of an AWS CodeDeploy application."
+        type: string
+        default: ""
+      deployment-group-name:
+        description:
+          "The name of an AWS CodeDeploy deployment group."
+        type: string
+        default: ""
+      container-name-for-code-deploy:
+        description:
+          "The name of the container for CodeDeploy."
+        type: string
+        default: ""
+      container-port-for-code-deploy:
+        description:
+          "The port of the container for CodeDeploy."
+        type: integer
+        default: ""
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -550,17 +575,27 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            SERVICE_NAME="$(echo << parameters.service-name >>)"
+            DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
 
-            if [ -z "${SERVICE_NAME}" ]; then
-                SERVICE_NAME="$(echo << parameters.family >>)"
+            if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
+                DEPLOYED_REVISION=$(aws deploy create-deployment \
+                    --application-name "<< parameters.application-name >>" \
+                    --deployment-group-name "<< parameters.deployment-group-name >>" \
+                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.container-name-for-code-deploy >>\", \"ContainerPort\": << parameters.container-port-for-code-deploy >>}}}}]}"}}' \
+                    --query deploymentId)
+            else
+              SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+              if [ -z "${SERVICE_NAME}" ]; then
+                  SERVICE_NAME="$(echo << parameters.family >>)"
+              fi
+              DEPLOYED_REVISION=$(aws ecs update-service \
+                  --cluster "<< parameters.cluster-name >>" \
+                  --service "${SERVICE_NAME}" \
+                  --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                  --output text \
+                  --query service.taskDefinition)
             fi
-            DEPLOYED_REVISION=$(aws ecs update-service \
-                --cluster "<< parameters.cluster-name >>" \
-                --service "${SERVICE_NAME}" \
-                --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                --output text \
-                --query service.taskDefinition)
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
           condition: << parameters.verify-revision-is-deployed >>
