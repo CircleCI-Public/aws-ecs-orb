@@ -611,7 +611,7 @@ commands:
                 DEPLOYED_REVISION=$(aws deploy create-deployment \
                     --application-name "<< parameters.application-name >>" \
                     --deployment-group-name "<< parameters.deployment-group-name >>" \
-                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.container-name-for-code-deploy >>\", \"ContainerPort\": << parameters.container-port-for-code-deploy >>}}}}]}"}}' \
+                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"'${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}'\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.container-name-for-code-deploy >>\", \"ContainerPort\": << parameters.container-port-for-code-deploy >>}}}}]}"}}' \
                     --query deploymentId)
             else
               SERVICE_NAME="$(echo << parameters.service-name >>)"
