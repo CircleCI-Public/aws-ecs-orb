@@ -132,6 +132,31 @@ jobs:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: string
+        default: "ECS"
+      application-name:
+        description:
+          "The name of an AWS CodeDeploy application."
+        type: string
+        default: ""
+      deployment-group-name:
+        description:
+          "The name of an AWS CodeDeploy deployment group."
+        type: string
+        default: ""
+      container-name-for-code-deploy:
+        description:
+          "The name of the container for CodeDeploy."
+        type: string
+        default: ""
+      container-port-for-code-deploy:
+        description:
+          "The port of the container for CodeDeploy."
+        type: integer
+        default: 80
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -189,6 +214,11 @@ jobs:
           family: << parameters.family >>
           cluster-name: << parameters.cluster-name >>
           service-name: << parameters.service-name >>
+          deployment-controller: << parameters.deployment-controller >>
+          application-name: << parameters.application-name >>
+          deployment-group-name: << parameters.deployment-group-name >>
+          container-name-for-code-deploy: << parameters.container-name-for-code-deploy >>
+          container-port-for-code-deploy: << parameters.container-port-for-code-deploy >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
