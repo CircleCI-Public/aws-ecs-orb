@@ -30,6 +30,7 @@ examples:
                 family: "${MY_APP_PREFIX}-service"
                 cluster-name: "${MY_APP_PREFIX}-cluster"
                 container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
+                profile-name: "${MY_AWS_PROFILE}"
 
   update-service:
     description: Use the AWS CLI and this orb to update an ECS service.
@@ -171,6 +172,11 @@ jobs:
           AWS region to operate in. Defaulted to $AWS_REGION
         type: string
         default: $AWS_REGION
+      profile-name:
+        description:
+          AWS profile used for calls to aws api.
+        type: string
+        default: default
       family:
         description:
           "Name of the task definition's family."
@@ -564,17 +570,20 @@ commands:
                     --cluster << parameters.cluster-name >> \
                     --services ${SERVICE_NAME} \
                     --output text \
-                    --query 'services[0].deployments[].[taskDefinition, status]')
+                    --query 'services[0].deployments[].[taskDefinition, status]' \
+                    --profile << parameters.profile-name >>)
                 NUM_DEPLOYMENTS=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
                     --services ${SERVICE_NAME} \
                     --output text \
-                    --query 'length(services[0].deployments)')
+                    --query 'length(services[0].deployments)' \
+                    --profile << parameters.profile-name >>)
                 TARGET_REVISION=$(aws ecs describe-services \
                     --cluster << parameters.cluster-name >> \
                     --services ${SERVICE_NAME} \
                     --output text \
-                    --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
+                    --query "services[0].deployments[?taskDefinition==\`<< parameters.task-definition-arn >>\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]" \
+                    --profile << parameters.profile-name >>)
                 echo "Current deployments: $DEPLOYMENTS"
                 if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "<< parameters.task-definition-arn >>" ]; then
                     echo "The task definition revision $TARGET_REVISION is the only deployment for the service and has attained the desired running task count."
@@ -619,7 +628,7 @@ commands:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
           command: |
-            PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >> --include TAGS)
+            PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >> --profile << parameters.profile-name >> --include TAGS)
             CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
             CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
 
@@ -716,7 +725,9 @@ commands:
                 --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
                 "$@" \
                 --output text \
-                --query 'taskDefinition.taskDefinitionArn')
+                --query 'taskDefinition.taskDefinitionArn' \
+                --profile << parameters.profile-name >>)
+
             echo "Registered task definition: ${REVISION}"
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
   update-service:
