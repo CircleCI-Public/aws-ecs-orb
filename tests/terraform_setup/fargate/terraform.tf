@@ -63,7 +63,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
     ContainerPort   = 8080
     StackName       = local.aws_vpc_stack_name
     ServiceName     = local.aws_ecs_service_name
+    # Note: Since ImageUrl parameter is not specified, the Service
+    # will be deployed with the nginx image when created
   }
-  # Note: Since ImageUrl parameter is not specified, the Service
-  # will be deployed with the nginx image when created
 }
