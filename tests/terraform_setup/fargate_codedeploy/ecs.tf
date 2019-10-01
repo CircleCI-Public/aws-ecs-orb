@@ -3,12 +3,12 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_dfn" {
-  family = "${var.aws_resource_prefix}-service"
+  family                   = "${var.aws_resource_prefix}-service"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
   memory                   = 2048
-  execution_role_arn = "${aws_iam_role.ecs_task_execution_role.arn}"
+  execution_role_arn       = "${aws_iam_role.ecs_task_execution_role.arn}"
 
   container_definitions = <<DEFINITION
 [
@@ -33,14 +33,14 @@ DEFINITION
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name          = "${var.aws_resource_prefix}-service"
-  cluster       = "${aws_ecs_cluster.ecs_cluster.id}"
-  desired_count = 2
-  task_definition = "${aws_ecs_task_definition.ecs_task_dfn.arn}"
-  launch_type = "FARGATE"
+  name            = "${var.aws_resource_prefix}-service"
+  cluster         = aws_ecs_cluster.ecs_cluster.id
+  desired_count   = 2
+  task_definition = aws_ecs_task_definition.ecs_task_dfn.arn
+  launch_type     = "FARGATE"
 
   deployment_controller {
-      type = "CODE_DEPLOY"
+    type = "CODE_DEPLOY"
   }
 
   network_configuration {
@@ -91,10 +91,10 @@ resource "aws_codedeploy_app" "codedeployapp" {
 }
 
 resource "aws_codedeploy_deployment_group" "deployment_group" {
-  app_name               = "${aws_codedeploy_app.codedeployapp.name}"
+  app_name               = aws_codedeploy_app.codedeployapp.name
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   deployment_group_name  = "${var.aws_resource_prefix}-codedeploygroup"
-  service_role_arn       = "${aws_iam_role.codedeployrole.arn}"
+  service_role_arn       = aws_iam_role.codedeployrole.arn
 
   auto_rollback_configuration {
     enabled = true
