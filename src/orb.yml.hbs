@@ -101,19 +101,20 @@ examples:
 
       orbs:
         aws-cli: circleci/aws-cli@0.1.4
-        aws-ecs: circleci/aws-ecs@0.0.12
+        aws-ecs: circleci/aws-ecs@x.y.z
 
       jobs:
         run-task:
           docker:
             - image: circleci/python:3.7.1
           steps:
-            - aws-ecr/run-task:
+            - aws-ecs/run-task:
                 cluster: "cluster1"
                 task-definition: "myapp"
-                awsvpc: true
-                subnet-ids: "subnet-70faa93b,subnet-bcc54b93"
-                security-group-ids: "sg-010a460f7f442fa75"
+                # e.g. "subnet-70faa93b,subnet-bcc54b93"
+                subnet-ids: $SUBNET_ONE, $SUBNET_TWO
+                # e.g. "sg-010a460f7f442fa75"
+                security-group-ids: $SECURITY_GROUP_IDS
 
       workflows:
         run-task:
@@ -127,16 +128,17 @@ examples:
 
       orbs:
         aws-cli: circleci/aws-cli@0.1.4
-        aws-ecs: circleci/aws-ecs@0.0.12
+        aws-ecs: circleci/aws-ecs@x.y.z
 
       jobs:
         run-task:
           docker:
             - image: circleci/python:3.7.1
           steps:
-            - aws-ecr/run-task:
+            - aws-ecs/run-task:
                 cluster: "cluster1"
                 task-definition: "myapp"
+                aws_vpc: false
 
       workflows:
         run-task:
@@ -394,7 +396,7 @@ jobs:
           this should be true and you should also include subnet-ids
           and optionally security-group-ids / assign-public-ips."
         type: boolean
-        default: false
+        default: true
       subnet-ids:
         description: |
           "List of subnet ids separated by commas.
@@ -851,7 +853,7 @@ commands:
           this should be true and you should also include subnet-ids
           and optionally security-group-ids / assign-public-ips."
         type: boolean
-        default: false
+        default: true
       subnet-ids:
         description: |
           "List of subnet ids separated by commas.
@@ -930,8 +932,6 @@ commands:
                 echo "Setting --network-configuration"
                 set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[<<parameters.subnet-ids>>],securityGroups=[<<parameters.security-group-ids>>],assignPublicIp=<<parameters.assign-public-ip>>}"
             fi
-
-            echo $@
 
             aws ecs run-task \
               --cluster <<parameters.cluster>> \
