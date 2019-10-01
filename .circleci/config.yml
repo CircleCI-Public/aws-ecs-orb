@@ -645,6 +645,7 @@ workflows:
           name: codedeploy_fargate_set-up-test-env-master
           requires:
             - codedeploy_fargate_build-test-app-master
+          terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           filters:
@@ -757,6 +758,7 @@ workflows:
           name: codedeploy_fargate_tear-down-test-env-master
           requires:
             - codedeploy_fargate_set-up-test-env-master
+          terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           filters:
