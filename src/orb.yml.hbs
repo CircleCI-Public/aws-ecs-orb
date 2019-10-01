@@ -151,8 +151,9 @@ jobs:
         type: string
         default: ""
       codedeploy-load-balanced-container-name:
-        description:
-          "The name of the container for CodeDeploy."
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       container-port-for-code-deploy:
@@ -546,8 +547,9 @@ commands:
         type: string
         default: ""
       codedeploy-load-balanced-container-name:
-        description:
-          "The name of the container for CodeDeploy."
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       container-port-for-code-deploy:
