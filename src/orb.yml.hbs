@@ -157,8 +157,9 @@ jobs:
         type: string
         default: ""
       codedeploy-load-balanced-container-port:
-        description:
-          "The port of the container for CodeDeploy."
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: integer
         default: 80
       container-image-name-updates:
@@ -553,8 +554,9 @@ commands:
         type: string
         default: ""
       codedeploy-load-balanced-container-port:
-        description:
-          "The port of the container for CodeDeploy."
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: integer
         default: 80
       container-image-name-updates:
