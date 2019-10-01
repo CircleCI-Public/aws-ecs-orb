@@ -139,8 +139,9 @@ jobs:
         enum: ["ECS", "CODE_DEPLOY"]
         default: "ECS"
       codedeploy-application-name:
-        description:
-          "The name of an AWS CodeDeploy application."
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       deployment-group-name:
@@ -532,8 +533,9 @@ commands:
         type: string
         default: "ECS"
       codedeploy-application-name:
-        description:
-          "The name of an AWS CodeDeploy application."
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       deployment-group-name:
