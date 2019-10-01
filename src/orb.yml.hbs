@@ -145,8 +145,9 @@ jobs:
         type: string
         default: ""
       codedeploy-deployment-group-name:
-        description:
-          "The name of an AWS CodeDeploy deployment group."
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       container-name-for-code-deploy:
@@ -539,8 +540,9 @@ commands:
         type: string
         default: ""
       codedeploy-deployment-group-name:
-        description:
-          "The name of an AWS CodeDeploy deployment group."
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
       container-name-for-code-deploy:
