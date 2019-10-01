@@ -117,8 +117,8 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        # Pin to terraform 0.11
-        default: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
+        # Pin to terraform 0.12
+        default: hashicorp/terraform@sha256:cf9b54657c498378e3fe43f5e36039c9b7d8e620a606fbdc713d63df514fb96d
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -224,8 +224,8 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        # Pin to terraform 0.11
-        default: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
+        # Pin to terraform 0.12
+        default: hashicorp/terraform@sha256:cf9b54657c498378e3fe43f5e36039c9b7d8e620a606fbdc713d63df514fb96d
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
