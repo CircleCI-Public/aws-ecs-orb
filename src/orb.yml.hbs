@@ -135,7 +135,8 @@ jobs:
       deployment-controller:
         description:
           "The deployment controller to use for the service. Defaulted to ECS"
-        type: string
+        type: enum
+        enum: ["ECS", "CODE_DEPLOY"]
         default: "ECS"
       application-name:
         description:
