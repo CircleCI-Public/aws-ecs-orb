@@ -156,7 +156,7 @@ jobs:
           Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
-      container-port-for-code-deploy:
+      codedeploy-load-balanced-container-port:
         description:
           "The port of the container for CodeDeploy."
         type: integer
@@ -222,7 +222,7 @@ jobs:
           codedeploy-application-name: << parameters.codedeploy-application-name >>
           codedeploy-deployment-group-name: << parameters.codedeploy-deployment-group-name >>
           codedeploy-load-balanced-container-name: << parameters.codedeploy-load-balanced-container-name >>
-          container-port-for-code-deploy: << parameters.container-port-for-code-deploy >>
+          codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
@@ -552,7 +552,7 @@ commands:
           Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
         type: string
         default: ""
-      container-port-for-code-deploy:
+      codedeploy-load-balanced-container-port:
         description:
           "The port of the container for CodeDeploy."
         type: integer
@@ -618,7 +618,7 @@ commands:
                 DEPLOYED_REVISION=$(aws deploy create-deployment \
                     --application-name "<< parameters.codedeploy-application-name >>" \
                     --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
-                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"'${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}'\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.codedeploy-load-balanced-container-name >>\", \"ContainerPort\": << parameters.container-port-for-code-deploy >>}}}}]}"}}' \
+                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"'${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}'\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.codedeploy-load-balanced-container-name >>\", \"ContainerPort\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}"}}' \
                     --query deploymentId)
             else
               SERVICE_NAME="$(echo << parameters.service-name >>)"
