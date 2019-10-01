@@ -115,13 +115,16 @@ jobs:
 
   set-up-test-env:
     parameters:
+      terraform-image:
+        type: string
+        # Pin to terraform 0.11
+        default: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
         type: string
     docker:
-      # Pin to terraform 0.11
-      - image: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
+      - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be set up
@@ -212,13 +215,16 @@ jobs:
 
   tear-down-test-env:
     parameters:
+      terraform-image:
+        type: string
+        # Pin to terraform 0.11
+        default: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
         type: string
     docker:
-      # Pin to terraform 0.11
-      - image: hashicorp/terraform@sha256:330bef7401e02e757e6fa2de69f398fd29fcbfafe2a3b9e8f150486fbcd7915b
+      - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be destroyed
@@ -421,6 +427,16 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - build-test-app:
+          name: codedeploy_fargate_build-test-app-dev
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - set-up-test-env:
           name: ec2_set-up-test-env-dev
           requires:
@@ -439,6 +455,19 @@ workflows:
             - fargate_build-test-app-dev
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
+      - set-up-test-env:
+          name: codedeploy_fargate_set-up-test-env-dev
+          requires:
+            - codedeploy_fargate_build-test-app-dev
+          terraform-image: "hashicorp/terraform:latest"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           filters:
             branches:
               ignore: /.*/
@@ -545,6 +574,19 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - tear-down-test-env:
+          name: codedeploy_fargate_tear-down-test-env-dev
+          requires:
+            - codedeploy_fargate_set-up-test-env-dev
+          terraform-image: "hashicorp/terraform:latest"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - build-test-app:
           name: ec2_build-test-app-master
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
@@ -559,6 +601,16 @@ workflows:
           name: fargate_build-test-app-master
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - build-test-app:
+          name: codedeploy_fargate_build-test-app-master
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           filters:
             branches:
               ignore: /.*/
@@ -583,6 +635,18 @@ workflows:
             - fargate_build-test-app-master
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
+      - set-up-test-env:
+          name: codedeploy_fargate_set-up-test-env-master
+          requires:
+            - codedeploy_fargate_build-test-app-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           filters:
             branches:
               ignore: /.*/
@@ -689,6 +753,18 @@ workflows:
             tags:
               only: /master-.*/
 
+      - tear-down-test-env:
+          name: codedeploy_fargate_tear-down-test-env-master
+          requires:
+            - codedeploy_fargate_set-up-test-env-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
       - publish-orb:
           name: publish-prod-orb
           to-prod: true
@@ -696,6 +772,7 @@ workflows:
           requires:
             - fargate_tear-down-test-env-master
             - ec2_tear-down-test-env-master
+            - codedeploy_fargate_tear-down-test-env-master
           filters:
             branches:
               ignore: /.*/

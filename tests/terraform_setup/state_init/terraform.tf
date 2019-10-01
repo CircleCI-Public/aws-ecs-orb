@@ -23,6 +23,14 @@ resource "aws_s3_bucket" "terraform-state-storage-s3-fargate" {
     }
 }
 
+resource "aws_s3_bucket" "terraform-state-storage-s3-codedeploy-fargate" {
+    bucket = "aws-ecs-orb-terraform-state-bucket-codedeploy-fargate"
+
+    versioning {
+      enabled = true
+    }
+}
+
 # create a dynamodb table for locking the state file
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-ec2" {
   name = "aws-ecs-orb-terraform-state-lock-db-ec2"
@@ -38,6 +46,18 @@ resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-ec2" {
 
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-fargate" {
   name = "aws-ecs-orb-terraform-state-lock-db-fargate"
+  hash_key = "LockID"
+  read_capacity = 20
+  write_capacity = 20
+ 
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-codedeploy-fargate" {
+  name = "aws-ecs-orb-terraform-state-lock-db-codedeploy-fargate"
   hash_key = "LockID"
   read_capacity = 20
   write_capacity = 20
