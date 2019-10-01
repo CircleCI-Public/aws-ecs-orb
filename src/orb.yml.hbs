@@ -138,7 +138,7 @@ jobs:
         type: enum
         enum: ["ECS", "CODE_DEPLOY"]
         default: "ECS"
-      application-name:
+      codedeploy-application-name:
         description:
           "The name of an AWS CodeDeploy application."
         type: string
@@ -216,7 +216,7 @@ jobs:
           cluster-name: << parameters.cluster-name >>
           service-name: << parameters.service-name >>
           deployment-controller: << parameters.deployment-controller >>
-          application-name: << parameters.application-name >>
+          codedeploy-application-name: << parameters.codedeploy-application-name >>
           deployment-group-name: << parameters.deployment-group-name >>
           container-name-for-code-deploy: << parameters.container-name-for-code-deploy >>
           container-port-for-code-deploy: << parameters.container-port-for-code-deploy >>
@@ -531,7 +531,7 @@ commands:
           "The deployment controller to use for the service. Defaulted to ECS"
         type: string
         default: "ECS"
-      application-name:
+      codedeploy-application-name:
         description:
           "The name of an AWS CodeDeploy application."
         type: string
@@ -610,7 +610,7 @@ commands:
 
             if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
                 DEPLOYED_REVISION=$(aws deploy create-deployment \
-                    --application-name "<< parameters.application-name >>" \
+                    --application-name "<< parameters.codedeploy-application-name >>" \
                     --deployment-group-name "<< parameters.deployment-group-name >>" \
                     --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"'${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}'\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.container-name-for-code-deploy >>\", \"ContainerPort\": << parameters.container-port-for-code-deploy >>}}}}]}"}}' \
                     --query deploymentId)
