@@ -72,7 +72,25 @@ jobs:
           root: src
           paths:
             - orb.yml
-
+  version: 2.1
+orbs:
+  aws-ecs: circleci/aws-ecs@0.0.8
+  aws-ecr: circleci/aws-ecr@6.1.0
+  aws-cli: circleci/aws-cli@0.1.13
+jobs:
+  run-release-tasks:
+    docker:
+      - image: circleci/python:3.7.1
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-region: AWS_REGION
+      - aws-ecs/update-task-definition:
+          family: ${AWS_TASK_DEFINITION}
+      - run:
+          name: Run release task
+          command: |
+            aws ecs run-task --cluster ${AWS_CLUSTER_NAME} --task-definition release --launch-type FARGATE --network-configuration awsvpcConfiguration="{subnets=[${PRIVATE_SUBNET_ONE}, ${PRIVATE_SUBNET_TWO}],securityGroups=[${AWS_FARGATE_SECURITY_GROUP}],assignPublicIp=DISABLED}"
   build-test-app:
     docker:
       - image: circleci/golang:1.8
