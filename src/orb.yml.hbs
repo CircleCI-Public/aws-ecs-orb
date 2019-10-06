@@ -183,6 +183,36 @@ jobs:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: enum
+        enum: ["ECS", "CODE_DEPLOY"]
+        default: "ECS"
+      codedeploy-application-name:
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-deployment-group-name:
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-name:
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-port:
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: integer
+        default: 80
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -209,6 +239,7 @@ jobs:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
+          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
@@ -240,6 +271,11 @@ jobs:
           family: << parameters.family >>
           cluster-name: << parameters.cluster-name >>
           service-name: << parameters.service-name >>
+          deployment-controller: << parameters.deployment-controller >>
+          codedeploy-application-name: << parameters.codedeploy-application-name >>
+          codedeploy-deployment-group-name: << parameters.codedeploy-deployment-group-name >>
+          codedeploy-load-balanced-container-name: << parameters.codedeploy-load-balanced-container-name >>
+          codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
@@ -465,6 +501,7 @@ commands:
       Polls the service's deployment status at intervals until the given task
       definition revision is the only one deployed for the service, and for the
       task definition revision's running task count to match the desired count.
+      Does not support ECS services that are of the Blue/Green Deployment type.
     parameters:
       family:
         description:
@@ -701,6 +738,36 @@ commands:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: enum
+        enum: ["ECS", "CODE_DEPLOY"]
+        default: "ECS"
+      codedeploy-application-name:
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-deployment-group-name:
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-name:
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-port:
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: integer
+        default: 80
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -727,6 +794,7 @@ commands:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
+          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
@@ -756,17 +824,29 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            SERVICE_NAME="$(echo << parameters.service-name >>)"
+            DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
 
-            if [ -z "${SERVICE_NAME}" ]; then
-                SERVICE_NAME="$(echo << parameters.family >>)"
+            if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
+                DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
+                DEPLOYMENT_ID=$(aws deploy create-deployment \
+                    --application-name "<< parameters.codedeploy-application-name >>" \
+                    --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
+                    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"'${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}'\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.codedeploy-load-balanced-container-name >>\", \"ContainerPort\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}"}}' \
+                    --query deploymentId)
+                echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
+            else
+              SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+              if [ -z "${SERVICE_NAME}" ]; then
+                  SERVICE_NAME="$(echo << parameters.family >>)"
+              fi
+              DEPLOYED_REVISION=$(aws ecs update-service \
+                  --cluster "<< parameters.cluster-name >>" \
+                  --service "${SERVICE_NAME}" \
+                  --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                  --output text \
+                  --query service.taskDefinition)
             fi
-            DEPLOYED_REVISION=$(aws ecs update-service \
-                --cluster "<< parameters.cluster-name >>" \
-                --service "${SERVICE_NAME}" \
-                --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                --output text \
-                --query service.taskDefinition)
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
           condition: << parameters.verify-revision-is-deployed >>
