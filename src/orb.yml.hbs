@@ -475,6 +475,47 @@ commands:
                 --query 'taskDefinition.taskDefinitionArn')
             echo "Registered task definition: ${REVISION}"
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
+  update-task-definition-cli-input-json:
+    description: Registers a task definition based on a json file.
+    parameters:
+      task-definition-json:
+        description: |
+          Location of your .json task definition file.
+        type: string
+      aws-access-key-id:
+        default: AWS_ACCESS_KEY_ID
+        description: >
+          AWS access key id for IAM role. Set this to the name of the environment
+          variable you will set to hold this value, i.e. AWS_ACCESS_KEY.
+        type: env_var_name
+      aws-secret-access-key:
+        default: AWS_SECRET_ACCESS_KEY
+        description: >
+          AWS secret key for IAM role. Set this to the name of the environment
+          variable you will set to hold this value, i.e. AWS_SECRET_ACCESS_KEY.
+        type: env_var_name
+      aws-region:
+        default: AWS_REGION
+        description:
+          Name of env var storing your AWS region information, defaults to AWS_REGION
+        type: env_var_name
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: $<< parameters.aws-access-key-id >>
+          aws-secret-access-key: $<< parameters.aws-secret-access-key >>
+          aws-region: $<< parameters.aws-region >>
+      - run:
+          name: Register new task definition
+          command: |
+            TASK_DEFINITION_JSON="$(echo << parameters.task-definition-json >>)"
+            REVISION=$(aws ecs register-task-definition \
+                --cli-input-json file://$(pwd)/${TASK_DEFINITION_JSON} \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn')
+            echo "Registered task definition: ${REVISION}"
+            echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
   update-service:
     description: |
       Registers a task definition for the given ECS service and updates the service to
