@@ -550,6 +550,28 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job-dev
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_set-up-test-env-dev
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          # verify-revision-is-deployed is not supported for blue/green deployment type services
+          verify-revision-is-deployed: false
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - tear-down-test-env:
           name: ec2_tear-down-test-env-dev
           requires:
@@ -577,7 +599,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env-dev
           requires:
-            - codedeploy_fargate_set-up-test-env-dev
+            - codedeploy_fargate_test-update-service-job-dev
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
@@ -730,6 +752,28 @@ workflows:
             tags:
               only: /master-.*/
 
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job-master
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_set-up-test-env-master
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          # verify-revision-is-deployed is not supported for blue/green deployment type services
+          verify-revision-is-deployed: false
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
       - tear-down-test-env:
           name: ec2_tear-down-test-env-master
           requires:
@@ -757,7 +801,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env-master
           requires:
-            - codedeploy_fargate_set-up-test-env-master
+            - codedeploy_fargate_test-update-service-job-master
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
