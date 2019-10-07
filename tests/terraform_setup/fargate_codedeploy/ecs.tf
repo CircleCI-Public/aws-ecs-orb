@@ -3,7 +3,7 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_dfn" {
-  family = "${var.aws_resource_prefix}"
+  family = "${var.aws_resource_prefix}-service"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
@@ -33,7 +33,7 @@ DEFINITION
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name          = "${var.aws_resource_prefix}"
+  name          = "${var.aws_resource_prefix}-service"
   cluster       = "${aws_ecs_cluster.ecs_cluster.id}"
   desired_count = 2
   task_definition = "${aws_ecs_task_definition.ecs_task_dfn.arn}"
