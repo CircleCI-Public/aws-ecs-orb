@@ -14,8 +14,8 @@ resource "aws_ecs_task_definition" "ecs_task_dfn" {
   {
     "cpu": 128,
     "portMappings": [{
-      "containerPort": ${var.app_port},
-      "hostPort": ${var.app_port}
+      "containerPort": ${var.container_port},
+      "hostPort": ${var.host_port}
     }],
     "environment": [{
       "name": "SECRET",
@@ -51,7 +51,7 @@ resource "aws_ecs_service" "ecs_service" {
   load_balancer {
     target_group_arn = aws_alb_target_group.blue.id
     container_name   = "${var.aws_resource_prefix}-service"
-    container_port   = var.app_port
+    container_port   = var.container_port
   }
 
   depends_on = [aws_alb_listener.front_end_blue, aws_iam_role_policy_attachment.ecs_task_execution_role]

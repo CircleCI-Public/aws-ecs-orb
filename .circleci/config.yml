@@ -344,6 +344,27 @@ jobs:
           git push origin $INTEGRATION_TAG
 
 commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+          description: "CodeDeploy application name"
+          type: string
+      deployment-group-name:
+          description: "CodeDeploy application name"
+          type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
   test-deployment:
     description: "Test the deployment"
     parameters:
@@ -504,6 +525,21 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - test-service-update:
+          name: codedeploy_fargate_test-update-service-command-dev
+          requires:
+            - codedeploy_fargate_set-up-test-env-dev
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job-dev
           docker-image-for-job: circleci/python:2.7.15
@@ -554,17 +590,25 @@ workflows:
           name: codedeploy_fargate_test-update-service-job-dev
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - codedeploy_fargate_set-up-test-env-dev
+            - codedeploy_fargate_test-update-service-command-dev
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
           # verify-revision-is-deployed is not supported for blue/green deployment type services
           verify-revision-is-deployed: false
           post-steps:
+            - wait-for-codedeploy-deployment:
+                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           filters:
             branches:
@@ -706,6 +750,21 @@ workflows:
             tags:
               only: /master-.*/
 
+      - test-service-update:
+          name: codedeploy_fargate_test-update-service-command-master
+          requires:
+            - codedeploy_fargate_set-up-test-env-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job-master
           docker-image-for-job: circleci/python:2.7.15
@@ -756,17 +815,25 @@ workflows:
           name: codedeploy_fargate_test-update-service-job-master
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - codedeploy_fargate_set-up-test-env-master
+            - codedeploy_fargate_test-update-service-command-master
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
           # verify-revision-is-deployed is not supported for blue/green deployment type services
           verify-revision-is-deployed: false
           post-steps:
+            - wait-for-codedeploy-deployment:
+                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           filters:
             branches:
