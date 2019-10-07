@@ -372,6 +372,23 @@ commands:
               --output text \
               | head -n 1)
             aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service-name:
+          description: "Name of the ECS service"
+          type: string
+      cluster-name:
+          description: "Name of the cluster"
+          type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster-name >> \
+              --service << parameters.service-name >> \
+              --force
   test-deployment:
     description: "Test the deployment"
     parameters:
@@ -619,6 +636,9 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+            - delete-service:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           filters:
             branches:
               ignore: /.*/
@@ -844,6 +864,9 @@ workflows:
                 application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
                 deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
             - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+            - delete-service:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           filters:
