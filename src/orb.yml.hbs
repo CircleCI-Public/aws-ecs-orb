@@ -831,7 +831,7 @@ commands:
                 DEPLOYMENT_ID=$(aws deploy create-deployment \
                     --application-name "<< parameters.codedeploy-application-name >>" \
                     --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
-                    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\"version\": 1, \"Resources\": [{\"TargetService\": {\"Type\": \"AWS::ECS::Service\", \"Properties\": {\"TaskDefinition\": \"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\", \"LoadBalancerInfo\": {\"ContainerName\": \"<< parameters.codedeploy-load-balanced-container-name >>\", \"ContainerPort\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}\"}}" \
+                    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"<< parameters.codedeploy-load-balanced-container-name >>\\\", \\\"ContainerPort\\\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}\"}}" \
                     --query deploymentId)
                 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
             else
