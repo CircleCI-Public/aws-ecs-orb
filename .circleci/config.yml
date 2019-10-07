@@ -176,6 +176,10 @@ jobs:
       docker-image-name:
         description: "The name for the previously built Docker image"
         type: string
+      skip-service-update:
+        description: "Skip updating the ECS service"
+        type: boolean
+        default: false
     steps:
       - checkout
       - setup_remote_docker
@@ -201,17 +205,20 @@ jobs:
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $FULL_IMAGE_NAME
-      - aws-ecs/update-service:
-          family: "<< parameters.family-name >>"
-          service-name: "<< parameters.service-name >>"
-          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
-          container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
-          container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
-          verify-revision-is-deployed: true
-          fail-on-verification-timeout: false
-      - test-deployment:
-          service-name: "<< parameters.aws-resource-name-prefix >>-service"
-          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+      - unless:
+          condition: << parameters.skip-service-update >>
+          steps:
+            - aws-ecs/update-service:
+                family: "<< parameters.family-name >>"
+                service-name: "<< parameters.service-name >>"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+                container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
+                container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
+                verify-revision-is-deployed: true
+                fail-on-verification-timeout: false
+            - test-deployment:
+                service-name: "<< parameters.aws-resource-name-prefix >>-service"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
 
   tear-down-test-env:
     parameters:
@@ -534,6 +541,7 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          skip-service-update: true
           filters:
             branches:
               ignore: /.*/
@@ -595,6 +603,7 @@ workflows:
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
@@ -759,6 +768,7 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          skip-service-update: true
           filters:
             branches:
               ignore: /.*/
@@ -820,6 +830,7 @@ workflows:
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
