@@ -3,19 +3,20 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_dfn" {
-  family = "${var.aws_resource_prefix}"
+  family = "${var.aws_resource_prefix}-service"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
   memory                   = 2048
+  execution_role_arn = "${aws_iam_role.ecs_task_execution_role.arn}"
 
   container_definitions = <<DEFINITION
 [
   {
     "cpu": 128,
     "portMappings": [{
-      "containerPort": ${var.app_port},
-      "hostPort": ${var.app_port}
+      "containerPort": ${var.container_port},
+      "hostPort": ${var.host_port}
     }],
     "environment": [{
       "name": "SECRET",
@@ -32,7 +33,7 @@ DEFINITION
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name          = "${var.aws_resource_prefix}"
+  name          = "${var.aws_resource_prefix}-service"
   cluster       = "${aws_ecs_cluster.ecs_cluster.id}"
   desired_count = 2
   task_definition = "${aws_ecs_task_definition.ecs_task_dfn.arn}"
@@ -51,7 +52,7 @@ resource "aws_ecs_service" "ecs_service" {
   load_balancer {
     target_group_arn = aws_alb_target_group.blue.id
     container_name   = "${var.aws_resource_prefix}-service"
-    container_port   = var.app_port
+    container_port   = var.container_port
   }
 
   depends_on = [aws_alb_listener.front_end_blue, aws_iam_role_policy_attachment.ecs_task_execution_role]
