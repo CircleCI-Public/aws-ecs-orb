@@ -95,6 +95,57 @@ examples:
           jobs:
             - verify-deployment
 
+  run-task-fargate:
+    description: Start the run of an ECS task on Fargate.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.1.4
+        aws-ecs: circleci/aws-ecs@x.y.z
+
+      jobs:
+        run-task:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-ecs/run-task:
+                cluster: "cluster1"
+                task-definition: "myapp"
+                # e.g. "subnet-70faa93b,subnet-bcc54b93"
+                subnet-ids: $SUBNET_ONE, $SUBNET_TWO
+                # e.g. "sg-010a460f7f442fa75"
+                security-group-ids: $SECURITY_GROUP_IDS
+
+      workflows:
+        run-task:
+          jobs:
+            - run-task
+
+  run-task-ec2:
+    description: Start the run of an ECS task on EC2.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.1.4
+        aws-ecs: circleci/aws-ecs@x.y.z
+
+      jobs:
+        run-task:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-ecs/run-task:
+                cluster: "cluster1"
+                task-definition: "myapp"
+                awsvpc: false
+
+      workflows:
+        run-task:
+          jobs:
+            - run-task
+
 jobs:
   deploy-service-update:
     docker:
@@ -133,6 +184,36 @@ jobs:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: enum
+        enum: ["ECS", "CODE_DEPLOY"]
+        default: "ECS"
+      codedeploy-application-name:
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-deployment-group-name:
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-name:
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-port:
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: integer
+        default: 80
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -159,6 +240,7 @@ jobs:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
+          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
@@ -190,6 +272,11 @@ jobs:
           family: << parameters.family >>
           cluster-name: << parameters.cluster-name >>
           service-name: << parameters.service-name >>
+          deployment-controller: << parameters.deployment-controller >>
+          codedeploy-application-name: << parameters.codedeploy-application-name >>
+          codedeploy-deployment-group-name: << parameters.codedeploy-deployment-group-name >>
+          codedeploy-load-balanced-container-name: << parameters.codedeploy-load-balanced-container-name >>
+          codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
@@ -253,6 +340,161 @@ jobs:
           family: << parameters.family >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
+  run-task:
+    docker:
+      - image: << parameters.docker-image-for-job >>
+    parameters:
+      docker-image-for-job:
+        description:
+          "The docker image to be used for running this job on CircleCI."
+        type: string
+        default: circleci/python:3.7.1
+      aws-access-key-id:
+        description: |
+          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+        type: string
+        default: $AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        description: |
+          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+        type: string
+        default: $AWS_SECRET_ACCESS_KEY
+      aws-region:
+        description:
+          AWS region to operate in. Defaulted to $AWS_REGION
+        type: string
+        default: $AWS_REGION
+      cluster:
+        description:
+          "The name or ARN of the cluster on which to run the task."
+        type: string
+      task-definition:
+        description: |
+          "The family and revision (family:revision) or full ARN of the task
+          definition to run. If a revision is not specified, the latest ACTIVE
+          revision is used."
+        type: string
+      count:
+        description: |
+          "The number of instantiations of the specified task to place on your
+          cluster. You can specify up to 10 tasks per call."
+        type: integer
+        default: 1
+      started-by:
+        description: |
+          An optional tag specified when a task is started. For example, if
+          you automatically trigger a task to run a batch process job, you
+          could apply a unique identifier for that job to your task with the
+          startedBy parameter. You can then identify which tasks belong to
+          that job by filtering the results of a ListTasks  call with  the
+          startedBy value. Up to 36 letters (uppercase and lowercase), num-
+          bers, hyphens, and underscores are allowed.
+        type: string
+        default: ""
+      group:
+        description: |
+          The name of the task group to associate with the task.
+          The default value is the family name of the task definition
+          (for example, family:my-family-name).
+        type: string
+        default: ""
+      placement-constraints:
+        description: |
+          "An array of placement constraint objects to use for the task. You
+          can specify up to 10 constraints per task (including constraints in
+          the task definition and those specified at runtime).
+          Expected format: type=string,field=string."
+        type: string
+        default: ""
+      placement-strategy:
+        description: |
+          "The placement strategy objects to use for the task. You can specify
+          a maximum of five strategy rules per task.
+          Expected format: type=string,field=string."
+        type: string
+        default: ""
+      launch-type:
+        description: |
+          The launch type on which to run your task. For more information, see
+          Amazon ECS Launch Types in the Amazon Elastic Container Service
+          Developer Guide. Possible values EC2, FARGATE.
+        type: enum
+        enum: ["FARGATE", "EC2"]
+        default: "FARGATE"
+      platform-version:
+        description: |
+          "The platform version the task should run. A platform version is only
+          specified for tasks using the Fargate launch type."
+        type: string
+        default: "LATEST"
+      awsvpc:
+        description: |
+          "Does your task defintion use awsvpc mode or not. If so,
+          this should be true and you should also include subnet-ids
+          and optionally security-group-ids / assign-public-ips."
+        type: boolean
+        default: true
+      subnet-ids:
+        description: |
+          "List of subnet ids separated by commas.
+          Expected Format: subnet-70faa93b,subnet-bcc54b93"
+        type: string
+        default: ""
+      security-group-ids:
+        description: |
+          "List of security group ids separated by commas.
+          Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75"
+        type: string
+        default: ""
+      assign-public-ip:
+        description: |
+          "Assign a public IP or not"
+        type: enum
+        enum: ["ENABLED", "DISABLED"]
+        default: "DISABLED"
+      tags:
+        description: |
+          "The metadata that you apply to the task to help you categorize and
+          organize them. Each tag consists of a key and an optional value,
+          both of which you define. Expected format: key=string,value=string."
+        type: string
+        default: ""
+      enable-ecs-managed-tags:
+        description: |
+          "Specifies whether to enable Amazon ECS managed tags for the task."
+        type: boolean
+        default: false
+      propagate-tags:
+        description: |
+          "Specifies  whether to propagate the tags from the task definition to
+          the task. If no value is specified, the  tags  are  not  propagated.
+          Tags can only be propagated to the task during task creation. To add
+          tags to a task after task creation, use the  TagResource API action."
+        type: boolean
+        default: false
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          aws-region: << parameters.aws-region >>
+      - run-task:
+          cluster: << parameters.cluster >>
+          task-definition: << parameters.task-definition >>
+          count: << parameters.count >>
+          started-by: << parameters.started-by >>
+          group: << parameters.group >>
+          placement-constraints: << parameters.placement-constraints >>
+          placement-strategy: << parameters.placement-strategy >>
+          launch-type: << parameters.launch-type >>
+          platform-version: << parameters.platform-version >>
+          awsvpc: << parameters.awsvpc >>
+          subnet-ids: << parameters.subnet-ids >>
+          security-group-ids: << parameters.security-group-ids >>
+          assign-public-ip: << parameters.assign-public-ip >>
+          tags: << parameters.tags >>
+          enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
+          propagate-tags: << parameters.propagate-tags >>
 
 commands:
   verify-revision-is-deployed:
@@ -260,6 +502,7 @@ commands:
       Polls the service's deployment status at intervals until the given task
       definition revision is the only one deployed for the service, and for the
       task definition revision's running task count to match the desired count.
+      Does not support ECS services that are of the Blue/Green Deployment type.
     parameters:
       family:
         description:
@@ -496,6 +739,36 @@ commands:
           "The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition."
         type: string
         default: ""
+      deployment-controller:
+        description:
+          "The deployment controller to use for the service. Defaulted to ECS"
+        type: enum
+        enum: ["ECS", "CODE_DEPLOY"]
+        default: "ECS"
+      codedeploy-application-name:
+        description: |
+          The name of the AWS CodeDeploy application used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-deployment-group-name:
+        description: |
+          The name of the AWS CodeDeploy deployment group used for the deployment.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-name:
+        description: |
+          The name of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: string
+        default: ""
+      codedeploy-load-balanced-container-port:
+        description: |
+          The port of the container to be load-balanced via AWS CodeDeploy.
+          Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+        type: integer
+        default: 80
       container-image-name-updates:
         description: |
           Use this to update the Docker image names and/or tag names of existing
@@ -522,6 +795,7 @@ commands:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
+          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
@@ -551,17 +825,29 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
-            SERVICE_NAME="$(echo << parameters.service-name >>)"
+            DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
 
-            if [ -z "${SERVICE_NAME}" ]; then
-                SERVICE_NAME="$(echo << parameters.family >>)"
+            if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
+                DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
+                DEPLOYMENT_ID=$(aws deploy create-deployment \
+                    --application-name "<< parameters.codedeploy-application-name >>" \
+                    --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
+                    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"<< parameters.codedeploy-load-balanced-container-name >>\\\", \\\"ContainerPort\\\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}\"}}" \
+                    --query deploymentId)
+                echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
+            else
+              SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+              if [ -z "${SERVICE_NAME}" ]; then
+                  SERVICE_NAME="$(echo << parameters.family >>)"
+              fi
+              DEPLOYED_REVISION=$(aws ecs update-service \
+                  --cluster "<< parameters.cluster-name >>" \
+                  --service "${SERVICE_NAME}" \
+                  --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                  --output text \
+                  --query service.taskDefinition)
             fi
-            DEPLOYED_REVISION=$(aws ecs update-service \
-                --cluster "<< parameters.cluster-name >>" \
-                --service "${SERVICE_NAME}" \
-                --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                --output text \
-                --query service.taskDefinition)
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
           condition: << parameters.verify-revision-is-deployed >>
@@ -574,3 +860,163 @@ commands:
                 max-poll-attempts: << parameters.max-poll-attempts >>
                 poll-interval: << parameters.poll-interval >>
                 fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
+  run-task:
+    description: |
+      Starts a new ECS task using the specified
+      task definition and other parameters.
+    parameters:
+      cluster:
+        description:
+          "The name or ARN of the cluster on which to run the task."
+        type: string
+      task-definition:
+        description: |
+          "The family and revision (family:revision) or full ARN of the task
+          definition to run. If a revision is not specified, the latest ACTIVE
+          revision is used."
+        type: string
+      count:
+        description: |
+          "The number of instantiations of the specified task to place on your
+          cluster. You can specify up to 10 tasks per call."
+        type: integer
+        default: 1
+      started-by:
+        description: |
+          An optional tag specified when a task is started. For example, if
+          you automatically trigger a task to run a batch process job, you
+          could apply a unique identifier for that job to your task with the
+          startedBy parameter. You can then identify which tasks belong to
+          that job by filtering the results of a ListTasks  call with  the
+          startedBy value. Up to 36 letters (uppercase and lowercase), num-
+          bers, hyphens, and underscores are allowed.
+        type: string
+        default: ""
+      group:
+        description: |
+          The name of the task group to associate with the task.
+          The default value is the family name of the task definition
+          (for example, family:my-family-name).
+        type: string
+        default: ""
+      placement-constraints:
+        description: |
+          "An array of placement constraint objects to use for the task. You
+          can specify up to 10 constraints per task (including constraints in
+          the task definition and those specified at runtime).
+          Expected format: type=string,field=string."
+        type: string
+        default: ""
+      placement-strategy:
+        description: |
+          "The placement strategy objects to use for the task. You can specify
+          a maximum of five strategy rules per task.
+          Expected format: type=string,field=string."
+        type: string
+        default: ""
+      launch-type:
+        description: |
+          The launch type on which to run your task. For more information, see
+          Amazon ECS Launch Types in the Amazon Elastic Container Service
+          Developer Guide. Possible values EC2, FARGATE.
+        type: enum
+        enum: ["FARGATE", "EC2"]
+        default: "FARGATE"
+      platform-version:
+        description: |
+          "The platform version the task should run. A platform version is only
+          specified for tasks using the Fargate launch type."
+        type: string
+        default: "LATEST"
+      awsvpc:
+        description: |
+          "Does your task defintion use awsvpc mode or not. If so,
+          this should be true and you should also include subnet-ids
+          and optionally security-group-ids / assign-public-ips."
+        type: boolean
+        default: true
+      subnet-ids:
+        description: |
+          "List of subnet ids separated by commas.
+          Expected Format: subnet-70faa93b,subnet-bcc54b93"
+        type: string
+        default: ""
+      security-group-ids:
+        description: |
+          "List of security group ids separated by commas.
+          Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75"
+        type: string
+        default: ""
+      assign-public-ip:
+        description: |
+          "Assign a public IP or not"
+        type: enum
+        enum: ["ENABLED", "DISABLED"]
+        default: "DISABLED"
+      tags:
+        description: |
+          "The metadata that you apply to the task to help you categorize and
+          organize them. Each tag consists of a key and an optional value,
+          both of which you define. Expected format: key=string,value=string."
+        type: string
+        default: ""
+      enable-ecs-managed-tags:
+        description: |
+          "Specifies whether to enable Amazon ECS managed tags for the task."
+        type: boolean
+        default: false
+      propagate-tags:
+        description: |
+          "Specifies  whether to propagate the tags from the task definition to
+          the task. If no value is specified, the  tags  are  not  propagated.
+          Tags can only be propagated to the task during task creation. To add
+          tags to a task after task creation, use the  TagResource API action."
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Run Task
+          command: |
+            if [ "<<parameters.launch-type>>" == "FARGATE" ]; then
+                echo "Setting --platform-version"
+                set -- "$@" --platform-version "<<parameters.platform-version>>"
+            fi
+            if [ ! -z "<<parameters.started-by>>" ]; then
+                echo "Setting --started-by"
+                set -- "$@" --started-by "<<parameters.started-by>>"
+            fi
+            if [ ! -z "<<parameters.group>>" ]; then
+                echo "Setting --group"
+                set -- "$@" --group "<<parameters.group>>"
+            fi
+            if [ ! -z "<<parameters.tags>>" ]; then
+                echo "Setting --tags"
+                set -- "$@" --tags "<<parameters.tags>>"
+            fi
+            if [ ! -z "<<parameters.placement-constraints>>" ]; then
+                echo "Setting --placement-constraints"
+                set -- "$@" --placement-constraints "<<parameters.placement-constraints>>"
+            fi
+            if [ ! -z "<<parameters.placement-strategy>>" ]; then
+                echo "Setting --placement-strategy"
+                set -- "$@" --placement-strategy "<<parameters.placement-strategy>>"
+            fi
+            if [ "<<parameters.enable-ecs-managed-tags>>" == "true" ]; then
+                echo "Setting --enable-ecs-managed-tags"
+                set -- "$@" --enable-ecs-managed-tags
+            fi
+            if [ "<<parameters.propagate-tags>>" == "true" ]; then
+                echo "Setting --propagate-tags"
+                set -- "$@" --propagate-tags "TASK_DEFINITION"
+            fi
+            if [ "<<parameters.awsvpc>>" == "true" ]; then
+                echo "Setting --network-configuration"
+                set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[<<parameters.subnet-ids>>],securityGroups=[<<parameters.security-group-ids>>],assignPublicIp=<<parameters.assign-public-ip>>}"
+            fi
+
+            aws ecs run-task \
+              --cluster <<parameters.cluster>> \
+              --task-definition <<parameters.task-definition>> \
+              --count <<parameters.count>> \
+              --launch-type <<parameters.launch-type>> \
+              "$@"

@@ -176,6 +176,10 @@ jobs:
       docker-image-name:
         description: "The name for the previously built Docker image"
         type: string
+      skip-service-update:
+        description: "Skip updating the ECS service"
+        type: boolean
+        default: false
     steps:
       - checkout
       - setup_remote_docker
@@ -201,17 +205,20 @@ jobs:
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $FULL_IMAGE_NAME
-      - aws-ecs/update-service:
-          family: "<< parameters.family-name >>"
-          service-name: "<< parameters.service-name >>"
-          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
-          container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
-          container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
-          verify-revision-is-deployed: true
-          fail-on-verification-timeout: false
-      - test-deployment:
-          service-name: "<< parameters.aws-resource-name-prefix >>-service"
-          cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+      - unless:
+          condition: << parameters.skip-service-update >>
+          steps:
+            - aws-ecs/update-service:
+                family: "<< parameters.family-name >>"
+                service-name: "<< parameters.service-name >>"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+                container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
+                container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
+                verify-revision-is-deployed: true
+                fail-on-verification-timeout: false
+            - test-deployment:
+                service-name: "<< parameters.aws-resource-name-prefix >>-service"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
 
   tear-down-test-env:
     parameters:
@@ -344,6 +351,44 @@ jobs:
           git push origin $INTEGRATION_TAG
 
 commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+          description: "CodeDeploy application name"
+          type: string
+      deployment-group-name:
+          description: "CodeDeploy application name"
+          type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service-name:
+          description: "Name of the ECS service"
+          type: string
+      cluster-name:
+          description: "Name of the cluster"
+          type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster-name >> \
+              --service << parameters.service-name >> \
+              --force
   test-deployment:
     description: "Test the deployment"
     parameters:
@@ -353,6 +398,10 @@ commands:
       cluster-name:
           description: "Name of the cluster"
           type: string
+      delete-load-balancer:
+          description: "Whether to delete the load balancer after the test"
+          type: boolean
+          default: false
     steps:
       - run:
           name: Test deployment (for orb testing and is not part of the orb)
@@ -364,6 +413,9 @@ commands:
             for attempt in {1..25}; do
               curl -s --retry 10 http://$ELB_DNS_NAME | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}"
             done
+            if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
+              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
+            fi
 
 workflows:
   build_deploy-dev:
@@ -504,6 +556,22 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - test-service-update:
+          name: codedeploy_fargate_test-update-service-command-dev
+          requires:
+            - codedeploy_fargate_set-up-test-env-dev
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          skip-service-update: true
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job-dev
           docker-image-for-job: circleci/python:2.7.15
@@ -550,6 +618,41 @@ workflows:
             tags:
               only: /integration-.*/
 
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job-dev
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_test-update-service-command-dev
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          # verify-revision-is-deployed is not supported for blue/green deployment type services
+          verify-revision-is-deployed: false
+          post-steps:
+            - wait-for-codedeploy-deployment:
+                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: true
+            - delete-service:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /integration-.*/
+
       - tear-down-test-env:
           name: ec2_tear-down-test-env-dev
           requires:
@@ -577,7 +680,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env-dev
           requires:
-            - codedeploy_fargate_set-up-test-env-dev
+            - codedeploy_fargate_test-update-service-job-dev
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
@@ -684,6 +787,22 @@ workflows:
             tags:
               only: /master-.*/
 
+      - test-service-update:
+          name: codedeploy_fargate_test-update-service-command-master
+          requires:
+            - codedeploy_fargate_set-up-test-env-master
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          skip-service-update: true
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job-master
           docker-image-for-job: circleci/python:2.7.15
@@ -730,6 +849,41 @@ workflows:
             tags:
               only: /master-.*/
 
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job-master
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_test-update-service-command-master
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          # verify-revision-is-deployed is not supported for blue/green deployment type services
+          verify-revision-is-deployed: false
+          post-steps:
+            - wait-for-codedeploy-deployment:
+                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: true
+            - delete-service:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /master-.*/
+
       - tear-down-test-env:
           name: ec2_tear-down-test-env-master
           requires:
@@ -757,7 +911,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env-master
           requires:
-            - codedeploy_fargate_set-up-test-env-master
+            - codedeploy_fargate_test-update-service-job-master
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
