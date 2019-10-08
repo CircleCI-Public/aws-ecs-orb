@@ -2,8 +2,8 @@
 data "aws_iam_policy_document" "ecs_task_execution_role" {
   version = "2012-10-17"
   statement {
-    sid = ""
-    effect = "Allow"
+    sid     = ""
+    effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role" {
 data "aws_iam_policy_document" "ecs_auto_scale_role" {
   version = "2012-10-17"
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {

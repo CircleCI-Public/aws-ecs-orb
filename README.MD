@@ -21,7 +21,7 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 
 ## Example
 
-```
+```yaml
 version: 2.1
 
 orbs:
