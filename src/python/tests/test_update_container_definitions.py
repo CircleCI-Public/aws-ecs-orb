@@ -20,6 +20,14 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     task_dfn_invalid = '{}'
     task_dfn_invalid_no_container_definitions = '{"taskDefinition": {"volumes": [], "taskDefinitionArn": "arn:aws:ecs:us-east-1:111:task-definition/sleep360:19"}'
 
+    def test_container_not_set_update_param(self):
+        """Exception is raised when using undefined container"""
+        task_dfns = [TestContainerDefinitionsUpdate.task_dfn_multi_containers,
+                     TestContainerDefinitionsUpdate.task_dfn_empty_volumes]
+        for task_dfn in task_dfns:
+            self.assertRaises(ValueError, run, task_dfn,
+                              'image-and-tag=ruby', '')
+
     def test_invalid_image_update_param_container(self):
         """Exception is raised when using an incorrectly formatted image update param value"""
         self.assertRaises(ValueError,
