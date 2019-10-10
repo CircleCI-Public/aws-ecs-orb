@@ -17,7 +17,7 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 ## Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
 - The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`. The default profile of `aws` will be used.
-- `bash` to be present in `/bin/bash`. Otherwise, `/bin/sh` will be used, but the orb has not been tested for compatibility with other shells.
+- `bash` to be present in `/bin/bash`. Otherwise, `/bin/sh` will be used but, the orb has not been tested yet for compatibility with other shells.
 
 ## Example
 
