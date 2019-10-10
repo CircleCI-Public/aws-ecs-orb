@@ -24,6 +24,10 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 ### deploy-service-update
 | parameter	| description	| required |	default |	type |
 | --- | --- | --- | --- | --- |
+| docker-image-for-job	| The docker image to be used for running this job on CircleCI. |	- |	'circleci/python:3.7.1' |	string |
+| aws-access-key-id |	AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID |	-	| $AWS_ACCESS_KEY_ID |	string |
+| aws-secret-access-key |	AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY | - | $AWS_SECRET_ACCESS_KEY |	string |
+| aws-region	| AWS region to operate in. Defaulted to $AWS_REGION | -	| $AWS_REGION |	string |
 
 ## Example
 
