@@ -4,6 +4,23 @@ A CircleCI Orb to simplify deployments to Amazon Elastic Container Service (ECS)
 
 CircleCI orbs registry page: https://circleci.com/orbs/registry/orb/circleci/aws-ecs
 
+![Alt Text](img/registryimg.png)
+
+## Orb Quick Start Guide
+1.Use CircleCI version 2.1 at the top of your .circleci/config.yml file.
+```yaml
+version: 2.1
+```
+If you do not already have Pipelines enabled, you'll need to go to Project Settings -> Advanced Settings and turn it on.
+
+2.Add the orbs stanza below your version, invoking the orb:
+```yaml
+orbs:
+  aws-ecs: circleci/aws-ecs@0.0.18
+```
+
+3.Use aws-ecs elements in your existing workflows and jobs.
+
 ## Features
 
 This orb allows convenient updating of ECS services when only the Docker
