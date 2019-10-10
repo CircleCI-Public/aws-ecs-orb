@@ -55,6 +55,33 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 | container-image-name-updates |	Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>image=<image-name>tag=<tag-name>,container=...,image-and-tag image tag=..., For each container, specify only either "image-and-tag" or "image" or "tag". If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. If "image" is specified, the image tag defined in the previous task definition will be retained, if exists. If "tag" is specified, the image name defined in the previous task definition will be used. |	-	 | '' |	string |
 | container-env-var-updates |	Use this to update or set the values of environment variables that will be defined for the containers. (Existing environment variables not included in this parameter will not be removed) Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=..., Values should not contain commas. |
 - | '' | string |
+
+### run-task
+| parameter	| description	| required |	default |	type |
+| --- | --- | --- | --- | --- |
+| docker-image-for-job |	The docker image to be used for running this job on CircleCI. |	- |	'circleci/python:3.7.1' |	string |
+| aws-access-key-id |	AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID |	- |	$AWS_ACCESS_KEY_ID	| string |
+| aws-secret-access-key |	AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY | 	- |	$AWS_SECRET_ACCESS_KEY	| string |
+| aws-region	| AWS region to operate in. Defaulted to $AWS_REGION |	- |	$AWS_REGION	 | string |
+| cluster |	The name or ARN of the cluster on which to run the task.| ✔|	
+| - |	string |
+| task-definition |	"The family and revision (family:revision) or full ARN of the task definition to run. If a revision is not specified, the latest ACTIVE revision is used."| ✔| 	
+| - |	string |
+| count |	"The number of instantiations of the specified task to place on your cluster. You can specify up to 10 tasks per call." 	| - |	1 |	integer |
+| started-by |	An optional tag specified when a task is started. For example, if you automatically trigger a task to run a batch process job, you could apply a unique identifier for that job to your task with the startedBy parameter. You can then identify which tasks belong to that job by filtering the results of a ListTasks call with the startedBy value. Up to 36 letters (uppercase and lowercase), num- bers, hyphens, and underscores are allowed. | 	- |	'' |	string |
+| group	| The name of the task group to associate with the task. The default value is the family name of the task definition (for example, family:my-family-name). | 	- |	'' |	string |
+| placement-constraints	| "An array of placement constraint objects to use for the task. You can specify up to 10 constraints per task (including constraints in the task definition and those specified at runtime). Expected format: type=string,field=string." 	| -	 | '' |	string |
+| placement-strategy |	"The placement strategy objects to use for the task. You can specify a maximum of five strategy rules per task. Expected format: type=string,field=string." | 	- |	'' |	string |
+| launch-type |	The launch type on which to run your task. For more information, see Amazon ECS Launch Types in the Amazon Elastic Container Service Developer Guide. Possible values EC2, FARGATE. | 	- |	FARGATE |	enum |
+| platform-version | "The platform version the task should run. A platform version is only specified for tasks using the Fargate launch type." |	- |	LATEST	 | string |
+| awsvpc |	"Does your task defintion use awsvpc mode or not. If so, this should be true and you should also include subnet-ids and optionally security-group-ids / assign-public-ips." | 	- |	true |	boolean |
+| subnet-ids	| "List of subnet ids separated by commas. Expected Format: subnet-70faa93b,subnet-bcc54b93" | 	- |	'' |	string |
+| security-group-ids	| "List of security group ids separated by commas. Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75" | 	- |	''	| string |
+| assign-public-ip |	"Assign a public IP or not" |	- |	DISABLED |	enum |
+| tags |	"The metadata that you apply to the task to help you categorize and organize them. Each tag consists of a key and an optional value, both of which you define. Expected format: key=string,value=string." | 	- | 	'' |	string |
+| enable-ecs-managed-tags |	"Specifies whether to enable Amazon ECS managed tags for the task." | 	- |	false	| boolean |
+| propagate-tags |	"Specifies whether to propagate the tags from the task definition to the task. If no value is specified, the tags are not propagated. Tags can only be propagated to the task during task creation. To add tags to a task after task creation, use the TagResource API action." | -	|false	| boolean |
+
 ## Example
 
 ```yaml
