@@ -28,8 +28,8 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 | aws-access-key-id |	AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID |	-	| $AWS_ACCESS_KEY_ID |	string |
 | aws-secret-access-key |	AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY | - | $AWS_SECRET_ACCESS_KEY |	string |
 | aws-region	| AWS region to operate in. Defaulted to $AWS_REGION | -	| $AWS_REGION |	string |
-| family | Name of the task definition's family.	| | - |	string |
-| cluster-name | The short name or full ARN of the cluster that hosts the service. |	| - |	string |
+| family | Name of the task definition's family.	|✔ | - |	string |
+| cluster-name | The short name or full ARN of the cluster that hosts the service. |✔	| - |	string |
 | service-name	| The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition. | - | '' |	string |
 | deployment-controller |	The deployment controller to use for the service. Defaulted to ECS | - | ECS | enum |
 | codedeploy-application-name |	The name of the AWS CodeDeploy application used for the deployment. Only effective when the deployment-controller parameter value is "CODE_DEPLOY". |	-	| '' |	string |
