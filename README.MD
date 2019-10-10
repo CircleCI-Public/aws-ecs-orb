@@ -53,8 +53,8 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 | family	| Name of the task definition's family. | ✔	 
  | - |	string |
 | container-image-name-updates |	Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>image=<image-name>tag=<tag-name>,container=...,image-and-tag image tag=..., For each container, specify only either "image-and-tag" or "image" or "tag". If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. If "image" is specified, the image tag defined in the previous task definition will be retained, if exists. If "tag" is specified, the image name defined in the previous task definition will be used. |	-	 | '' |	string |
-| container-env-var-updates |	Use this to update or set the values of environment variables that will be defined for the containers. (Existing environment variables not included in this parameter will not be removed) Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=..., Values should not contain commas. 
-| - | '' | string |
+| container-env-var-updates |	Use this to update or set the values of environment variables that will be defined for the containers. (Existing environment variables not included in this parameter will not be removed) Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,
+ container=...,name=...,value=..., Values should not contain commas. | - | '' | string |
 
 ### run-task
 | parameter	| description	| required |	default |	type |
