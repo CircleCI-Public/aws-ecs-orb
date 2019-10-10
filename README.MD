@@ -42,6 +42,19 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 | max-poll-attempts |	The maximum number of attempts to poll the deployment status before giving up. Only in use when verify-revision-is-deployed is set to true. |	- |	50 |	integer |
 | poll-interval |	The polling interval, in seconds. Only in use when verify-revision-is-deployed is set to true. |	- |	20 |	integer |
 | fail-on-verification-timeout |	Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts. Only in use when verify-revision-is-deployed is set to true. |	- |	true |	boolean |
+
+### update-task-definition
+| parameter	| description	| required |	default |	type |
+| --- | --- | --- | --- | --- |
+| docker-image-for-job	| The docker image to be used for running this job on CircleCI. |	- |	'circleci/python:3.7.1' |	string |
+| aws-access-key-id |	AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID |	- |	$AWS_ACCESS_KEY_ID |	string |
+| aws-secret-access-key	| AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY |	- |	$AWS_SECRET_ACCESS_KEY	| string |
+| aws-region	| AWS region to operate in. Defaulted to $AWS_REGION |	- |	$AWS_REGION |	string |
+| family	| Name of the task definition's family. |	 
+ | - |	string |
+| container-image-name-updates |	Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition. Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>image=<image-name>tag=<tag-name>,container=...,image-and-tag image tag=..., For each container, specify only either "image-and-tag" or "image" or "tag". If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair. If "image" is specified, the image tag defined in the previous task definition will be retained, if exists. If "tag" is specified, the image name defined in the previous task definition will be used. |	-	 | '' |	string |
+| container-env-var-updates |	Use this to update or set the values of environment variables that will be defined for the containers. (Existing environment variables not included in this parameter will not be removed) Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=..., Values should not contain commas. |
+- | '' | string |
 ## Example
 
 ```yaml
