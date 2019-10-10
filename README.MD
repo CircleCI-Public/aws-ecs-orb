@@ -19,6 +19,11 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 - The `aws` CLI should be available in `PATH`. Otherwise, `pip` is required to be available as the job will then attempt to install `aws` via `pip`. The default profile of `aws` will be used.
 - `bash` to be present in `/bin/bash`. Otherwise, `/bin/sh` will be used, but the orb has not been tested for compatibility with other shells.
 
+## Jobs
+
+### deploy-service-update
+parameter	| description	| required |	default |	type
+
 ## Example
 
 ```yaml
