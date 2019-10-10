@@ -22,7 +22,8 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 ## Jobs
 
 ### deploy-service-update
-parameter	| description	| required |	default |	type
+| parameter	| description	| required |	default |	type |
+| --- | --- | --- | --- | --- |
 
 ## Example
 
