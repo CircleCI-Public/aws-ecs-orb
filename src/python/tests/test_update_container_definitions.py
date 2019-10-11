@@ -283,7 +283,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_volumes_key(self):
         """Updated definition preserves the lack of volumes key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_volumes_key
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(updated_obj[0].get('volumes'), None)
@@ -292,7 +292,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_volumes(self):
         """Updated definition preserves the empty volumes"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_volumes
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['volumes']), 0)
@@ -301,7 +301,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_placement_constraints_key(self):
         """Updated definition preserves the lack of placementConstraints key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_requires_compatibilities_key
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(updated_obj[0].get('placementConstraints'), None)
@@ -310,7 +310,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_placement_constraints_key(self):
         """Updated definition preserves the empty placementConstraints"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_placement_constraints
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['placementConstraints']), 0)
@@ -319,7 +319,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_requires_compatibilities_key(self):
         """Updated definition preserves the lack of requiresCompatibilities key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_placement_constraints_key
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(updated_obj[0].get('requiresCompatibilities'), None)
@@ -328,7 +328,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_requires_compatibilities_key(self):
         """Updated definition preserves the empty requiresCompatibilities"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_requires_compatibilities
-        ret_val = run(task_dfn, 'container=timer',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['requiresCompatibilities']), 0)
