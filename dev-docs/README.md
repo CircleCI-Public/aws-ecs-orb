@@ -15,6 +15,7 @@ The following [project environment variables](https://circleci.com/docs/2.0/env-
 | `AWS_DEFAULT_REGION`           | Picked up by the AWS CLI              |
 | `AWS_ACCOUNT_ID`               | AWS account id                        |
 | `CIRCLECI_API_KEY`             | Used by the `queue` orb               |
+| `AWS_RESOURCE_NAME_PREFIX`     | 	Prefix that some of the required AWS resources are assumed to have in their names. The value should correspond to the `aws_resource_prefix` variable value in `terraform_setup/terraform.tfvars`.    |
 | `AWS_RESOURCE_NAME_PREFIX_EC2` | Prefix used to name AWS resources for EC2 launch type integration tests                                        |
 | `AWS_RESOURCE_NAME_PREFIX_FARGATE` | Prefix used to name AWS resources for Fargate launch type integration tests                               |
 | `AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE` | Prefix used to name AWS resources for Fargate launch type integration tests that use CodeDeploy |
