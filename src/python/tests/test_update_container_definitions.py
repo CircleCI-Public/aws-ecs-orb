@@ -286,7 +286,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
-        self.assertEqual(updated_obj[0].get('volumes'), None)
+        self.assertIsNone(updated_obj[0].get('volumes'))
         self.validate_no_change_made(task_dfn, updated_obj)
 
     def test_empty_volumes(self):
@@ -304,7 +304,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
-        self.assertEqual(updated_obj[0].get('placementConstraints'), None)
+        self.assertIsNone(updated_obj[0].get('placementConstraints'))
         self.validate_no_change_made(task_dfn, updated_obj)
 
     def test_empty_placement_constraints_key(self):
@@ -322,7 +322,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
-        self.assertEqual(updated_obj[0].get('requiresCompatibilities'), None)
+        self.assertIsNone(updated_obj[0].get('requiresCompatibilities'))
         self.validate_no_change_made(task_dfn, updated_obj)
 
     def test_empty_requires_compatibilities_key(self):
