@@ -13,6 +13,8 @@ executors:
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs@dev:alpha
+
+
   circleci-cli: circleci/circleci-cli@0.1.2
   circle-compare-url: iynere/compare-url@0.3.1
   queue: eddiewebb/queue@1.0.110
@@ -416,19 +418,6 @@ commands:
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
-    unset_env_var:
-      description: "unset environment variables"
-      parameters:
-        var_name:
-            description: "variable name to be deleted from environment variable list"
-            type: string
-            default: ""
-      steps:
-      - run:
-          name: UNSET  Env variables
-          command: |
-            unsetenv("<<parameters.var_name>>")
-
 workflows:
   build_deploy-dev:
     jobs:
