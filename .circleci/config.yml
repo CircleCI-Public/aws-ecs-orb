@@ -416,7 +416,26 @@ commands:
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
-
+            
+  set_aws_credentials:
+      descriptions: "Set credentials to access AWS Resources"
+      parameters: 
+        aws-access-key-id:
+          description : "Access key"
+          type: string
+        aws-secret-access-key:
+          description : "Secret access key"
+          type: string
+        aws-region:
+          description: "Aws Region"
+          type: string
+      steps:
+        - run:
+            name: runs aws configure for setting credentials
+            command: |
+               aws configure set <<parameters.aws-access-key-id>>\
+               aws configure set <<parameters.aws-secret-access-key>>\
+               aws configure set <<parameters.aws-region>>
 workflows:
   build_deploy-dev:
     jobs:
