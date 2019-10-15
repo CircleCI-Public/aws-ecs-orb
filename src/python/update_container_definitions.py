@@ -68,7 +68,7 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
 
     # Expected format: container=...,image-and-tag|image|tag=...,container=...,image-and-tag|image|tag=...,
     try:
-        if "container=" not in container_image_name_updates:
+        if container_image_name_updates and "container=" not in container_image_name_updates:
             raise ValueError(
                 'The container parameter is required in the container_image_name_updates variable.')
 
