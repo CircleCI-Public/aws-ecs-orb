@@ -21,12 +21,12 @@ See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aw
 
 ## Example
 
-```
+```yaml
 version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@0.0.10
+  aws-ecs: circleci/aws-ecs@0.0.15
 
 jobs:
   update-tag:

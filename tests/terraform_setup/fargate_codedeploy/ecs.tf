@@ -3,19 +3,20 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 }
 
 resource "aws_ecs_task_definition" "ecs_task_dfn" {
-  family = "${var.aws_resource_prefix}"
+  family                   = "${var.aws_resource_prefix}-service"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = 1024
   memory                   = 2048
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
   container_definitions = <<DEFINITION
 [
   {
     "cpu": 128,
     "portMappings": [{
-      "containerPort": ${var.app_port},
-      "hostPort": ${var.app_port}
+      "containerPort": ${var.container_port},
+      "hostPort": ${var.host_port}
     }],
     "environment": [{
       "name": "SECRET",
@@ -32,14 +33,14 @@ DEFINITION
 }
 
 resource "aws_ecs_service" "ecs_service" {
-  name          = "${var.aws_resource_prefix}"
-  cluster       = "${aws_ecs_cluster.ecs_cluster.id}"
-  desired_count = 2
-  task_definition = "${aws_ecs_task_definition.ecs_task_dfn.arn}"
-  launch_type = "FARGATE"
+  name            = "${var.aws_resource_prefix}-service"
+  cluster         = aws_ecs_cluster.ecs_cluster.id
+  desired_count   = 2
+  task_definition = aws_ecs_task_definition.ecs_task_dfn.arn
+  launch_type     = "FARGATE"
 
   deployment_controller {
-      type = "CODE_DEPLOY"
+    type = "CODE_DEPLOY"
   }
 
   network_configuration {
@@ -51,7 +52,7 @@ resource "aws_ecs_service" "ecs_service" {
   load_balancer {
     target_group_arn = aws_alb_target_group.blue.id
     container_name   = "${var.aws_resource_prefix}-service"
-    container_port   = var.app_port
+    container_port   = var.container_port
   }
 
   depends_on = [aws_alb_listener.front_end_blue, aws_iam_role_policy_attachment.ecs_task_execution_role]
@@ -81,7 +82,7 @@ EOF
 
 resource "aws_iam_role_policy_attachment" "AWSCodeDeployRole" {
   policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
-  role       = "${aws_iam_role.codedeployrole.name}"
+  role       = aws_iam_role.codedeployrole.name
 }
 
 resource "aws_codedeploy_app" "codedeployapp" {
@@ -90,10 +91,10 @@ resource "aws_codedeploy_app" "codedeployapp" {
 }
 
 resource "aws_codedeploy_deployment_group" "deployment_group" {
-  app_name               = "${aws_codedeploy_app.codedeployapp.name}"
+  app_name               = aws_codedeploy_app.codedeployapp.name
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   deployment_group_name  = "${var.aws_resource_prefix}-codedeploygroup"
-  service_role_arn       = "${aws_iam_role.codedeployrole.arn}"
+  service_role_arn       = aws_iam_role.codedeployrole.arn
 
   auto_rollback_configuration {
     enabled = true
@@ -117,22 +118,22 @@ resource "aws_codedeploy_deployment_group" "deployment_group" {
   }
 
   ecs_service {
-    cluster_name = "${aws_ecs_cluster.ecs_cluster.name}"
-    service_name = "${aws_ecs_service.ecs_service.name}"
+    cluster_name = aws_ecs_cluster.ecs_cluster.name
+    service_name = aws_ecs_service.ecs_service.name
   }
 
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = ["${aws_alb_listener.front_end_blue.arn}"]
+        listener_arns = [aws_alb_listener.front_end_blue.arn]
       }
 
       target_group {
-        name = "${aws_alb_target_group.blue.name}"
+        name = aws_alb_target_group.blue.name
       }
 
       target_group {
-        name = "${aws_alb_target_group.green.name}"
+        name = aws_alb_target_group.green.name
       }
     }
   }
