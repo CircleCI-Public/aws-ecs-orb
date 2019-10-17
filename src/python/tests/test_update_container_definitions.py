@@ -34,6 +34,14 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         self._test_image_update(task_dfn,
             image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
 
+    def test_container_not_set_update_param(self):
+        """Exception is raised when using undefined container"""
+        task_dfns = [TestContainerDefinitionsUpdate.task_dfn_multi_containers,
+                     TestContainerDefinitionsUpdate.task_dfn_empty_volumes]
+        for task_dfn in task_dfns:
+            self.assertRaises(ValueError, run, task_dfn,
+                              'image-and-tag=ruby', '')
+
     def test_invalid_image_update_param_container(self):
         """Exception is raised when using an incorrectly formatted image update param value"""
         self.assertRaises(ValueError,
@@ -289,7 +297,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_volumes_key(self):
         """Updated definition preserves the lack of volumes key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_volumes_key
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertIsNone(updated_obj[0].get('volumes'))
@@ -298,7 +306,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_volumes(self):
         """Updated definition preserves the empty volumes"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_volumes
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['volumes']), 0)
@@ -307,7 +315,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_placement_constraints_key(self):
         """Updated definition preserves the lack of placementConstraints key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_requires_compatibilities_key
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertIsNone(updated_obj[0].get('placementConstraints'))
@@ -316,7 +324,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_placement_constraints_key(self):
         """Updated definition preserves the empty placementConstraints"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_placement_constraints
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['placementConstraints']), 0)
@@ -325,7 +333,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_no_requires_compatibilities_key(self):
         """Updated definition preserves the lack of requiresCompatibilities key"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_no_placement_constraints_key
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertIsNone(updated_obj[0].get('requiresCompatibilities'))
@@ -334,7 +342,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     def test_empty_requires_compatibilities_key(self):
         """Updated definition preserves the empty requiresCompatibilities"""
         task_dfn = TestContainerDefinitionsUpdate.task_dfn_empty_requires_compatibilities
-        ret_val = run(task_dfn, '',  '')
+        ret_val = run(task_dfn, 'container=sleep,image=busybox',  '')
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         self.assertEqual(len(updated_obj[0]['requiresCompatibilities']), 0)
