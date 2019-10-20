@@ -4,7 +4,7 @@
   "description": "A CircleCI Orb to simplify deployments to Amazon Elastic Container Service (ECS), supporting the EC2 and Fargate launch types.",
   "main": "index.js",
   "dependencies": {
-    "handlebars": "^4.1.2"
+    "handlebars": "^4.4.3"
   },
   "devDependencies": {},
   "scripts": {
