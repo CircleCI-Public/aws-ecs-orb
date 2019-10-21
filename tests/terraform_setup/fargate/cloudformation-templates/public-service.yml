@@ -86,6 +86,8 @@ Resources:
           Environment:
             - Name: VERSION_INFO
               Value: 'v0'
+            - Name: TEST_VAR
+              Value: "just testin' here"
 
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
