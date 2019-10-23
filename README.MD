@@ -49,6 +49,6 @@ workflows:
 
 ## Contributing
 
-We welcome [issues](https://github.com/CircleCI-Public/aws-ecs-orb/issues) to and [pull requests](https://github.com/CircleCI-Public/aws-ecs-orb/pulls) against this repository!
+We welcome new [issues](https://github.com/CircleCI-Public/aws-ecs-orb/issues) and [pull requests](https://github.com/CircleCI-Public/aws-ecs-orb/pulls) against this repository!
 
 For further questions/comments about this or other orbs, visit [CircleCI's orbs discussion forum](https://discuss.circleci.com/c/orbs).
