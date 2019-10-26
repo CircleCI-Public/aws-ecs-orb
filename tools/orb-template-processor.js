@@ -1,5 +1,5 @@
 const Handlebars = require('handlebars'),
-fs = require('fs');
+const fs = require('fs');
 const templateContents = fs.readFileSync(process.argv[2]).toString();
 const containerDefsScript = fs.readFileSync("src/python/update_container_definitions.py").toString();
 const getTaskDefScript = fs.readFileSync("src/python/get_task_definition_value.py").toString();
