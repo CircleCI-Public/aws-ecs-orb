@@ -12,7 +12,7 @@ A sample project that demonstrates using the orb is available on this GitHub rep
 
 ## Usage
 
-See the [orb registry listing](http://circleci.com/orbs/registry/orb/circleci/aws-ecs) for usage guidelines.
+See the [orb registry listing](https://circleci.com/orbs/registry/orb/circleci/aws-ecs) for usage guidelines.
 
 ## Requirements
 - `python` should be available in `PATH`. Supported versions are Python 2 version 2.7.1 and above and Python 3 version 3.4.9 and above.
