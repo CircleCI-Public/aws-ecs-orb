@@ -1,7 +1,9 @@
 version: 2.1
 description: |
-  An orb for working with Amazon Elastic Container Service (ECS)
-  AWS ECS Orb Source: https://github.com/CircleCI-Public/aws-ecs-orb
+  An orb for working with Amazon Elastic Container Service (ECS).
+  Supports the EC2 and Fargate launch types and Blue/Green deployment
+  via CodeDeploy.
+  Repository link: https://github.com/CircleCI-Public/aws-ecs-orb
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
@@ -386,7 +388,7 @@ jobs:
           you automatically trigger a task to run a batch process job, you
           could apply a unique identifier for that job to your task with the
           startedBy parameter. You can then identify which tasks belong to
-          that job by filtering the results of a ListTasks  call with  the
+          that job by filtering the results of a ListTasks call with the
           startedBy value. Up to 36 letters (uppercase and lowercase), num-
           bers, hyphens, and underscores are allowed.
         type: string
@@ -429,7 +431,7 @@ jobs:
         default: "LATEST"
       awsvpc:
         description: |
-          "Does your task defintion use awsvpc mode or not. If so,
+          "Does your task definition use awsvpc mode or not. If so,
           this should be true and you should also include subnet-ids
           and optionally security-group-ids / assign-public-ips."
         type: boolean
@@ -466,10 +468,10 @@ jobs:
         default: false
       propagate-tags:
         description: |
-          "Specifies  whether to propagate the tags from the task definition to
-          the task. If no value is specified, the  tags  are  not  propagated.
+          "Specifies whether to propagate the tags from the task definition to
+          the task. If no value is specified, the tags are not propagated.
           Tags can only be propagated to the task during task creation. To add
-          tags to a task after task creation, use the  TagResource API action."
+          tags to a task after task creation, use the TagResource API action."
         type: boolean
         default: false
     steps:
@@ -887,7 +889,7 @@ commands:
           you automatically trigger a task to run a batch process job, you
           could apply a unique identifier for that job to your task with the
           startedBy parameter. You can then identify which tasks belong to
-          that job by filtering the results of a ListTasks  call with  the
+          that job by filtering the results of a ListTasks call with the
           startedBy value. Up to 36 letters (uppercase and lowercase), num-
           bers, hyphens, and underscores are allowed.
         type: string
@@ -967,10 +969,10 @@ commands:
         default: false
       propagate-tags:
         description: |
-          "Specifies  whether to propagate the tags from the task definition to
-          the task. If no value is specified, the  tags  are  not  propagated.
+          "Specifies whether to propagate the tags from the task definition to
+          the task. If no value is specified, the tags are not propagated.
           Tags can only be propagated to the task during task creation. To add
-          tags to a task after task creation, use the  TagResource API action."
+          tags to a task after task creation, use the TagResource API action."
         type: boolean
         default: false
     steps:
