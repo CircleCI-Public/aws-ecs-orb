@@ -30,7 +30,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         env_var_update_param = 'container=web,name=%s,value=%s,container=timer,name=%s,value=%s,container=web,name=%s,value=%s,container=web,name=%s,value=%s,' % (
             'protocol', 'https', 'scheduled', 'every week', 'hostname', '127.0.0.1', 'password', "jgfgfgdf'vgfgffx")
         updated_containers = ['web', 'timer']
-        expected_diff = '{"0": {"image": "ruby:latest", "environment": [{"name": "protocol", "value": "https"}, {"name": "hostname", "value": "127.0.0.1"}, {"name": "password", "value": "jgfgfgdf\\\\\'vgfgffx"}]}, "1": {"image": "python:3.7.1", "environment": [{"name": "scheduled", "value": "every week"}]}}'
+        expected_diff = '{"0": {"image": "ruby:latest", "environment": [{"name": "protocol", "value": "https"}, {"name": "hostname", "value": "127.0.0.1"}, {"name": "password", "value": "jgfgfgdf\'\\"\'\\"\'vgfgffx"}]}, "1": {"image": "python:3.7.1", "environment": [{"name": "scheduled", "value": "every week"}]}}'
         self._test_image_update(task_dfn,
             image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
 
