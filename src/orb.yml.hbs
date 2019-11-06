@@ -34,7 +34,9 @@ examples:
                 container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
 
   update-service:
-    description: Use the AWS CLI and this orb to update an ECS service.
+    description: |
+      Use the AWS CLI and this orb to update an ECS service.
+      (Supports both EC2 and Fargate launch types)
     usage:
       version: 2.1
 
@@ -103,7 +105,6 @@ examples:
       version: 2.1
 
       orbs:
-        aws-cli: circleci/aws-cli@0.1.4
         aws-ecs: circleci/aws-ecs@x.y.z
 
       jobs:
@@ -130,7 +131,6 @@ examples:
       version: 2.1
 
       orbs:
-        aws-cli: circleci/aws-cli@0.1.4
         aws-ecs: circleci/aws-ecs@x.y.z
 
       jobs:
