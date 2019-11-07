@@ -1,5 +1,11 @@
 version: 2.1
 
+orb_promotion_filters: &orb_promotion_filters
+  branches:
+    ignore: /.*/
+  tags:
+    only: /^(major|minor|patch)-release-v\d+\.\d+\.\d+$/
+
 executors:
   cli:
     resource_class: small
@@ -14,8 +20,13 @@ orbs:
   aws-cli: circleci/aws-cli@0.1.4
   aws-ecs: circleci/aws-ecs@dev:alpha
   circleci-cli: circleci/circleci-cli@0.1.2
-  circle-compare-url: iynere/compare-url@0.3.1
   queue: eddiewebb/queue@1.0.110
+  orb-tools: circleci/orb-tools@8.27.3
+
+parameters:
+  run-integration-tests:
+    type: boolean
+    default: false
 
 jobs:
   build-orb:
@@ -72,6 +83,21 @@ jobs:
           root: src
           paths:
             - orb.yml
+
+  trigger-integration-tests:
+    docker:
+      - image: circleci/python:3.7.1
+    steps:
+      - checkout
+      - run:
+          name: Trigger integration workflow
+          command: |
+            curl -u ${CIRCLE_TOKEN}: -X POST --header "Content-Type: application/json" -d "{
+              \"branch\": \"${CIRCLE_BRANCH}\",
+              \"parameters\": {
+                \"run-integration-tests\": true
+              }
+            }" "https://circleci.com/api/v2/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
 
   build-test-app:
     docker:
@@ -258,98 +284,48 @@ jobs:
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
-
-  publish-orb:
-    description: Publish the orb
-    parameters:
-      filepath:
-        type: string
-        default: orb.yml
-      to-prod:
-        type: boolean
-        default: false
-      release-type:
-        type: enum
-        description: If publishing to production, what type of release?
-        enum: ["patch", "minor", "major"]
-        default: "patch"
-      circle-token:
-        type: env_var_name
-        default: CIRCLE_TOKEN
-    executor: cli
+  # Orb promotion workflow jobs
+  pre-orb-promotion-check:
+    docker:
+      - image: circleci/python:3.7.1
     steps:
       - checkout
-      - attach_workspace:
-          at: workspace
-      - unless:
-          condition: <<parameters.to-prod>>
-          steps:
-            - run:
-                name: publish dev versions
-                command: |
-                  # for integration testing
-                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:alpha --token $CIRCLE_TOKEN
-
-                  # for transparency
-                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:$CIRCLE_BRANCH-${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
-
-                  # for potentially promoting to prod
-                  circleci orb publish <<parameters.filepath>> circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} --token $CIRCLE_TOKEN
-
-      - when:
-          condition: <<parameters.to-prod>>
-          steps:
-            - run:
-                name: use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
-                command: |
-                  # use compare URL commit range (stored in git tag) to determine if prod publishing is necessary
-
-                  if [[ $(echo "$CIRCLE_TAG" | grep "integration-") ]]; then
-                    COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:integration-::' | sed 's:\._\.:...:')
-                  elif [[ $(echo "$CIRCLE_TAG" | grep "master-") ]]; then
-                    COMMIT_RANGE=$(echo "$CIRCLE_TAG" | sed 's:master-::' | sed 's:\._\.:...:')
-                  fi
-
-                  if [[ $(git diff $COMMIT_RANGE --name-status | grep -e "src" -e "tools" -e "tests" -e build_orb) ]]; then
-                    circleci orb publish promote circleci/aws-ecs@dev:${CIRCLE_SHA1:0:7} <<parameters.release-type>> --token $CIRCLE_TOKEN
-                  fi
-
-  trigger-integration:
-    executor: node
-    parameters:
-      tag:
-        type: enum
-        default: "integration"
-        enum: ["integration", master]
-    steps:
-      - checkout
-
-      - attach_workspace:
-          at: workspace
-
-      - add_ssh_keys:
-          fingerprints:
-            - "fc:22:bf:38:f5:27:ea:6a:98:a3:d1:ce:ae:17:56:8a"
-
       - run:
-          name: git config
+          name: Check that this is a master branch commit
           command: |
-            git config --global user.email "$CIRCLE_USERNAME@users.noreply.github.com"
-            git config --global user.name "$CIRCLE_USERNAME"
-
-      - run: |
-          # save value stored in file to a local env var
-          CIRCLE_COMPARE_URL=$(cat workspace/CIRCLE_COMPARE_URL.txt)
-
-          # borrowed from https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos
-
-          COMMIT_RANGE=$(echo $CIRCLE_COMPARE_URL | sed 's:^.*/compare/::g')
-          echo "Commit range: $COMMIT_RANGE"
-
-          INTEGRATION_TAG=<<parameters.tag>>-$(echo $COMMIT_RANGE | sed 's:\.\.\.:._.:')
-          git tag $INTEGRATION_TAG
-          git push origin $INTEGRATION_TAG
-
+            git clone "$CIRCLE_REPOSITORY_URL" repository
+            cd repository
+            git branch --contains ${CIRCLE_SHA1} | grep "master"
+  promote-orb-into-production:
+    parameters:
+      orb-name:
+        type: string
+        description: |
+          Semver-less name of the orb to be promoted into production
+      orb-ref:
+        type: string
+        description: |
+          Version information of the orb to be promoted into production
+    executor: circleci-cli/default
+    steps:
+      - checkout
+      - run:
+          name: Promote dev orb to production
+          command: |
+            RELEASE_TYPE=''
+            if [[ "${CIRCLE_TAG}" =~ major-release-* ]]; then
+              RELEASE_TYPE='major'
+            elif [[ "${CIRCLE_TAG}" =~ minor-release-* ]]; then
+              RELEASE_TYPE='minor'
+            elif [[ "${CIRCLE_TAG}" =~ patch-release-* ]]; then
+              RELEASE_TYPE='patch'
+            fi
+            if [ -n "${RELEASE_TYPE}" ]; then
+              circleci orb publish promote \
+              <<parameters.orb-name>>@<<parameters.orb-ref>> \
+              ${RELEASE_TYPE} --token \
+              ${CIRCLE_TOKEN}
+            fi
 commands:
   wait-for-codedeploy-deployment:
     description: "Wait for the CodeDeploy deployment to be successful"
@@ -419,164 +395,102 @@ commands:
 
 workflows:
   build_deploy-dev:
+    unless: << pipeline.parameters.run-integration-tests >>
     jobs:
       - build-orb
-
-      - publish-orb:
-          name: publish-dev-orb
-          filepath: workspace/orb.yml
-          context: orb-publishing
-          requires:
-            - build-orb
-
-      - circle-compare-url/reconstruct:
-          name: reconstruct_compare_url
-          resource-class: small
-          requires:
-            - publish-dev-orb
 
       - queue/block_workflow:
           consider-branch: false
           requires:
-            - reconstruct_compare_url
+            - build-orb
 
-      - trigger-integration:
-          name: trigger-integration-dev
+      - orb-tools/publish-dev:
+          orb-name: circleci/aws-ecs
           requires:
             - queue/block_workflow
-          filters:
-            branches:
-              ignore: master
+          context: orb-publishing
 
-      - trigger-integration:
-          name: trigger-integration-master
-          tag: master
+      - trigger-integration-tests:
           requires:
-            - queue/block_workflow
-          filters:
-            branches:
-              only: master
+            - orb-tools/publish-dev
+          context: orb-publishing
 
-  integration_test-prod_deploy:
+  integration_tests:
+    when: << pipeline.parameters.run-integration-tests >>
     jobs:
       - build-test-app:
-          name: ec2_build-test-app-dev
+          name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - build-test-app:
-          name: fargate_build-test-app-dev
+          name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - build-test-app:
-          name: codedeploy_fargate_build-test-app-dev
+          name: codedeploy_fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - set-up-test-env:
-          name: ec2_set-up-test-env-dev
+          name: ec2_set-up-test-env
           requires:
-            - ec2_build-test-app-dev
+            - ec2_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - set-up-test-env:
-          name: fargate_set-up-test-env-dev
+          name: fargate_set-up-test-env
           requires:
-            - fargate_build-test-app-dev
+            - fargate_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - set-up-test-env:
-          name: codedeploy_fargate_set-up-test-env-dev
+          name: codedeploy_fargate_set-up-test-env
           requires:
-            - codedeploy_fargate_build-test-app-dev
+            - codedeploy_fargate_build-test-app
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - test-service-update:
-          name: ec2_test-update-service-command-dev
+          name: ec2_test-update-service-command
           requires:
-            - ec2_set-up-test-env-dev
+            - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - test-service-update:
-          name: fargate_test-update-service-command-dev
+          name: fargate_test-update-service-command
           requires:
-            - fargate_set-up-test-env-dev
+            - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - test-service-update:
-          name: codedeploy_fargate_test-update-service-command-dev
+          name: codedeploy_fargate_test-update-service-command
           requires:
-            - codedeploy_fargate_set-up-test-env-dev
+            - codedeploy_fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - aws-ecs/deploy-service-update:
-          name: ec2_test-update-service-job-dev
+          name: ec2_test-update-service-job
           docker-image-for-job: circleci/python:2.7.15
           requires:
-            - ec2_test-update-service-command-dev
+            - ec2_test-update-service-command
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
@@ -589,17 +503,12 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-job-dev
+          name: fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - fargate_test-update-service-command-dev
+            - fargate_test-update-service-command
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
@@ -612,17 +521,12 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - aws-ecs/deploy-service-update:
-          name: codedeploy_fargate_test-update-service-job-dev
+          name: codedeploy_fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - codedeploy_fargate_test-update-service-command-dev
+            - codedeploy_fargate_test-update-service-command
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
@@ -647,290 +551,44 @@ workflows:
             - delete-service:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - tear-down-test-env:
-          name: ec2_tear-down-test-env-dev
+          name: ec2_tear-down-test-env
           requires:
-            - ec2_test-update-service-job-dev
+            - ec2_test-update-service-job
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - tear-down-test-env:
-          name: fargate_tear-down-test-env-dev
+          name: fargate_tear-down-test-env
           requires:
-            - fargate_test-update-service-job-dev
+            - fargate_test-update-service-job
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
       - tear-down-test-env:
-          name: codedeploy_fargate_tear-down-test-env-dev
+          name: codedeploy_fargate_tear-down-test-env
           requires:
-            - codedeploy_fargate_test-update-service-job-dev
+            - codedeploy_fargate_test-update-service-job
           terraform-image: "hashicorp/terraform:latest"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /integration-.*/
 
-      - build-test-app:
-          name: ec2_build-test-app-master
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - build-test-app:
-          name: fargate_build-test-app-master
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - build-test-app:
-          name: codedeploy_fargate_build-test-app-master
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - set-up-test-env:
-          name: ec2_set-up-test-env-master
+  # Tag-triggered workflow to promote a dev orb into production.
+  # The tag is expected to have been applied manually.
+  production-orb-publishing:
+    jobs:
+      - pre-orb-promotion-check:
+          filters: *orb_promotion_filters
+      - hold-for-approval:
+          type: approval
           requires:
-            - ec2_build-test-app-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - set-up-test-env:
-          name: fargate_set-up-test-env-master
-          requires:
-            - fargate_build-test-app-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - set-up-test-env:
-          name: codedeploy_fargate_set-up-test-env-master
-          requires:
-            - codedeploy_fargate_build-test-app-master
-          terraform-image: "hashicorp/terraform:latest"
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - test-service-update:
-          name: ec2_test-update-service-command-master
-          requires:
-            - ec2_set-up-test-env-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - test-service-update:
-          name: fargate_test-update-service-command-master
-          requires:
-            - fargate_set-up-test-env-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - test-service-update:
-          name: codedeploy_fargate_test-update-service-command-master
-          requires:
-            - codedeploy_fargate_set-up-test-env-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          skip-service-update: true
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - aws-ecs/deploy-service-update:
-          name: ec2_test-update-service-job-master
-          docker-image-for-job: circleci/python:2.7.15
-          requires:
-            - ec2_test-update-service-command-master
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
-          verify-revision-is-deployed: true
-          fail-on-verification-timeout: false
-          post-steps:
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-job-master
-          docker-image-for-job: circleci/python:3.4.9
-          requires:
-            - fargate_test-update-service-command-master
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
-          verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
-          post-steps:
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - aws-ecs/deploy-service-update:
-          name: codedeploy_fargate_test-update-service-job-master
-          docker-image-for-job: circleci/python:3.4.9
-          requires:
-            - codedeploy_fargate_test-update-service-command-master
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
-          deployment-controller: "CODE_DEPLOY"
-          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy-load-balanced-container-port: 8080
-          # verify-revision-is-deployed is not supported for blue/green deployment type services
-          verify-revision-is-deployed: false
-          post-steps:
-            - wait-for-codedeploy-deployment:
-                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-                delete-load-balancer: true
-            - delete-service:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - tear-down-test-env:
-          name: ec2_tear-down-test-env-master
-          requires:
-            - ec2_test-update-service-job-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - tear-down-test-env:
-          name: fargate_tear-down-test-env-master
-          requires:
-            - fargate_test-update-service-job-master
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - tear-down-test-env:
-          name: codedeploy_fargate_tear-down-test-env-master
-          requires:
-            - codedeploy_fargate_test-update-service-job-master
-          terraform-image: "hashicorp/terraform:latest"
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
-
-      - publish-orb:
-          name: publish-prod-orb
-          to-prod: true
+            - pre-orb-promotion-check
+          filters: *orb_promotion_filters
+      - promote-orb-into-production:
+          orb-name: circleci/aws-ecs
+          orb-ref: dev:${CIRCLE_SHA1:0:7}
           context: orb-publishing
           requires:
-            - fargate_tear-down-test-env-master
-            - ec2_tear-down-test-env-master
-            - codedeploy_fargate_tear-down-test-env-master
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /master-.*/
+            - hold-for-approval
+          filters: *orb_promotion_filters
