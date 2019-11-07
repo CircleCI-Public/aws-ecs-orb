@@ -19,20 +19,6 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
     task_dfn_empty_requires_compatibilities = '{"taskDefinition": {"volumes": [], "taskDefinitionArn": "arn:aws:ecs:us-east-1:111:task-definition/sleep360:19", "containerDefinitions": [{"environment": [], "name": "sleep", "mountPoints": [], "image": "busybox", "cpu": 10, "portMappings": [], "command": ["sleep", "360"], "memory": 10, "essential": true, "volumesFrom": [], "requiresCompatibilities": []}], "family": "sleep360", "revision": 1}}'
     task_dfn_invalid = '{}'
     task_dfn_invalid_no_container_definitions = '{"taskDefinition": {"volumes": [], "taskDefinitionArn": "arn:aws:ecs:us-east-1:111:task-definition/sleep360:19"}'
-    task_dfn_empty_volumes_env_var_with_single_quote = '{"taskDefinition": {"volumes": [], "taskDefinitionArn": "arn:aws:ecs:us-east-1:111:task-definition/sleep360:19", "containerDefinitions": [{"environment": [{ "name": "paul\'s"}], "name": "sleep", "mountPoints": [], "image": "busybox", "cpu": 10, "portMappings": [], "command": ["sleep", "360"], "memory": 10, "essential": true, "volumesFrom": [], "volumes": []}], "family": "sleep360", "revision": 1}}'
-
-    def test_env_var_with_quote_escaped_update_param(self):
-        """Env vars are correctly added"""
-        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers
-        new_images = ['ruby:latest', 'python:3.7.1']
-        image_update_param = 'container=web,image-and-tag=%s,container=timer,image-and-tag=%s' % (
-            new_images[0], new_images[1])
-        env_var_update_param = 'container=web,name=%s,value=%s,container=timer,name=%s,value=%s,container=web,name=%s,value=%s,container=web,name=%s,value=%s,' % (
-            'protocol', 'https', 'scheduled', 'every week', 'hostname', '127.0.0.1', 'password', "jgfgfgdf'vgfgffx")
-        updated_containers = ['web', 'timer']
-        expected_diff = '{"0": {"image": "ruby:latest", "environment": [{"name": "protocol", "value": "https"}, {"name": "hostname", "value": "127.0.0.1"}, {"name": "password", "value": "jgfgfgdf\'\\"\'\\"\'vgfgffx"}]}, "1": {"image": "python:3.7.1", "environment": [{"name": "scheduled", "value": "every week"}]}}'
-        self._test_image_update(task_dfn,
-            image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
 
     def test_container_not_set_update_param(self):
         """Exception is raised when using undefined container"""
