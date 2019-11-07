@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import sys
 import json
+import re
 
 
 def run(previous_task_definition, container_image_name_updates, container_env_var_updates):
@@ -26,7 +27,7 @@ def run(previous_task_definition, container_image_name_updates, container_env_va
 
     # Expected format: container=...,name=...,value=...,container=...,name=...,value=
     try:
-        env_kv_pairs = container_env_var_updates.replace("'", "'\"'\"'").split(',')
+        env_kv_pairs = container_env_var_updates.split(',')
         for index, kv_pair in enumerate(env_kv_pairs):
             kv = kv_pair.split('=')
             key = kv[0].strip()
