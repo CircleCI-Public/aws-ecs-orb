@@ -637,7 +637,7 @@ commands:
             CONTAINER_DEFS=$(python $UPDATE_CONTAINER_DEFS_SCRIPT_FILE "$PREVIOUS_TASK_DEFINITION" "$CONTAINER_IMAGE_NAME_UPDATES" "$CONTAINER_ENV_VAR_UPDATES")
             
             # Escape single quotes from environment variables for BASH_ENV
-            CLEANED_CONTAINER_DEFS=$(sed -r "s/'+/'\\\''/g" <<< $CONTAINER_DEFS)
+            CLEANED_CONTAINER_DEFS=$(sed -r "s/'+/'\\\''/g" \<<< $CONTAINER_DEFS)
 
             # Prepare script for getting task definition values
             GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
