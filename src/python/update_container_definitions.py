@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import sys
 import json
-import re
 
 
 def run(previous_task_definition, container_image_name_updates, container_env_var_updates):
