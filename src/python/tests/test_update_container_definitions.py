@@ -33,7 +33,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         self.assertRaises(ValueError,
                           run, TestContainerDefinitionsUpdate.task_dfn_multi_containers,
                           'acontainer=web,container=timer,image-and-tag=golang', '')
-        
+
     def test_invalid_image_update_param(self):
         """Exception is raised when using an incorrectly formatted image update param value"""
         self.assertRaises(ValueError,
