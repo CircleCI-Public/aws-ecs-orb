@@ -85,8 +85,7 @@ Resources:
             - ContainerPort: !Ref 'ContainerPort'
           Environment:
             - Name: VERSION_INFO
-              Value: 'v0'
-
+              Value: "v0's release's testing of many '' single quotes '''"
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
   # as monitor the number of running tasks and replace any that have crashed
