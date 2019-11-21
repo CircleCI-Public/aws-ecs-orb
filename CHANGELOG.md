@@ -1,6 +1,39 @@
 # Changelog
 Documents changes in orb version releases.
 
+## [[1.0.1](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.1)]
+### Fixed
+- Fix bug that caused orb to fail if single quotes were present in task definition [\#67](https://github.com/CircleCI-Public/aws-ecs-orb/pull/67) ([Xheno](https://github.com/Xheno))
+
+## [[1.0.0](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.0)]
+### Changed
+- Improved the build process, but there is no actual change to the orb. Promoted the orb to a 1.0.0 version release as it can be considered stable. [\#77](https://github.com/CircleCI-Public/aws-ecs-orb/pull/77) ([lokst](https://github.com/lokst))
+
+## [[0.0.22](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.22)]
+### Fixed
+- Updated vulnerable handlebars version [\#69](https://github.com/CircleCI-Public/aws-ecs-orb/pull/69) ([sagarvd01](https://github.com/sagarvd01))
+Note: This is not a crucial fix since handlebars is only used at orb-build time to generate the orb YAML.
+
+## [[0.0.21](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.21)]
+### Changed
+- Update the orb description to mention AWS Fargate launch type support [\#71](https://github.com/CircleCI-Public/aws-ecs-orb/pull/71) ([lokst](https://github.com/lokst))
+
+## [[0.0.20](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.20)]
+### Fixed
+- Fix typo in orb description [\#70](https://github.com/CircleCI-Public/aws-ecs-orb/pull/70) ([ashishpatelcs](https://github.com/ashishpatelcs))
+
+## [[0.0.19](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.19)]
+### Changed
+- Improved validation: add validation check for if container is included in container-image-name-updates [\#39](https://github.com/CircleCI-Public/aws-ecs-orb/pull/39) ([Xheno](https://github.com/Xheno))
+
+## [[0.0.18](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.18)]
+### Changed
+- (No actual change to the orb) Use assertIsNone instead of assertEquals in Python testsuite [\#46](https://github.com/CircleCI-Public/aws-ecs-orb/pull/46) ([StrikerRUS](https://github.com/StrikerRUS))
+
+## [[0.0.17](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.17)]
+### Changed
+- Simplified and speeded up Python function [\#45](https://github.com/CircleCI-Public/aws-ecs-orb/pull/45) ([StrikerRUS](https://github.com/StrikerRUS))
+
 ## [[0.0.16](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=0.0.16)]
 ### Changed
 - Integration tests for the orb now use Terraform 0.12 instead of 0.11. (No actual change to the orb) [\#40](https://github.com/CircleCI-Public/aws-ecs-orb/pull/40) ([mikkopiu](https://github.com/mikkopiu))
