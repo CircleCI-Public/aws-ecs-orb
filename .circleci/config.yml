@@ -143,8 +143,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        # Pin to terraform 0.12
-        default: hashicorp/terraform@sha256:cf9b54657c498378e3fe43f5e36039c9b7d8e620a606fbdc713d63df514fb96d
+        default: hashicorp/terraform:0.12.16
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -291,8 +290,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        # Pin to terraform 0.12
-        default: hashicorp/terraform@sha256:cf9b54657c498378e3fe43f5e36039c9b7d8e620a606fbdc713d63df514fb96d
+        default: hashicorp/terraform:0.12.16
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -492,7 +490,7 @@ workflows:
           name: codedeploy_fargate_set-up-test-env
           requires:
             - codedeploy_fargate_build-test-app
-          terraform-image: "hashicorp/terraform:latest"
+          terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
 
@@ -637,7 +635,7 @@ workflows:
           name: codedeploy_fargate_tear-down-test-env
           requires:
             - codedeploy_fargate_test-update-service-job
-          terraform-image: "hashicorp/terraform:latest"
+          terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
 
