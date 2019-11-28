@@ -235,6 +235,12 @@ jobs:
           Values should not contain commas.
         type: string
         default: ""
+      force-new-deployment:
+        description: |
+          Whether to force a new deployment of the service.
+          Not applicable to ECS services that are of the Blue/Green Deployment type.
+        type: boolean
+        default: false
       verify-revision-is-deployed:
         description: |
           Runs the verify-revision-is-deployed Orb command to verify that
@@ -281,6 +287,7 @@ jobs:
           codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
+          force-new-deployment: << parameters.force-new-deployment >>
           verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
           max-poll-attempts: << parameters.max-poll-attempts >>
           poll-interval: << parameters.poll-interval >>
@@ -793,6 +800,12 @@ commands:
           Values should not contain commas.
         type: string
         default: ""
+      force-new-deployment:
+        description: |
+          Whether to force a new deployment of the service.
+          Not applicable to ECS services that are of the Blue/Green Deployment type.
+        type: boolean
+        default: false
       verify-revision-is-deployed:
         description: |
           Runs the verify-revision-is-deployed Orb command to verify that
@@ -851,6 +864,7 @@ commands:
                   --service "${SERVICE_NAME}" \
                   --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
                   --output text \
+                  --force-new-deployment "<< parameters.force-new-deployment >>" \
                   --query service.taskDefinition)
             fi
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV

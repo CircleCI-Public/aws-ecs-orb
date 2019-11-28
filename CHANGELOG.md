@@ -1,6 +1,10 @@
 # Changelog
 Documents changes in orb version releases.
 
+## [[1.0.2](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.2)]
+### Changed
+- Updated example to use more recent version of circleci/aws-ecr orb [\#81](https://github.com/CircleCI-Public/aws-ecs-orb/pull/81) ([uraway](https://github.com/uraway))
+
 ## [[1.0.1](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.1)]
 ### Fixed
 - Fix bug that caused orb to fail if single quotes were present in task definition [\#67](https://github.com/CircleCI-Public/aws-ecs-orb/pull/67) ([Xheno](https://github.com/Xheno))
