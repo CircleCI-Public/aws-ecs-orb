@@ -246,6 +246,47 @@ jobs:
                 service-name: "<< parameters.aws-resource-name-prefix >>-service"
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
 
+  set-up-run-task-test:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+      - run:
+          name: Register task definition
+          command: |
+            aws ecs register-task-definition \
+              --family << parameters.family-name >> \
+              --cpu 256 --memory 512 \
+              --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
+
+  tear-down-run-task-test:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+      - run:
+          name: Deregister task definition
+          command: |
+            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+              --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
+            aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
+
   tear-down-test-env:
     parameters:
       terraform-image:
@@ -455,6 +496,29 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
 
+      # test run-task job in ec2 env
+      - set-up-run-task-test:
+          name: ec2_set-up-run-task-test
+          requires:
+            - ec2_set-up-test-env
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+      - aws-ecs/run-task:
+          name: ec2_run-task-test
+          requires:
+            - ec2_set-up-run-task-test
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          aws-region: $AWS_DEFAULT_REGION
+          task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          launch-type: "EC2"
+          awsvpc: false
+          overrides: "{\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\": 512}]}"
+      - tear-down-run-task-test:
+          name: ec2_tear-down-run-task-test
+          requires:
+            - ec2_run-task-test
+          family-name: ecs-test-sleep360
+
+      # test ecs updates
       - test-service-update:
           name: ec2_test-update-service-command
           requires:
@@ -558,6 +622,7 @@ workflows:
           name: ec2_tear-down-test-env
           requires:
             - ec2_test-update-service-job
+            - ec2_tear-down-run-task-test
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
 

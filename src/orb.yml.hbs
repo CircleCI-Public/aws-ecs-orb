@@ -3,7 +3,9 @@ description: |
   An orb for working with Amazon Elastic Container Service (ECS).
   Supports the EC2 and Fargate launch types and Blue/Green deployment
   via CodeDeploy.
-  Repository link: https://github.com/CircleCI-Public/aws-ecs-orb
+
+display:
+  home_url: https://github.com/CircleCI-Public/aws-ecs-orb
 
 orbs:
   aws-cli: circleci/aws-cli@0.1.4
@@ -142,6 +144,7 @@ examples:
                 cluster: "cluster1"
                 task-definition: "myapp"
                 awsvpc: false
+                launch-type: "EC2"
 
       workflows:
         run-task:
@@ -461,6 +464,15 @@ jobs:
         type: enum
         enum: ["ENABLED", "DISABLED"]
         default: "DISABLED"
+      overrides:
+        description: |
+          A list of container overrides in JSON format that specify the name of
+          a container in the specified task definition and the overrides it
+          should receive.
+          Double quotes in the JSON should be escaped e.g.:
+          {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\": 512}]}
+        type: string
+        default: ""
       tags:
         description: |
           "The metadata that you apply to the task to help you categorize and
@@ -501,6 +513,7 @@ jobs:
           subnet-ids: << parameters.subnet-ids >>
           security-group-ids: << parameters.security-group-ids >>
           assign-public-ip: << parameters.assign-public-ip >>
+          overrides: << parameters.overrides >>
           tags: << parameters.tags >>
           enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
           propagate-tags: << parameters.propagate-tags >>
@@ -975,6 +988,15 @@ commands:
         type: enum
         enum: ["ENABLED", "DISABLED"]
         default: "DISABLED"
+      overrides:
+        description: |
+          A list of container overrides in JSON format that specify the name of
+          a container in the specified task definition and the overrides it
+          should receive.
+          Double quotes in the JSON should be escaped e.g.:
+          {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\": 512}]}
+        type: string
+        default: ""
       tags:
         description: |
           "The metadata that you apply to the task to help you categorize and
@@ -1010,6 +1032,10 @@ commands:
             if [ ! -z "<<parameters.group>>" ]; then
                 echo "Setting --group"
                 set -- "$@" --group "<<parameters.group>>"
+            fi
+            if [ ! -z "<<parameters.overrides>>" ]; then
+                echo "Setting --overrides"
+                set -- "$@" --overrides "<<parameters.overrides>>"
             fi
             if [ ! -z "<<parameters.tags>>" ]; then
                 echo "Setting --tags"
