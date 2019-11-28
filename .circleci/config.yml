@@ -514,6 +514,8 @@ workflows:
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          # test the force-new-deployment flag
+          force-new-deployment: true
           verify-revision-is-deployed: true
           max-poll-attempts: 40
           poll-interval: 10
