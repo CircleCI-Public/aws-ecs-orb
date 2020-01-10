@@ -413,6 +413,10 @@ commands:
       cluster-name:
           description: "Name of the cluster"
           type: string
+      test-asterisk-expansion:
+          description: "Checks that asterisk expansion is prevented"
+          type: boolean
+          default: false
       delete-load-balancer:
           description: "Whether to delete the load balancer after the test"
           type: boolean
@@ -426,7 +430,8 @@ commands:
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             for attempt in {1..25}; do
-              curl -s --retry 10 http://$ELB_DNS_NAME | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}"
+              curl -s --retry 10 http://$ELB_DNS_NAME \
+                | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
             done
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
@@ -558,13 +563,14 @@ workflows:
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
           verify-revision-is-deployed: true
           fail-on-verification-timeout: false
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+                test-asterisk-expansion: true
 
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
