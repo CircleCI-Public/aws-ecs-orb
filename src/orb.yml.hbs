@@ -746,7 +746,7 @@ commands:
                 --query 'taskDefinition.taskDefinitionArn')
             echo "Registered task definition: ${REVISION}"
             echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
-  update-task-definition-cli-input-json:
+  update-task-definition-from-json:
     description: Registers a task definition based on a json file.
     parameters:
       task-definition-json:
