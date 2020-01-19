@@ -781,8 +781,11 @@ commands:
           name: Register new task definition
           command: |
             TASK_DEFINITION_JSON="$(echo << parameters.task-definition-json >>)"
+            if [ "${TASK_DEFINITION_JSON:0:1}" != "/" ]; then
+                TASK_DEFINITION_JSON="$(pwd)/${TASK_DEFINITION_JSON}"
+            fi
             REVISION=$(aws ecs register-task-definition \
-                --cli-input-json file://$(pwd)/${TASK_DEFINITION_JSON} \
+                --cli-input-json file://${TASK_DEFINITION_JSON} \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
             echo "Registered task definition: ${REVISION}"
