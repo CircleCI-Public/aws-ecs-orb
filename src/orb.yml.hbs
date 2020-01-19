@@ -35,6 +35,28 @@ examples:
                 cluster-name: "${MY_APP_PREFIX}-cluster"
                 container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
 
+  update-task-definition-from-json:
+    description: |
+      Use the AWS CLI and this orb to create a new ECS task definition
+      based upon a local JSON file.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.1.4
+        aws-ecs: circleci/aws-ecs@1.0.5
+
+      jobs:
+        update-tag:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-cli/install
+            - aws-cli/configure:
+                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+                aws-region: "$AWS_REGION"
+            - aws-ecs/update-task-definition-from-json:
+                task-definition-json: "my-app-definition.json"
   update-service:
     description: |
       Use the AWS CLI and this orb to update an ECS service.
