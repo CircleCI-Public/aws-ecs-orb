@@ -245,6 +245,33 @@ jobs:
                 service-name: "<< parameters.aws-resource-name-prefix >>-service"
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
 
+  test-task-definition-update:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+      - run:
+          name: Get existing task definition
+          command: |
+            aws ecs describe-task-definition --task-definition << parameters.family-name >> \
+              | jq '.taskDefinition' | jq '.memory = "3072"' \
+              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities"])' \
+              > task-definition.json
+      - aws-ecs/update-task-definition-from-json:
+          task-definition-json: "task-definition.json"
+      - run:
+          name: Check if task definition was updated
+          command: |
+            aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
+
   set-up-run-task-test:
     docker:
       - image: circleci/python:3.7.1
@@ -553,11 +580,17 @@ workflows:
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
 
+      - test-task-definition-update:
+          name: ec2_test-task-definition-update
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          requires:
+            - ec2_test-update-service-command
+
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
           docker-image-for-job: circleci/python:2.7.15
           requires:
-            - ec2_test-update-service-command
+            - ec2_test-task-definition-update
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
