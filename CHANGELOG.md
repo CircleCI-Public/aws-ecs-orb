@@ -1,6 +1,11 @@
 # Changelog
 Documents changes in orb version releases.
 
+## [[1.1.0](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.1.0)]
+### Added
+- Enhancement: Add update-task-definition-from-json command and job [\#91](https://github.com/CircleCI-Public/aws-ecs-orb/pull/91) ([a10waveracer](https://github.com/a10waveracer))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/91
+
 ## [[1.0.5](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.5)]
 ### Fixed
 - Prevent asterisk expansion when asterisk is present in task definition value [\#90](https://github.com/CircleCI-Public/aws-ecs-orb/pull/90) ([lokst](https://github.com/lokst))

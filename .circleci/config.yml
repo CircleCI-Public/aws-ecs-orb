@@ -546,7 +546,7 @@ workflows:
           name: ec2_tear-down-run-task-test
           requires:
             - ec2_run-task-test
-          family-name: ecs-test-sleep360
+          family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
 
       # test ecs updates
       - test-service-update:
