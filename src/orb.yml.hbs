@@ -796,7 +796,7 @@ commands:
             if [ -n "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" ] && [ "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" != "{}" ]; then
                 set -- "$@" --proxy-configuration "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}"
             fi
-            echo \$@ is: $@
+            echo "Before register-task-definition \$@ is: $@"
             REVISION=$(aws ecs register-task-definition \
                 --family << parameters.family >> \
                 --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
@@ -958,6 +958,7 @@ commands:
               if [ "<< parameters.force-new-deployment >>" == "true" ]; then
                   set -- "$@" --force-new-deployment
               fi
+              echo "Before update-service \$@ is: $@"
               DEPLOYED_REVISION=$(aws ecs update-service \
                   --cluster "<< parameters.cluster-name >>" \
                   --service "${SERVICE_NAME}" \
@@ -1146,6 +1147,7 @@ commands:
                 set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[<<parameters.subnet-ids>>],securityGroups=[<<parameters.security-group-ids>>],assignPublicIp=<<parameters.assign-public-ip>>}"
             fi
 
+            echo "Before run-task \$@ is: $@"
             aws ecs run-task \
               --cluster <<parameters.cluster>> \
               --task-definition <<parameters.task-definition>> \
