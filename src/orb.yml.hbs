@@ -848,15 +848,14 @@ commands:
           Only in use when verify-revision-is-deployed is set to true.
         type: boolean
         default: true
-      run-update-task-definition:
+      skip-task-definition-registration:
         description: |
-          Whether to run the update-task-definition again in the update-service or
-          not. Defaults to false and will only run when parameter is set to true.
+          Whether to skip registration of a new task definition.
         type: boolean
         default: false
     steps:
-      - when:
-          condition: <<parameters.run-update-task-definition>>
+      - unless:
+          condition: << parameters.skip-task-definition-registration >>
           steps:
             - update-task-definition:
                 family: << parameters.family >>
