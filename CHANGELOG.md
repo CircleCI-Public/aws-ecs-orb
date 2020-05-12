@@ -1,6 +1,23 @@
 # Changelog
 Documents changes in orb version releases.
 
+## [[1.1.0](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.1.0)]
+### Added
+- Enhancement: Add update-task-definition-from-json command and job [\#91](https://github.com/CircleCI-Public/aws-ecs-orb/pull/91) ([a10waveracer](https://github.com/a10waveracer))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/91
+
+## [[1.0.5](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.5)]
+### Fixed
+- Prevent asterisk expansion when asterisk is present in task definition value [\#90](https://github.com/CircleCI-Public/aws-ecs-orb/pull/90) ([lokst](https://github.com/lokst))
+
+## [[1.0.4](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.4)]
+### Changed
+- Enhancement: Add overrides parameter to run-task job and command [\#84](https://github.com/CircleCI-Public/aws-ecs-orb/pull/84) ([lokst](https://github.com/lokst))
+
+## [[1.0.3](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.3)]
+### Changed
+- Enhancement: Support --force-new-deployment [\#83](https://github.com/CircleCI-Public/aws-ecs-orb/pull/83) ([lokst](https://github.com/lokst))
+
 ## [[1.0.2](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.0.2)]
 ### Changed
 - Updated example to use more recent version of circleci/aws-ecr orb [\#81](https://github.com/CircleCI-Public/aws-ecs-orb/pull/81) ([uraway](https://github.com/uraway))

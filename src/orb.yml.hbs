@@ -35,6 +35,28 @@ examples:
                 cluster-name: "${MY_APP_PREFIX}-cluster"
                 container-image-name-updates: "container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}"
 
+  update-task-definition-from-json:
+    description: |
+      Use the AWS CLI and this orb to create a new ECS task definition
+      based upon a local JSON file.
+    usage:
+      version: 2.1
+
+      orbs:
+        aws-cli: circleci/aws-cli@0.1.4
+        aws-ecs: circleci/aws-ecs@1.0.5
+
+      jobs:
+        update-tag:
+          docker:
+            - image: circleci/python:3.7.1
+          steps:
+            - aws-cli/install
+            - aws-cli/configure:
+                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+                aws-region: "$AWS_REGION"
+            - aws-ecs/update-task-definition-from-json:
+                task-definition-json: "my-app-definition.json"
   update-service:
     description: |
       Use the AWS CLI and this orb to update an ECS service.
@@ -358,6 +380,42 @@ jobs:
           family: << parameters.family >>
           container-image-name-updates: << parameters.container-image-name-updates >>
           container-env-var-updates: << parameters.container-env-var-updates >>
+  update-task-definition-from-json:
+    docker:
+      - image: << parameters.docker-image-for-job >>
+    parameters:
+      docker-image-for-job:
+        description:
+          "The docker image to be used for running this job on CircleCI."
+        type: string
+        default: circleci/python:3.7.1
+      aws-access-key-id:
+        description: |
+          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+        type: string
+        default: $AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        description: |
+          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+        type: string
+        default: $AWS_SECRET_ACCESS_KEY
+      aws-region:
+        description:
+          AWS region to operate in. Defaulted to $AWS_REGION
+        type: string
+        default: $AWS_REGION
+      task-definition-json:
+        description: |
+          Location of your .json task definition file (relative or absolute).
+        type: string
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: << parameters.aws-access-key-id >>
+          aws-secret-access-key: << parameters.aws-secret-access-key >>
+          aws-region: << parameters.aws-region >>
+      - update-task-definition-from-json:
+          task-definition-json: << parameters.task-definition-json >>
   run-task:
     docker:
       - image: << parameters.docker-image-for-job >>
@@ -647,6 +705,7 @@ commands:
       - run:
           name: Retrieve previous task definition and prepare new task definition values
           command: |
+            set -o noglob
             PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition << parameters.family >> --include TAGS)
             CONTAINER_IMAGE_NAME_UPDATES="$(echo << parameters.container-image-name-updates >>)"
             CONTAINER_ENV_VAR_UPDATES="$(echo << parameters.container-env-var-updates >>)"
@@ -661,9 +720,9 @@ commands:
 
             # Prepare container definitions
             CONTAINER_DEFS=$(python $UPDATE_CONTAINER_DEFS_SCRIPT_FILE "$PREVIOUS_TASK_DEFINITION" "$CONTAINER_IMAGE_NAME_UPDATES" "$CONTAINER_ENV_VAR_UPDATES")
-            
+
             # Escape single quotes from environment variables for BASH_ENV
-            CLEANED_CONTAINER_DEFS=$(echo $CONTAINER_DEFS | sed -E "s:':'\\\'':g")
+            CLEANED_CONTAINER_DEFS=$(echo "$CONTAINER_DEFS" | sed -E "s:':'\\\'':g")
 
             # Prepare script for getting task definition values
             GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
@@ -706,6 +765,7 @@ commands:
       - run:
           name: Register new task definition
           command: |
+            set -o noglob
             if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
                 set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
             fi
@@ -746,6 +806,27 @@ commands:
                 --family << parameters.family >> \
                 --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
                 "$@" \
+                --output text \
+                --query 'taskDefinition.taskDefinitionArn')
+            echo "Registered task definition: ${REVISION}"
+            echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> $BASH_ENV
+  update-task-definition-from-json:
+    description: Registers a task definition based on a json file.
+    parameters:
+      task-definition-json:
+        description: |
+          Location of your .json task definition file (relative or absolute).
+        type: string
+    steps:
+      - run:
+          name: Register new task definition
+          command: |
+            TASK_DEFINITION_JSON="$(echo << parameters.task-definition-json >>)"
+            if [ "${TASK_DEFINITION_JSON:0:1}" != "/" ]; then
+                TASK_DEFINITION_JSON="$(pwd)/${TASK_DEFINITION_JSON}"
+            fi
+            REVISION=$(aws ecs register-task-definition \
+                --cli-input-json file://${TASK_DEFINITION_JSON} \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
             echo "Registered task definition: ${REVISION}"
@@ -1043,6 +1124,7 @@ commands:
       - run:
           name: Run Task
           command: |
+            set -o noglob
             if [ "<<parameters.launch-type>>" == "FARGATE" ]; then
                 echo "Setting --platform-version"
                 set -- "$@" --platform-version "<<parameters.platform-version>>"
