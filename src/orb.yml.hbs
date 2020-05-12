@@ -273,6 +273,11 @@ jobs:
           Only in use when verify-revision-is-deployed is set to true.
         type: boolean
         default: true
+      skip-task-definition-registration:
+        description: |
+          Whether to skip registration of a new task definition.
+        type: boolean
+        default: false
     steps:
       - aws-cli/install
       - aws-cli/configure:
@@ -295,6 +300,7 @@ jobs:
           max-poll-attempts: << parameters.max-poll-attempts >>
           poll-interval: << parameters.poll-interval >>
           fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
+          skip-task-definition-registration: << parameters.skip-task-definition-registration >>
   update-task-definition:
     docker:
       - image: << parameters.docker-image-for-job >>
@@ -861,6 +867,14 @@ commands:
                 family: << parameters.family >>
                 container-image-name-updates: << parameters.container-image-name-updates >>
                 container-env-var-updates: << parameters.container-env-var-updates >>
+            - run:
+                name: Retrieve previous task definition
+                command: |
+                  TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                    --task-definition << parameters.family >> \
+                    --output text \
+                    --query 'taskDefinition.taskDefinitionArn')
+                  echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
             - run:
                 name: Update service with registered task definition
                 command: |
