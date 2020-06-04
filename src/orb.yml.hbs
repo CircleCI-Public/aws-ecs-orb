@@ -962,6 +962,7 @@ commands:
       - run:
           name: Update service with registered task definition
           command: |
+            set -o noglob
             DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
 
             if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
