@@ -626,6 +626,25 @@ workflows:
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
 
       - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-skip-registration
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - fargate_test-update-service-job
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          # test skipping registration of a new task definition
+          skip-task-definition-registration: false
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+
+      - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
@@ -666,7 +685,7 @@ workflows:
       - tear-down-test-env:
           name: fargate_tear-down-test-env
           requires:
-            - fargate_test-update-service-job
+            - fargate_test-update-service-skip-registration
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
 
