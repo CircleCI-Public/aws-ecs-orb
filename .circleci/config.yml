@@ -635,14 +635,10 @@ workflows:
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition
-          skip-task-definition-registration: false
+          skip-task-definition-registration: true
           verify-revision-is-deployed: true
           max-poll-attempts: 40
           poll-interval: 10
-          post-steps:
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
 
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
