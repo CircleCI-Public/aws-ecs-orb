@@ -273,7 +273,6 @@ jobs:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
-          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
@@ -588,7 +587,6 @@ commands:
       Polls the service's deployment status at intervals until the given task
       definition revision is the only one deployed for the service, and for the
       task definition revision's running task count to match the desired count.
-      Does not support ECS services that are of the Blue/Green Deployment type.
     parameters:
       family:
         description:
@@ -913,7 +911,6 @@ commands:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
-          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
       max-poll-attempts:
