@@ -17,7 +17,7 @@ executors:
       - image: circleci/node
 
 orbs:
-  aws-cli: circleci/aws-cli@0.1.4
+  aws-cli: circleci/aws-cli@1.1.0
   aws-ecs: circleci/aws-ecs@dev:alpha
   circleci-cli: circleci/circleci-cli@0.1.2
   queue: eddiewebb/queue@1.0.110

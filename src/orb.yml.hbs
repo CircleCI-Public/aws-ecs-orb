@@ -9,7 +9,7 @@ display:
   source_url: https://github.com/CircleCI-Public/aws-ecs-orb
 
 orbs:
-  aws-cli: circleci/aws-cli@0.1.4
+  aws-cli: circleci/aws-cli@1.1
 
 examples:
   deploy-service-update:
@@ -52,8 +52,7 @@ examples:
           docker:
             - image: circleci/python:3.7.1
           steps:
-            - aws-cli/install
-            - aws-cli/configure:
+            - aws-cli/setup:
                 aws-access-key-id: "$AWS_ACCESS_KEY_ID"
                 aws-region: "$AWS_REGION"
             - aws-ecs/update-task-definition-from-json:
@@ -74,8 +73,7 @@ examples:
           docker:
             - image: circleci/python:3.7.1
           steps:
-            - aws-cli/install
-            - aws-cli/configure:
+            - aws-cli/setup:
                 aws-access-key-id: "$AWS_ACCESS_KEY_ID"
                 aws-region: "$AWS_REGION"
             - aws-ecs/update-service:
@@ -102,8 +100,7 @@ examples:
           docker:
             - image: circleci/python:3.7.1
           steps:
-            - aws-cli/install
-            - aws-cli/configure:
+            - aws-cli/setup:
                 aws-access-key-id: "$AWS_ACCESS_KEY_ID"
                 aws-region: "$AWS_REGION"
             - run:
@@ -297,8 +294,7 @@ jobs:
         type: boolean
         default: true
     steps:
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: << parameters.aws-access-key-id >>
           aws-secret-access-key: << parameters.aws-secret-access-key >>
           aws-region: << parameters.aws-region >>
@@ -366,8 +362,7 @@ jobs:
         type: string
         default: ""
     steps:
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: << parameters.aws-access-key-id >>
           aws-secret-access-key: << parameters.aws-secret-access-key >>
           aws-region: << parameters.aws-region >>
@@ -404,8 +399,7 @@ jobs:
           Location of your .json task definition file (relative or absolute).
         type: string
     steps:
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: << parameters.aws-access-key-id >>
           aws-secret-access-key: << parameters.aws-secret-access-key >>
           aws-region: << parameters.aws-region >>
@@ -553,8 +547,7 @@ jobs:
         type: boolean
         default: false
     steps:
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: << parameters.aws-access-key-id >>
           aws-secret-access-key: << parameters.aws-secret-access-key >>
           aws-region: << parameters.aws-region >>
