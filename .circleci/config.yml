@@ -313,6 +313,44 @@ jobs:
               --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
             aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
 
+  test-SPOT-run-task:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
+          aws-region: "$AWS_DEFAULT_REGION"
+      # Simulate existing cluster and capacity provider
+      - run:
+          name: Create capacity provider
+          command: |
+            aws ecs create-capacity-provider \
+              --name ECS_EC2_ORB \
+              --auto-scaling-group-provider autoScalingGroupArn="$ORB_GROUP_ARN",managedScaling=\{status='ENABLED',targetCapacity=1,minimumScalingStepSize=1,maximumScalingStepSize=1\},managedTerminationProtection="ENABLED" \
+              --region us-west-2
+      - run:
+          name: Create cluster
+          command: |
+            aws ecs create-cluster \
+              --cluster-name ORB_SPOT_TEST \
+              --capacity-providers ECS_EC2_ORB \
+              --default-capacity-provider-strategy capacityProvider=ECS_EC2_ORB,weight=1,base=1 \
+              --region us-west-2
+      # run task against the cluster using the capacity provider.
+      - aws-ecs/run-task:
+          name: Run EC2 Task on capacity provider
+          cluster: "ORB_SPOT_TEST"
+          aws-region: $AWS_DEFAULT_REGION
+          task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          capacity-provider-strategy: "capacityProvider=ECS_EC2_ORB,weight=1"
+          awsvpc: false
+      - run:
+          name: Delete cluster
+          command: |
+            aws ecs delete-cluster --cluster ORB_SPOT_TEST --region us-west-2
+
   tear-down-test-env:
     parameters:
       terraform-image:
@@ -678,6 +716,8 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
 
+      - test-SPOT-run-task:
+          context: orb-publishing
   # Tag-triggered workflow to promote a dev orb into production.
   # The tag is expected to have been applied manually.
   production-orb-publishing:

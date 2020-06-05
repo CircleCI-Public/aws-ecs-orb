@@ -1099,6 +1099,12 @@ commands:
           tags to a task after task creation, use the TagResource API action."
         type: boolean
         default: false
+      capacity-provider-strategy:
+        description: |
+          A capacity provider strategy consists of one or more capacity providers along with the base and weight to assign to them. A capacity provider must be associated with the cluster to be used in a capacity provider strategy.
+          If specified, the launchType parameter must be omitted.
+        type: string
+        default: ""
     steps:
       - run:
           name: Run Task
@@ -1149,5 +1155,6 @@ commands:
               --cluster <<parameters.cluster>> \
               --task-definition <<parameters.task-definition>> \
               --count <<parameters.count>> \
-              --launch-type <<parameters.launch-type>> \
+              <<#parameters.capacity-provider-strategy>>--capacity-provider-strategy <<parameters.capacity-provider-strategy>> \ <</parameters.capacity-provider-strategy>>
+              <<^parameters.capacity-provider-strategy>>--launch-type <<parameters.launch-type>> \ <</parameters.capacity-provider-strategy>>
               "$@"
