@@ -210,8 +210,7 @@ jobs:
       - setup_remote_docker
       - attach_workspace:
           at: workspace
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
           aws-region: "$AWS_DEFAULT_REGION"
       - run:
@@ -254,8 +253,7 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
           aws-region: "$AWS_DEFAULT_REGION"
       - run:
@@ -281,8 +279,7 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
           aws-region: "$AWS_DEFAULT_REGION"
       - run:
@@ -302,8 +299,7 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
           aws-region: "$AWS_DEFAULT_REGION"
       - run:
@@ -318,8 +314,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
+      - aws-cli/setup:
           aws-access-key-id: "$AWS_ACCESS_KEY_ID"
           aws-region: "$AWS_DEFAULT_REGION"
       # Simulate existing cluster and capacity provider
