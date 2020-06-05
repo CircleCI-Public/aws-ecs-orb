@@ -340,9 +340,7 @@ jobs:
               --region us-west-2
       # run task against the cluster using the capacity provider.
       - aws-ecs/run-task:
-          name: Run EC2 Task on capacity provider
           cluster: "ORB_SPOT_TEST"
-          aws-region: $AWS_DEFAULT_REGION
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           capacity-provider-strategy: "capacityProvider=ECS_EC2_ORB,weight=1"
           awsvpc: false
