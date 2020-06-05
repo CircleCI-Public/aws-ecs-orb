@@ -587,6 +587,7 @@ commands:
       Polls the service's deployment status at intervals until the given task
       definition revision is the only one deployed for the service, and for the
       task definition revision's running task count to match the desired count.
+      Does not support ECS services that are of the Blue/Green Deployment type.
     parameters:
       family:
         description:
