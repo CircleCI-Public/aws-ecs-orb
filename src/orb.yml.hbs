@@ -975,16 +975,16 @@ commands:
                   seconds=3600+$SECONDS
                   while (( $SECONDS < $seconds )); do
                     DEPLOYMENT_STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID)  
-                    if grep "\"status\": \"Succeeded\"" <<< $DEPLOYMENT_STATUS; then
+                    if grep "\"status\": \"Succeeded\"" \<<< $DEPLOYMENT_STATUS; then
                       echo "Deployment Success" 
                       exit 0  
-                    elif grep "\"status\": \"Failed\"" <<< $DEPLOYMENT_STATUS; then 
+                    elif grep "\"status\": \"Failed\"" \<<< $DEPLOYMENT_STATUS; then 
                       echo "Deployment Failed"
                       exit 1 
-                    elif grep "\"status\": \"Stopped\"" <<< $DEPLOYMENT_STATUS; then 
+                    elif grep "\"status\": \"Stopped\"" \<<< $DEPLOYMENT_STATUS; then 
                       echo "Deployment Stopped"
                       exit 1 
-                    elif grep "\"status\": \"Skipped\"" <<< $DEPLOYMENT_STATUS; then 
+                    elif grep "\"status\": \"Skipped\"" \<<< $DEPLOYMENT_STATUS; then 
                       echo "Deployment Skipped"
                       exit 1 
                     else
