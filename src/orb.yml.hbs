@@ -983,6 +983,9 @@ commands:
                     elif grep "\"status\": \"Stopped\"" <<< $DEPLOYMENT_STATUS; then 
                       echo "Deployment Stopped"
                       exit 1 
+                    elif grep "\"status\": \"Skipped\"" <<< $DEPLOYMENT_STATUS; then 
+                      echo "Deployment Skipped"
+                      exit 0 
                     else
                       echo "Sleeping for 1 minute before retrying the status of the deployment" 
                       sleep 60s
