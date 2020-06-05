@@ -991,6 +991,8 @@ commands:
                       sleep 60s
                     fi
                   done
+                  echo "No response from Code deploy, exiting." 
+                  exit 1
                 fi
             else
               SERVICE_NAME="$(echo << parameters.service-name >>)"
