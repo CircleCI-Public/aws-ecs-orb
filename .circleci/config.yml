@@ -686,6 +686,14 @@ workflows:
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
           verify-revision-is-deployed: true
+          post_steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: true
+            - delete-service:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
 
       - tear-down-test-env:
           name: ec2_tear-down-test-env
