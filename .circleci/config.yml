@@ -656,7 +656,6 @@ workflows:
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
-          # verify-revision-is-deployed is not supported for blue/green deployment type services
           verify-revision-is-deployed: false
           post-steps:
             - wait-for-codedeploy-deployment:
@@ -669,6 +668,24 @@ workflows:
             - delete-service:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_test-update-service-command
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          verify-revision-is-deployed: true
 
       - tear-down-test-env:
           name: ec2_tear-down-test-env
