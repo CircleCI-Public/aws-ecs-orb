@@ -670,7 +670,7 @@ workflows:
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
 
       - aws-ecs/deploy-service-update:
-          name: codedeploy_fargate_test-update-service-job
+          name: codedeploy_fargate_test-update-and-wait-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-command
@@ -714,6 +714,7 @@ workflows:
           name: codedeploy_fargate_tear-down-test-env
           requires:
             - codedeploy_fargate_test-update-service-job
+            - codedeploy_fargate_test-update-and-wait-service-job
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
