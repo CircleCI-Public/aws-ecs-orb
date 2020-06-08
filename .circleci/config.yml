@@ -170,9 +170,9 @@ jobs:
             cd << parameters.terraform-config-dir >>
             terraform plan \
                 -input=false \
-                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
+                -var "aws_access_key=AWS_ACCESS_KEY_ID" \
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                -var "aws_region=${AWS_DEFAULT_REGION}" \
+                -var "aws_region=AWS_DEFAULT_REGION" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
                 -out tfplan
@@ -223,7 +223,7 @@ jobs:
             echo 'export ECR_REPOSITORY_NAME="<< parameters.aws-resource-name-prefix >>"' >> $BASH_ENV
             echo 'export ECS_CLUSTER_NAME="<< parameters.aws-resource-name-prefix >>-cluster"' >> $BASH_ENV
             echo 'export ECS_SERVICE_NAME="<< parameters.aws-resource-name-prefix >>-service"' >> $BASH_ENV
-            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
       - run:
           name: Push image
           command: |
@@ -376,9 +376,9 @@ jobs:
             terraform destroy \
                 -input=false \
                 -auto-approve \
-                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
+                -var "aws_access_key=AWS_ACCESS_KEY_ID" \
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                -var "aws_region=${AWS_DEFAULT_REGION}" \
+                -var "aws_region=AWS_DEFAULT_REGION" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
   # Orb promotion workflow jobs
@@ -522,17 +522,17 @@ workflows:
     jobs:
       - build-test-app:
           name: ec2_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: codedeploy_fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
 
       - set-up-test-env:
@@ -587,7 +587,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - test-service-update:
@@ -597,7 +597,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - test-service-update:
@@ -607,7 +607,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
 
@@ -622,8 +622,8 @@ workflows:
           docker-image-for-job: circleci/python:2.7.15
           requires:
             - ec2_test-task-definition-update
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
@@ -641,8 +641,8 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
@@ -661,11 +661,11 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
