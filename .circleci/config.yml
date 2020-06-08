@@ -568,7 +568,7 @@ workflows:
           requires:
             - ec2_set-up-run-task-test
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          aws-region: $AWS_DEFAULT_REGION
+          aws-region: AWS_DEFAULT_REGION
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
