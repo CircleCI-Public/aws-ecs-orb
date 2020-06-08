@@ -122,7 +122,10 @@ examples:
             - verify-deployment
 
   run-task-fargate:
-    description: Start the run of an ECS task on Fargate.
+    description: |
+      Start the run of an ECS task on Fargate. 
+      Use the FARGATE_SPOT capacity provider for SPOT pricing on AWS.
+
     usage:
       version: 2.1
 
