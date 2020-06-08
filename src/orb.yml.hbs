@@ -53,8 +53,8 @@ examples:
             - image: circleci/python:3.7.1
           steps:
             - aws-cli/setup:
-                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-                aws-region: "$AWS_REGION"
+                aws-access-key-id: "AWS_ACCESS_KEY_ID"
+                aws-region: "AWS_REGION"
             - aws-ecs/update-task-definition-from-json:
                 task-definition-json: "my-app-definition.json"
   update-service:
@@ -74,8 +74,8 @@ examples:
             - image: circleci/python:3.7.1
           steps:
             - aws-cli/setup:
-                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-                aws-region: "$AWS_REGION"
+                aws-access-key-id: "AWS_ACCESS_KEY_ID"
+                aws-region: "AWS_REGION"
             - aws-ecs/update-service:
                 family: "${MY_APP_PREFIX}-service"
                 cluster-name: "${MY_APP_PREFIX}-cluster"
@@ -101,8 +101,8 @@ examples:
             - image: circleci/python:3.7.1
           steps:
             - aws-cli/setup:
-                aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-                aws-region: "$AWS_REGION"
+                aws-access-key-id: "AWS_ACCESS_KEY_ID"
+                aws-region: "AWS_REGION"
             - run:
                 name: Get last task definition
                 command: |
@@ -416,14 +416,14 @@ jobs:
         default: circleci/python:3.7.1
       aws-access-key-id:
         description: |
-          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
-        type: string
-        default: $AWS_ACCESS_KEY_ID
+          AWS access key id for IAM role.
+        type: env_var_name
+        default: AWS_ACCESS_KEY_ID
       aws-secret-access-key:
         description: |
-          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
-        type: string
-        default: $AWS_SECRET_ACCESS_KEY
+          AWS secret key for IAM role.
+        type: env_var_name
+        default: AWS_SECRET_ACCESS_KEY
       aws-region:
         description:
           AWS region to operate in. Defaulted to $AWS_REGION

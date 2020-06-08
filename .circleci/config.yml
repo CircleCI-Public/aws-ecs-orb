@@ -211,8 +211,8 @@ jobs:
       - attach_workspace:
           at: workspace
       - aws-cli/setup:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
       - run:
           name: Load image
           command: |
@@ -254,8 +254,8 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
       - run:
           name: Get existing task definition
           command: |
@@ -280,8 +280,8 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
       - run:
           name: Register task definition
           command: |
@@ -300,8 +300,8 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
       - run:
           name: Deregister task definition
           command: |
@@ -315,8 +315,8 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+          aws-access-key-id: "AWS_ACCESS_KEY_ID"
+          aws-region: "AWS_DEFAULT_REGION"
       # Simulate existing cluster and capacity provider
       - run:
           name: Create capacity provider
