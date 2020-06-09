@@ -322,7 +322,7 @@ jobs:
           name: Create capacity provider
           command: |
             aws ecs create-capacity-provider \
-              --name ECS_EC2_ORB \
+              --name CCI_ECS_EC2_ORB \
               --auto-scaling-group-provider autoScalingGroupArn="$ORB_GROUP_ARN",managedScaling=\{status='ENABLED',targetCapacity=1,minimumScalingStepSize=1,maximumScalingStepSize=1\},managedTerminationProtection="ENABLED" \
               --region us-west-2
       - run:
@@ -330,8 +330,8 @@ jobs:
           command: |
             aws ecs create-cluster \
               --cluster-name ORB_SPOT_TEST \
-              --capacity-providers ECS_EC2_ORB \
-              --default-capacity-provider-strategy capacityProvider=ECS_EC2_ORB,weight=1,base=1 \
+              --capacity-providers CCI_ECS_EC2_ORB \
+              --default-capacity-provider-strategy capacityProvider=CCI_ECS_EC2_ORB,weight=1,base=1 \
               --region us-west-2
       # run task against the cluster using the capacity provider.
       - aws-ecs/run-task:
