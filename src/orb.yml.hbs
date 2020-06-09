@@ -186,14 +186,14 @@ jobs:
         default: circleci/python:3.7.1
       aws-access-key-id:
         description: |
-          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
-        type: string
-        default: $AWS_ACCESS_KEY_ID
+          Env var for AWS access key id for IAM role. Defaulted to AWS_ACCESS_KEY_ID
+        type: env_var_name
+        default: AWS_ACCESS_KEY_ID
       aws-secret-access-key:
         description: |
-          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
-        type: string
-        default: $AWS_SECRET_ACCESS_KEY
+          Env var for AWS secret key for IAM role. Defaulted to AWS_SECRET_ACCESS_KEY
+        type: env_var_name
+        default: AWS_SECRET_ACCESS_KEY
       aws-region:
         description:
           AWS region to operate in. Defaulted to $AWS_REGION
@@ -328,14 +328,14 @@ jobs:
         default: circleci/python:3.7.1
       aws-access-key-id:
         description: |
-          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+          Env var for AWS access key id for IAM role. Defaulted to AWS_ACCESS_KEY_ID
         type: string
-        default: $AWS_ACCESS_KEY_ID
+        default: AWS_ACCESS_KEY_ID
       aws-secret-access-key:
         description: |
-          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+          Env var for AWS secret key for IAM role. Defaulted to AWS_SECRET_ACCESS_KEY
         type: string
-        default: $AWS_SECRET_ACCESS_KEY
+        default: AWS_SECRET_ACCESS_KEY
       aws-region:
         description:
           AWS region to operate in. Defaulted to $AWS_REGION
@@ -384,14 +384,14 @@ jobs:
         default: circleci/python:3.7.1
       aws-access-key-id:
         description: |
-          AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+          Env var for AWS access key id for IAM role. Defaulted to AWS_ACCESS_KEY_ID
         type: string
-        default: $AWS_ACCESS_KEY_ID
+        default: AWS_ACCESS_KEY_ID
       aws-secret-access-key:
         description: |
-          AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+          Env var for AWS secret key for IAM role. Defaulted to AWS_SECRET_ACCESS_KEY
         type: string
-        default: $AWS_SECRET_ACCESS_KEY
+        default: AWS_SECRET_ACCESS_KEY
       aws-region:
         description:
           AWS region to operate in. Defaulted to $AWS_REGION
