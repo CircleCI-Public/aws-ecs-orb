@@ -27,7 +27,7 @@ examples:
             - aws-ecr/build-and-push-image:
                 account-url: AWS_ECR_ACCOUNT_URL
                 repo: "${MY_APP_PREFIX}"
-                region: AWS_REGION
+                region: $AWS_REGION
                 tag: "${CIRCLE_SHA1}"
             - aws-ecs/deploy-service-update:
                 requires:
@@ -54,7 +54,7 @@ examples:
           steps:
             - aws-cli/setup:
                 aws-access-key-id: "AWS_ACCESS_KEY_ID"
-                aws-region: "AWS_REGION"
+                aws-region: "$AWS_REGION"
             - aws-ecs/update-task-definition-from-json:
                 task-definition-json: "my-app-definition.json"
   update-service:
@@ -75,7 +75,7 @@ examples:
           steps:
             - aws-cli/setup:
                 aws-access-key-id: "AWS_ACCESS_KEY_ID"
-                aws-region: "AWS_REGION"
+                aws-region: "$AWS_REGION"
             - aws-ecs/update-service:
                 family: "${MY_APP_PREFIX}-service"
                 cluster-name: "${MY_APP_PREFIX}-cluster"
@@ -102,7 +102,7 @@ examples:
           steps:
             - aws-cli/setup:
                 aws-access-key-id: "AWS_ACCESS_KEY_ID"
-                aws-region: "AWS_REGION"
+                aws-region: "$AWS_REGION"
             - run:
                 name: Get last task definition
                 command: |
@@ -980,6 +980,11 @@ commands:
       Starts a new ECS task using the specified
       task definition and other parameters.
     parameters:
+      aws-region:
+        description:
+          AWS region to operate in. Defaulted to $AWS_REGION
+        type: string
+        default: $AWS_REGION
       cluster:
         description:
           "The name or ARN of the cluster on which to run the task."
@@ -1153,6 +1158,6 @@ commands:
               --cluster <<parameters.cluster>> \
               --task-definition <<parameters.task-definition>> \
               --count <<parameters.count>> \
-              <<^parameters.capacity-provider-strategy>>--launch-type <<parameters.launch-type>> <</parameters.capacity-provider-strategy>>
-              <<#parameters.capacity-provider-strategy>>--capacity-provider-strategy <<parameters.capacity-provider-strategy>> <</parameters.capacity-provider-strategy>>
+              --region << parameters.aws-region >> \
+              <<^parameters.capacity-provider-strategy>>--launch-type <<parameters.launch-type>> <</parameters.capacity-provider-strategy>><<#parameters.capacity-provider-strategy>>--capacity-provider-strategy <<parameters.capacity-provider-strategy>> <</parameters.capacity-provider-strategy>>
               "$@"
