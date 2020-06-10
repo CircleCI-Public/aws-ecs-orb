@@ -170,9 +170,9 @@ jobs:
             cd << parameters.terraform-config-dir >>
             terraform plan \
                 -input=false \
-                -var "aws_access_key=AWS_ACCESS_KEY_ID" \
+                -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                -var "aws_region=AWS_DEFAULT_REGION" \
+                -var "aws_region=$AWS_DEFAULT_REGION" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
                 -out tfplan
@@ -322,20 +322,19 @@ jobs:
           name: Create cluster
           command: |
             aws ecs create-cluster \
-              --cluster-name ORB_SPOT_TEST \
-              --capacity-providers FARGATE_SPOT \
-              --default-capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1,base=1 \
+              --cluster-name FargateCluster \
+              --capacity-providers FARGATE FARGATE_SPOT \
               --region us-west-2
       # run task against the cluster using the capacity provider.
       - aws-ecs/run-task:
-          cluster: "ORB_SPOT_TEST"
+          cluster: "FargateCluster"
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          capacity-provider-strategy: "capacityProvider=FARGATE_SPOT,weight=1"
+          capacity-provider-strategy: "capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1"
           awsvpc: false
       - run:
           name: Delete cluster
           command: |
-            aws ecs delete-cluster --cluster ORB_SPOT_TEST --region us-west-2
+            aws ecs delete-cluster --cluster FargateCluster --region us-west-2
 
   tear-down-test-env:
     parameters:
