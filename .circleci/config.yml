@@ -223,7 +223,7 @@ jobs:
             echo 'export ECR_REPOSITORY_NAME="<< parameters.aws-resource-name-prefix >>"' >> $BASH_ENV
             echo 'export ECS_CLUSTER_NAME="<< parameters.aws-resource-name-prefix >>-cluster"' >> $BASH_ENV
             echo 'export ECS_SERVICE_NAME="<< parameters.aws-resource-name-prefix >>-service"' >> $BASH_ENV
-            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
       - run:
           name: Push image
           command: |
@@ -319,25 +319,18 @@ jobs:
           aws-region: "AWS_DEFAULT_REGION"
       # Simulate existing cluster and capacity provider
       - run:
-          name: Create capacity provider
-          command: |
-            aws ecs create-capacity-provider \
-              --name CCI_ECS_EC2_ORB \
-              --auto-scaling-group-provider autoScalingGroupArn="$ORB_GROUP_ARN",managedScaling=\{status='ENABLED',targetCapacity=1,minimumScalingStepSize=1,maximumScalingStepSize=1\},managedTerminationProtection="ENABLED" \
-              --region us-west-2
-      - run:
           name: Create cluster
           command: |
             aws ecs create-cluster \
               --cluster-name ORB_SPOT_TEST \
-              --capacity-providers CCI_ECS_EC2_ORB \
-              --default-capacity-provider-strategy capacityProvider=CCI_ECS_EC2_ORB,weight=1,base=1 \
+              --capacity-providers FARGATE_SPOT \
+              --default-capacity-provider-strategy capacityProvider=FARGATE_SPOT,weight=1,base=1 \
               --region us-west-2
       # run task against the cluster using the capacity provider.
       - aws-ecs/run-task:
           cluster: "ORB_SPOT_TEST"
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          capacity-provider-strategy: "capacityProvider=ECS_EC2_ORB,weight=1"
+          capacity-provider-strategy: "capacityProvider=FARGATE_SPOT,weight=1"
           awsvpc: false
       - run:
           name: Delete cluster
@@ -522,17 +515,17 @@ workflows:
     jobs:
       - build-test-app:
           name: ec2_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - build-test-app:
           name: codedeploy_fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
 
       - set-up-test-env:
@@ -587,7 +580,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
 
       - test-service-update:
@@ -597,7 +590,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
       - test-service-update:
@@ -607,7 +600,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
 
@@ -665,7 +658,7 @@ workflows:
           aws-region: "AWS_DEFAULT_REGION"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.AWS_DEFAULT_REGION.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
