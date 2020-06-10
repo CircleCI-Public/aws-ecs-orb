@@ -485,10 +485,11 @@ jobs:
         description: |
           The launch type on which to run your task. For more information, see
           Amazon ECS Launch Types in the Amazon Elastic Container Service
-          Developer Guide. Possible values EC2, FARGATE.
+          Developer Guide. Possible values EC2, FARGATE, or leave empty.
+          If using a capacity provider, launch-type must be left blank.
         type: enum
-        enum: ["FARGATE", "EC2"]
-        default: "FARGATE"
+        enum: ["FARGATE", "EC2", ""]
+        default: ""
       platform-version:
         description: |
           "The platform version the task should run. A platform version is only
