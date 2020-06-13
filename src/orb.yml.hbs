@@ -998,7 +998,10 @@ commands:
             fi
             echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
-          condition: << parameters.verify-revision-is-deployed >>
+          condition:
+            and:
+             - << parameters.verify-revision-is-deployed >>
+             - equal: [ ECS, << parameters.deployment-controller >> ]
           steps:
             - verify-revision-is-deployed:
                 family: << parameters.family >>

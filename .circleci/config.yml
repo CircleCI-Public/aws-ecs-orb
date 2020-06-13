@@ -673,7 +673,7 @@ workflows:
           name: codedeploy_fargate_test-update-and-wait-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
-            - codedeploy_fargate_test-update-service-command
+            - codedeploy_fargate_test-update-service-job
           aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
           aws-region: "${AWS_DEFAULT_REGION}"
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
@@ -691,10 +691,6 @@ workflows:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: true
-            - delete-service:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-
       - tear-down-test-env:
           name: ec2_tear-down-test-env
           requires:
@@ -713,7 +709,6 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
           requires:
-            - codedeploy_fargate_test-update-service-job
             - codedeploy_fargate_test-update-and-wait-service-job
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
