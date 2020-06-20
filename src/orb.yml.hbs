@@ -973,8 +973,7 @@ commands:
                   echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
       - when:
           condition: 
-            - not: 
-                equal: [ "ECS", << parameters.deployment-controller >> ]
+              - equal: [ "CODE_DEPLOY", << parameters.deployment-controller >> ]
           steps:
             - run:
                 name: Update ECS Blue/Green service with registered task definition.
