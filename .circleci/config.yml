@@ -686,6 +686,7 @@ workflows:
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
           verify-revision-is-deployed: true
+          verification-timeout: "12m"
           post_steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
