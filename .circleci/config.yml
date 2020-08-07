@@ -656,7 +656,6 @@ workflows:
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
-          # verify-revision-is-deployed is not supported for blue/green deployment type services
           verify-revision-is-deployed: false
           post-steps:
             - wait-for-codedeploy-deployment:
@@ -665,11 +664,34 @@ workflows:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: false
+
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-and-wait-service-job
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - codedeploy_fargate_test-update-service-job
+          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-region: "${AWS_DEFAULT_REGION}"
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          verify-revision-is-deployed: true
+          verification-timeout: "12m"
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: true
             - delete-service:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-
       - tear-down-test-env:
           name: ec2_tear-down-test-env
           requires:
@@ -688,7 +710,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
           requires:
-            - codedeploy_fargate_test-update-service-job
+            - codedeploy_fargate_test-update-and-wait-service-job
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"

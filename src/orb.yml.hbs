@@ -273,9 +273,14 @@ jobs:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
-          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
+      verification-timeout:
+        description: |
+          The maximum amount of time to wait for a blue/green deployment to complete before timing out.
+          Only in use when the deployment controller is the blue/green deployment type.
+        type: string
+        default: "10m"
       max-poll-attempts:
         description: |
           The maximum number of attempts to poll the deployment status before giving up.
@@ -323,6 +328,7 @@ jobs:
           poll-interval: << parameters.poll-interval >>
           fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
           skip-task-definition-registration: << parameters.skip-task-definition-registration >>
+          verification-timeout: << parameters.verification-timeout >> 
   update-task-definition:
     docker:
       - image: << parameters.docker-image-for-job >>
@@ -673,6 +679,7 @@ commands:
             done
             echo "Stopped waiting for deployment to be stable - please check the status of << parameters.task-definition-arn >> on the AWS ECS console."
             <<# parameters.fail-on-verification-timeout >>exit 1<</ parameters.fail-on-verification-timeout >>
+
   update-task-definition:
     description: Registers a task definition based on the last task definition, except
       with the Docker image/tag names and environment variables of the containers
@@ -913,9 +920,14 @@ commands:
           for the service. Note: enabling this may result in the build
           being marked as failed if tasks for older revisions fail to be stopped
           before the max number of polling attempts is reached.
-          Does not support ECS services that are of the Blue/Green Deployment type.
         type: boolean
         default: false
+      verification-timeout:
+        description: |
+          The maximum amount of time to wait for a blue/green deployment to complete before timing out.
+          Only in use when the deployment controller is the blue/green deployment type.
+        type: string
+        default: "10m"
       max-poll-attempts:
         description: |
           The maximum number of attempts to poll the deployment status before giving up.
@@ -959,40 +971,62 @@ commands:
                     --output text \
                     --query 'taskDefinition.taskDefinitionArn')
                   echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
-      - run:
-          name: Update service with registered task definition
-          command: |
-            set -o noglob
-            DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
-
-            if [ "${DEPLOYMENT_CONTROLLER}" = "CODE_DEPLOY" ]; then
-                DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
-                DEPLOYMENT_ID=$(aws deploy create-deployment \
-                    --application-name "<< parameters.codedeploy-application-name >>" \
-                    --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
-                    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"<< parameters.codedeploy-load-balanced-container-name >>\\\", \\\"ContainerPort\\\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}\"}}" \
-                    --query deploymentId)
-                echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
-            else
-              SERVICE_NAME="$(echo << parameters.service-name >>)"
-
-              if [ -z "${SERVICE_NAME}" ]; then
-                  SERVICE_NAME="$(echo << parameters.family >>)"
-              fi
-              if [ "<< parameters.force-new-deployment >>" == "true" ]; then
-                  set -- "$@" --force-new-deployment
-              fi
-              DEPLOYED_REVISION=$(aws ecs update-service \
-                  --cluster "<< parameters.cluster-name >>" \
-                  --service "${SERVICE_NAME}" \
-                  --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                  --output text \
-                  --query service.taskDefinition \
-                  "$@")
-            fi
-            echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
-          condition: << parameters.verify-revision-is-deployed >>
+          condition:
+            equal: [ "CODE_DEPLOY", << parameters.deployment-controller >> ]
+          steps:
+            - run:
+                name: Update ECS Blue/Green service with registered task definition.
+                command: | 
+                  set -o noglob
+                  DEPLOYMENT_CONTROLLER="$(echo << parameters.deployment-controller >>)"
+                  DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
+                  DEPLOYMENT_ID=$(aws deploy create-deployment \
+                      --application-name "<< parameters.codedeploy-application-name >>" \
+                      --deployment-group-name "<< parameters.codedeploy-deployment-group-name >>" \
+                      --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"<< parameters.codedeploy-load-balanced-container-name >>\\\", \\\"ContainerPort\\\": << parameters.codedeploy-load-balanced-container-port >>}}}}]}\"}}" \
+                      --query deploymentId \
+                      --output text)
+                  echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
+                  if [ "<< parameters.verify-revision-is-deployed >>" == "true" ]; then
+                    echo "Waiting for deployment to succeed."
+                    if $(aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}); then
+                      echo "Deployment succeeded."
+                    else
+                      echo "Deployment failed."
+                    fi
+                  fi
+                  echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
+          no_output_timeout: << parameters.verification-timeout >> 
+      - when:
+          condition:
+            equal: [ "ECS", << parameters.deployment-controller >> ]
+          steps:
+            - run:
+                name: Update service with registered task definition
+                command: |
+                  set -o noglob
+                  SERVICE_NAME="$(echo << parameters.service-name >>)"
+
+                  if [ -z "${SERVICE_NAME}" ]; then
+                      SERVICE_NAME="$(echo << parameters.family >>)"
+                  fi
+                  if [ "<< parameters.force-new-deployment >>" == "true" ]; then
+                      set -- "$@" --force-new-deployment
+                  fi
+                  DEPLOYED_REVISION=$(aws ecs update-service \
+                      --cluster "<< parameters.cluster-name >>" \
+                      --service "${SERVICE_NAME}" \
+                      --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                      --output text \
+                      --query service.taskDefinition \
+                      "$@")
+                  echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
+      - when:
+          condition:
+            and:
+             - << parameters.verify-revision-is-deployed >>
+             - equal: [ ECS, << parameters.deployment-controller >> ]
           steps:
             - verify-revision-is-deployed:
                 family: << parameters.family >>
