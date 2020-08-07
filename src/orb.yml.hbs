@@ -972,8 +972,8 @@ commands:
                     --query 'taskDefinition.taskDefinitionArn')
                   echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
       - when:
-          condition: 
-              - equal: [ "CODE_DEPLOY", << parameters.deployment-controller >> ]
+          condition:
+            equal: [ "CODE_DEPLOY", << parameters.deployment-controller >> ]
           steps:
             - run:
                 name: Update ECS Blue/Green service with registered task definition.
@@ -998,28 +998,28 @@ commands:
           no_output_timeout: << parameters.verification-timeout >> 
       - when:
           condition:
-            - equal: [ "ECS", << parameters.deployment-controller >> ] 
-          steps: 
+            equal: [ "ECS", << parameters.deployment-controller >> ]
+          steps:
             - run:
-              name: Update service with registered task definition
-              command: |
-                set -o noglob
-                SERVICE_NAME="$(echo << parameters.service-name >>)"
+                name: Update service with registered task definition
+                command: |
+                  set -o noglob
+                  SERVICE_NAME="$(echo << parameters.service-name >>)"
 
-                if [ -z "${SERVICE_NAME}" ]; then
-                    SERVICE_NAME="$(echo << parameters.family >>)"
-                fi
-                if [ "<< parameters.force-new-deployment >>" == "true" ]; then
-                    set -- "$@" --force-new-deployment
-                fi
-                DEPLOYED_REVISION=$(aws ecs update-service \
-                    --cluster "<< parameters.cluster-name >>" \
-                    --service "${SERVICE_NAME}" \
-                    --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                    --output text \
-                    --query service.taskDefinition \
-                    "$@")
-                echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
+                  if [ -z "${SERVICE_NAME}" ]; then
+                      SERVICE_NAME="$(echo << parameters.family >>)"
+                  fi
+                  if [ "<< parameters.force-new-deployment >>" == "true" ]; then
+                      set -- "$@" --force-new-deployment
+                  fi
+                  DEPLOYED_REVISION=$(aws ecs update-service \
+                      --cluster "<< parameters.cluster-name >>" \
+                      --service "${SERVICE_NAME}" \
+                      --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                      --output text \
+                      --query service.taskDefinition \
+                      "$@")
+                  echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
       - when:
           condition:
             and:
