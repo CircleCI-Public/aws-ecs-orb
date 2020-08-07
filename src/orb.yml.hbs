@@ -988,12 +988,13 @@ commands:
                       --query deploymentId)
                   echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
                   if [ "<< parameters.verify-revision-is-deployed >>" == "true" ]; then
-                    echo "Waiting for deployment to succeed." 
+                    echo "Waiting for deployment to succeed."
                     if $(aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}); then
                       echo "Deployment succeeded."
                     else
                       echo "Deployment failed."
                     fi
+                  fi
                   echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
           no_output_timeout: << parameters.verification-timeout >> 
       - when:
