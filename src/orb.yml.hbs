@@ -994,6 +994,7 @@ commands:
                       echo "Deployment succeeded."
                     else
                       echo "Deployment failed."
+                      exit 1
                     fi
                   fi
                   echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> $BASH_ENV
