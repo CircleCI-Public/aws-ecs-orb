@@ -42,7 +42,7 @@ steps:
         Poll the deployment status at intervals till the given task definition
         revision has reached its desired running task count and is the only
         one deployed for the service.
-      command: <<include(script/verify-revision-deployed.sh)>>
+      command: <<include(scripts/verify-revision-deployed.sh)>>
       environment:
         SERVICE_NAME: <<parameters.service-name>>
         ECS_PARAM_FAMILY: <<parameters.family>>
