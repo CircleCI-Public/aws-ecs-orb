@@ -1,8 +1,7 @@
-if [ "<< parameters.task-definition-arn >>" = "" ]; then
-    echo "Invalid task-definition-arn parameter value: << parameters.task-definition-arn >>"
+if [ "$ECS_PARAM_TASK_DEF_ARN" = "" ]; then
+    echo "Invalid task-definition-arn parameter value: $ECS_PARAM_TASK_DEF_ARN"
     exit 1
 fi
-
 
 
 if [ -z "${SERVICE_NAME}" ]; then
@@ -24,12 +23,12 @@ do
         --query 'services[0].deployments[].[taskDefinition, status]')
     NUM_DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services ${SERVICE_NAME} \
+        --services "${SERVICE_NAME}" \
         --output text \
         --query 'length(services[0].deployments)')
     TARGET_REVISION=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services ${SERVICE_NAME} \
+        --services "${SERVICE_NAME}" \
         --output text \
         --query "services[0].deployments[?taskDefinition==\`$ECS_PARAM_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
     echo "Current deployments: $DEPLOYMENTS"

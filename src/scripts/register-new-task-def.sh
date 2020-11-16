@@ -12,18 +12,15 @@ if [ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]; then
     set -- "$@" --network-mode "${CCI_ORB_AWS_ECS_NETWORK_MODE}"
 fi
 
-if [ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ] && [ "${CCI_ORB_AWS_ECS_VOLUMES}"
-!= "[]" ]; then
+if [ -n "${CCI_ORB_AWS_ECS_VOLUMES}" ] && [ "${CCI_ORB_AWS_ECS_VOLUMES}" != "[]" ]; then
     set -- "$@" --volumes "${CCI_ORB_AWS_ECS_VOLUMES}"
 fi
 
-if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [
-"${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]; then
+if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" != "[]" ]; then
     set -- "$@" --placement-constraints "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}"
 fi
 
-if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [
-"${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
+if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
     set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
 fi
 
@@ -43,13 +40,11 @@ if [ -n "${CCI_ORB_AWS_ECS_IPC_MODE}" ]; then
     set -- "$@" --ipc-mode "${CCI_ORB_AWS_ECS_IPC_MODE}"
 fi
 
-if [ -n "${CCI_ORB_AWS_ECS_TAGS}" ] && [ "${CCI_ORB_AWS_ECS_TAGS}" !=
-"[]" ]; then
+if [ -n "${CCI_ORB_AWS_ECS_TAGS}" ] && [ "${CCI_ORB_AWS_ECS_TAGS}" != "[]" ]; then
     set -- "$@" --tags "${CCI_ORB_AWS_ECS_TAGS}"
 fi
 
-if [ -n "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" ] && [
-"${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" != "{}" ]; then
+if [ -n "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" ] && [ "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" != "{}" ]; then
     set -- "$@" --proxy-configuration "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}"
 fi
 

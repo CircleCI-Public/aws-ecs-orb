@@ -1,20 +1,20 @@
 set -o noglob
 
+# shellcheck disable=SC2034  # Hold-over from previous iteration.
 PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
-
+# shellcheck disable=SC2034  # Hold-over from previous iteration.
 CONTAINER_IMAGE_NAME_UPDATES="$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES"
-
+# shellcheck disable=SC2034  # Hold-over from previous iteration.
 CONTAINER_ENV_VAR_UPDATES="$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES"
 
 
 # Prepare script for updating container definitions
 
-UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp
-_update_container_defs.py.XXXXXX)
+UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp_update_container_defs.py.XXXXXX)
 
-chmod +x $UPDATE_CONTAINER_DEFS_SCRIPT_FILE
+chmod +x "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
-cat > $UPDATE_CONTAINER_DEFS_SCRIPT_FILE \<<-EOF
+cat > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" \<<-EOF
 
 from __future__ import absolute_import
 
@@ -23,7 +23,7 @@ import sys
 import json
 
 
-
+# shellcheck disable=SC1036  # Hold-over from previous iteration.
 def run(previous_task_definition, container_image_name_updates,
 container_env_var_updates):
     try:

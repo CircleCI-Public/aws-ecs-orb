@@ -6,7 +6,7 @@ orbs:
   aws-cli: circleci/aws-cli@0.1.4
   orb-tools: circleci/orb-tools@10.0
   # bats: circleci/bats@1.0
-  shellcheck: circleci/shellcheck@2.0
+  shellcheck: circleci/shellcheck@2.2
 
 # Pipeline Parameters
 ## These parameters are used internally by orb-tools. Skip to the Jobs section.
@@ -28,11 +28,11 @@ commands:
     description: "Wait for the CodeDeploy deployment to be successful"
     parameters:
       application-name:
-          description: "CodeDeploy application name"
-          type: string
+        description: "CodeDeploy application name"
+        type: string
       deployment-group-name:
-          description: "CodeDeploy application name"
-          type: string
+        description: "CodeDeploy application name"
+        type: string
     steps:
       - run:
           name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
@@ -49,11 +49,11 @@ commands:
     description: "Forcefully delete an ECS service"
     parameters:
       service-name:
-          description: "Name of the ECS service"
-          type: string
+        description: "Name of the ECS service"
+        type: string
       cluster-name:
-          description: "Name of the cluster"
-          type: string
+        description: "Name of the cluster"
+        type: string
     steps:
       - run:
           name: Delete ECS service
@@ -66,19 +66,19 @@ commands:
     description: "Test the deployment"
     parameters:
       service-name:
-          description: "Name of the ECS service"
-          type: string
+        description: "Name of the ECS service"
+        type: string
       cluster-name:
-          description: "Name of the cluster"
-          type: string
+        description: "Name of the cluster"
+        type: string
       test-asterisk-expansion:
-          description: "Checks that asterisk expansion is prevented"
-          type: boolean
-          default: false
+        description: "Checks that asterisk expansion is prevented"
+        type: boolean
+        default: false
       delete-load-balancer:
-          description: "Whether to delete the load balancer after the test"
-          type: boolean
-          default: false
+        description: "Whether to delete the load balancer after the test"
+        type: boolean
+        default: false
     steps:
       - run:
           name: Test deployment (for orb testing and is not part of the orb)

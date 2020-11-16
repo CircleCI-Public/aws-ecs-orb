@@ -3,7 +3,7 @@ if [ "${TASK_DEFINITION_JSON:0:1}" != "/" ]; then
 fi
 
 REVISION=$(aws ecs register-task-definition \
-    --cli-input-json file://${TASK_DEFINITION_JSON} \
+    --cli-input-json file://"${TASK_DEFINITION_JSON}" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
 echo "Registered task definition: ${REVISION}"
