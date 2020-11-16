@@ -1,0 +1,15 @@
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@0.1.4
+  aws-ecs: circleci/aws-ecs@1.0.5
+jobs:
+  update-tag:
+    docker:
+      - image: 'circleci/python:3.7.1'
+    steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: $AWS_ACCESS_KEY_ID
+          aws-region: $AWS_REGION
+      - aws-ecs/update-task-definition-from-json:
+          task-definition-json: my-app-definition.json

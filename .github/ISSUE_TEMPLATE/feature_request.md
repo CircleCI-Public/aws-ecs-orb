@@ -1,18 +1,14 @@
 ---
-name: "Feature request"
-about: Suggest an idea that will improve the project
-labels: enhancement
-
+name: "\U0001F680 Feature Request"
+about: Propose changes to the orb.
+title: ''
+labels: feature_request
+assignees: ''
 ---
 
-## What would you like to be added
+## Describe Request:
 
-<!---
-  please describe the idea you have and the problem you are trying to solve
--->
+## Examples:
 
-## Why is this needed
+## Supporting Documentation Links:
 
-<!---
-  please explain why is this feature needed and how it improves the project
--->

@@ -1,0 +1,17 @@
+version: 2.1
+orbs:
+  aws-ecs: circleci/aws-ecs@x.y.z
+jobs:
+  run-task:
+    docker:
+      - image: 'circleci/python:3.7.1'
+    steps:
+      - aws-ecs/run-task:
+          cluster: cluster1
+          task-definition: myapp
+          awsvpc: false
+          launch-type: EC2
+workflows:
+  run-task:
+    jobs:
+      - run-task

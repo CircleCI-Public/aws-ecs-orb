@@ -1,104 +1,102 @@
 version: 2.1
 
-orb_promotion_filters: &orb_promotion_filters
-  branches:
-    ignore: /.*/
-  tags:
-    only: /^(major|minor|patch)-release-v\d+\.\d+\.\d+$/
-
-executors:
-  cli:
-    resource_class: small
-    docker:
-      - image: circleci/circleci-cli
-  node:
-    resource_class: small
-    docker:
-      - image: circleci/node
-
 orbs:
+  # Replace this with your own!
+  aws-ecs: circleci/aws-ecs@<<pipeline.parameters.dev-orb-version>>
   aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@dev:alpha
-  circleci-cli: circleci/circleci-cli@0.1.2
-  queue: eddiewebb/queue@1.0.110
-  orb-tools: circleci/orb-tools@8.27.3
+  orb-tools: circleci/orb-tools@10.0
+  # bats: circleci/bats@1.0
+  shellcheck: circleci/shellcheck@2.0
 
+# Pipeline Parameters
+## These parameters are used internally by orb-tools. Skip to the Jobs section.
 parameters:
   run-integration-tests:
+    description: An internal flag to prevent integration test from running before a development version has been created.
     type: boolean
     default: false
+  dev-orb-version:
+    description: >
+      The development version of the orb to test.
+      This value is automatically adjusted by the "trigger-integration-tests-workflow" job to correspond with the specific version created by the commit and should not be edited.
+      A "dev:alpha" version must exist for the initial pipeline run.
+    type: string
+    default: "dev:alpha"
+
+commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+          description: "CodeDeploy application name"
+          type: string
+      deployment-group-name:
+          description: "CodeDeploy application name"
+          type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service-name:
+          description: "Name of the ECS service"
+          type: string
+      cluster-name:
+          description: "Name of the cluster"
+          type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster-name >> \
+              --service << parameters.service-name >> \
+              --force
+  test-deployment:
+    description: "Test the deployment"
+    parameters:
+      service-name:
+          description: "Name of the ECS service"
+          type: string
+      cluster-name:
+          description: "Name of the cluster"
+          type: string
+      test-asterisk-expansion:
+          description: "Checks that asterisk expansion is prevented"
+          type: boolean
+          default: false
+      delete-load-balancer:
+          description: "Whether to delete the load balancer after the test"
+          type: boolean
+          default: false
+    steps:
+      - run:
+          name: Test deployment (for orb testing and is not part of the orb)
+          command: |
+            set -x
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            for attempt in {1..25}; do
+              curl -s --retry 10 http://$ELB_DNS_NAME \
+                | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
+            done
+            if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
+              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
+            fi
 
 jobs:
-  build-orb:
-    docker:
-      - image: circleci/python:3.7.1
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - cache-{{ checksum "tools/package-lock.json" }}
-      - restore_cache:
-          keys:
-            - cache-{{ checksum "Pipfile.lock" }}
-      - run:
-          name: Install Python dependencies
-          command: |
-            pipenv sync --dev
-      - run:
-          name: Install JS dependencies
-          command: |
-            sudo apt-get update
-            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            cd tools
-            npm install
-      - run:
-          name: Run unit tests
-          command: |
-            cd src/python
-            pipenv run pylint --py3k *.py
-            pipenv run coverage run --source . -m pytest
-            pipenv run coverage report --omit "*/test*"
-      - run:
-          name: Build orb
-          command: |
-            ./build_orb.sh
-            cat src/orb.yml
-      - circleci-cli/install
-      - run:
-          name: Validate orb
-          command: |
-            circleci orb validate src/orb.yml
-      - save_cache:
-          key: cache-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ~/.local
-            - ~/.cache
-      - save_cache:
-          key: cache-{{ checksum "tools/package-lock.json" }}
-          paths:
-            - ~/tools/node_modules
-
-      - persist_to_workspace:
-          root: src
-          paths:
-            - orb.yml
-
-  trigger-integration-tests:
-    docker:
-      - image: circleci/python:3.7.1
-    steps:
-      - checkout
-      - run:
-          name: Trigger integration workflow
-          command: |
-            curl -u ${CIRCLE_TOKEN}: -X POST --header "Content-Type: application/json" -d "{
-              \"branch\": \"${CIRCLE_BRANCH}\",
-              \"parameters\": {
-                \"run-integration-tests\": true
-              }
-            }" "https://circleci.com/api/v2/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
-
+  # Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
   build-test-app:
     docker:
       - image: circleci/golang:1.8
@@ -132,7 +130,6 @@ jobs:
           name: Save image to an archive
           command: |
             mkdir -p docker-images/<<parameters.docker-image-name>>
-
             docker save -o docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
           root: .
@@ -181,7 +178,6 @@ jobs:
           command: |
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
-
   test-service-update:
     docker:
       - image: circleci/python:3.7.1
@@ -271,7 +267,6 @@ jobs:
           name: Check if task definition was updated
           command: |
             aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
-
   set-up-run-task-test:
     docker:
       - image: circleci/python:3.7.1
@@ -292,7 +287,6 @@ jobs:
               --family << parameters.family-name >> \
               --cpu 256 --memory 512 \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
-
   tear-down-run-task-test:
     docker:
       - image: circleci/python:3.7.1
@@ -312,7 +306,6 @@ jobs:
             TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
               --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
             aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
-
   tear-down-test-env:
     parameters:
       terraform-image:
@@ -350,145 +343,52 @@ jobs:
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
-  # Orb promotion workflow jobs
-  pre-orb-promotion-check:
-    docker:
-      - image: circleci/python:3.7.1
-    steps:
-      - checkout
-      - run:
-          name: Check that this is a master branch commit
-          command: |
-            git clone "$CIRCLE_REPOSITORY_URL" repository
-            cd repository
-            git branch --contains ${CIRCLE_SHA1} | grep "master"
-  promote-orb-into-production:
-    parameters:
-      orb-name:
-        type: string
-        description: |
-          Semver-less name of the orb to be promoted into production
-      orb-ref:
-        type: string
-        description: |
-          Version information of the orb to be promoted into production
-    executor: circleci-cli/default
-    steps:
-      - checkout
-      - run:
-          name: Promote dev orb to production
-          command: |
-            RELEASE_TYPE=''
-            if [[ "${CIRCLE_TAG}" =~ major-release-* ]]; then
-              RELEASE_TYPE='major'
-            elif [[ "${CIRCLE_TAG}" =~ minor-release-* ]]; then
-              RELEASE_TYPE='minor'
-            elif [[ "${CIRCLE_TAG}" =~ patch-release-* ]]; then
-              RELEASE_TYPE='patch'
-            fi
-            if [ -n "${RELEASE_TYPE}" ]; then
-              circleci orb publish promote \
-              <<parameters.orb-name>>@<<parameters.orb-ref>> \
-              ${RELEASE_TYPE} --token \
-              ${CIRCLE_TOKEN}
-            fi
-commands:
-  wait-for-codedeploy-deployment:
-    description: "Wait for the CodeDeploy deployment to be successful"
-    parameters:
-      application-name:
-          description: "CodeDeploy application name"
-          type: string
-      deployment-group-name:
-          description: "CodeDeploy application name"
-          type: string
-    steps:
-      - run:
-          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
-          command: |
-            DEPLOYMENT_ID=$(aws deploy list-deployments \
-              --application-name << parameters.application-name >> \
-              --deployment-group-name << parameters.deployment-group-name >> \
-              --query "deployments" \
-              --max-items 1 \
-              --output text \
-              | head -n 1)
-            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
-  delete-service:
-    description: "Forcefully delete an ECS service"
-    parameters:
-      service-name:
-          description: "Name of the ECS service"
-          type: string
-      cluster-name:
-          description: "Name of the cluster"
-          type: string
-    steps:
-      - run:
-          name: Delete ECS service
-          command: |
-            aws ecs delete-service \
-              --cluster << parameters.cluster-name >> \
-              --service << parameters.service-name >> \
-              --force
-  test-deployment:
-    description: "Test the deployment"
-    parameters:
-      service-name:
-          description: "Name of the ECS service"
-          type: string
-      cluster-name:
-          description: "Name of the cluster"
-          type: string
-      test-asterisk-expansion:
-          description: "Checks that asterisk expansion is prevented"
-          type: boolean
-          default: false
-      delete-load-balancer:
-          description: "Whether to delete the load balancer after the test"
-          type: boolean
-          default: false
-    steps:
-      - run:
-          name: Test deployment (for orb testing and is not part of the orb)
-          command: |
-            set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
-            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
-            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
-            for attempt in {1..25}; do
-              curl -s --retry 10 http://$ELB_DNS_NAME \
-                | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
-            done
-            if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
-              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
-            fi
 
 workflows:
-  build_deploy-dev:
+  # Prior to producing a development orb (which requires credentials) basic validation, linting, and even unit testing can be performed.
+  # This workflow will run on every commit
+  test-pack:
     unless: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - build-orb
-
-      - queue/block_workflow:
-          consider-branch: false
+      - orb-tools/lint # Lint Yaml files
+      - orb-tools/pack # Pack orb source
+      - shellcheck/check:
+          dir: ./src/scripts
+          exclude: SC2148
+      # optional: Run BATS tests against your scripts
+      # - bats/run:
+      #     path: ./src/tests
+      # If you accept building open source forks, protect your secrects behind a restricted context.
+      # A job containing restricted context (which holds your orb publishing credentials) may only be accessed by a user with proper permissions.
+      # An open source user may begin a pipeline with a PR, and once the pipeline is approved by an authorized user at this point, the pipeline will continue with the proper context permissions.
+      - hold-for-dev-publish:
+          type: approval
           requires:
-            - build-orb
-
+            - orb-tools/lint
+            - orb-tools/pack
+            # - bats/run
+            - shellcheck/check
+      # Publish development version(s) of the orb.
       - orb-tools/publish-dev:
           orb-name: circleci/aws-ecs
-          requires:
-            - queue/block_workflow
+          context: orb-publishing # A restricted context containing your private publishing credentials. Will only execute if approved by an authorized user.
+          requires: [hold-for-dev-publish]
+      # Trigger an integration workflow to test the
+      # dev:${CIRCLE_SHA1:0:7} version of your orb
+      - orb-tools/trigger-integration-tests-workflow:
+          name: trigger-integration-dev
           context: orb-publishing
-
-      - trigger-integration-tests:
           requires:
             - orb-tools/publish-dev
-          context: orb-publishing
 
-  integration_tests:
+  # This `integration-test_deploy` workflow will only run
+  # when the run-integration-tests pipeline parameter is set to true.
+  # It is meant to be triggered by the "trigger-integration-tests-workflow"
+  # job, and run tests on <your orb>@dev:${CIRCLE_SHA1:0:7}.
+  integration-test_deploy:
     when: << pipeline.parameters.run-integration-tests >>
     jobs:
+      # Run any integration tests defined within the `jobs` key.
       - build-test-app:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
@@ -714,22 +614,22 @@ workflows:
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-
-  # Tag-triggered workflow to promote a dev orb into production.
-  # The tag is expected to have been applied manually.
-  production-orb-publishing:
-    jobs:
-      - pre-orb-promotion-check:
-          filters: *orb_promotion_filters
       - hold-for-approval:
           type: approval
-          requires:
-            - pre-orb-promotion-check
-          filters: *orb_promotion_filters
-      - promote-orb-into-production:
+      # Publish a semver version of the orb. relies on
+      # the commit subject containing the text "[semver:patch|minor|major|skip]"
+      # as that will determine whether a patch, minor or major
+      # version will be published or if publishing should
+      # be skipped.
+      # e.g. [semver:patch] will cause a patch version to be published.
+      - orb-tools/dev-promote-prod-from-commit-subject:
           orb-name: circleci/aws-ecs
-          orb-ref: dev:${CIRCLE_SHA1:0:7}
           context: orb-publishing
+          add-pr-comment: false
+          fail-if-semver-not-indicated: true
+          publish-version-tag: false
           requires:
             - hold-for-approval
-          filters: *orb_promotion_filters
+          filters:
+            branches:
+              only: master
