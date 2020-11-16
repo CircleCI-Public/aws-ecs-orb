@@ -14,7 +14,7 @@ UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp_update_container_defs.py.XXXXXX)
 
 chmod +x "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
-cat > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" \\<<-EOF
+cat > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" <<-EOF
 
 from __future__ import absolute_import
 
@@ -162,7 +162,7 @@ GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
 
 chmod +x "$GET_TASK_DFN_VAL_SCRIPT_FILE"
 
-cat > "$GET_TASK_DFN_VAL_SCRIPT_FILE" \\<<-EOF
+cat > "$GET_TASK_DFN_VAL_SCRIPT_FILE" <<-EOF
 
 from __future__ import absolute_import
 
