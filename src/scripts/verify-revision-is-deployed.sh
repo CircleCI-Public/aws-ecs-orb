@@ -18,7 +18,7 @@ while [ "$attempt" -lt "$ECS_PARAM_MAX_POLL_ATTEMPTS" ]
 do
     DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services ${SERVICE_NAME} \
+        --services "${SERVICE_NAME}" \
         --output text \
         --query 'services[0].deployments[].[taskDefinition, status]')
     NUM_DEPLOYMENTS=$(aws ecs describe-services \
