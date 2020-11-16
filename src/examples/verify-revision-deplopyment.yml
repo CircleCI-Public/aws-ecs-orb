@@ -1,30 +1,32 @@
-version: 2.1
-orbs:
-  aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@0.0.10
-jobs:
-  verify-deployment:
-    docker:
-      - image: 'circleci/python:3.7.1'
-    steps:
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: $AWS_ACCESS_KEY_ID
-          aws-region: $AWS_REGION
-      - run:
-          name: Get last task definition
-          command: >
-            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-                --task-definition ${MY_APP_PREFIX}-service \
-                --output text \
-                --query 'taskDefinition.taskDefinitionArn')
-            echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
-            $BASH_ENV
-      - aws-ecs/verify-revision-is-deployed:
-          family: '${MY_APP_PREFIX}-service'
-          cluster-name: '${MY_APP_PREFIX}-cluster'
-          task-definition-arn: '${TASK_DEFINITION_ARN}'
-workflows:
-  test-workflow:
-    jobs:
-      - verify-deployment
+description: Verify the deployment of an ECS revision.
+usage:
+  version: 2.1
+  orbs:
+    aws-cli: circleci/aws-cli@0.1.4
+    aws-ecs: circleci/aws-ecs@0.0.10
+  jobs:
+    verify-deployment:
+      docker:
+        - image: 'circleci/python:3.7.1'
+      steps:
+        - aws-cli/install
+        - aws-cli/configure:
+            aws-access-key-id: $AWS_ACCESS_KEY_ID
+            aws-region: $AWS_REGION
+        - run:
+            name: Get last task definition
+            command: >
+              TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                  --task-definition ${MY_APP_PREFIX}-service \
+                  --output text \
+                  --query 'taskDefinition.taskDefinitionArn')
+              echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
+              $BASH_ENV
+        - aws-ecs/verify-revision-is-deployed:
+            family: '${MY_APP_PREFIX}-service'
+            cluster-name: '${MY_APP_PREFIX}-cluster'
+            task-definition-arn: '${TASK_DEFINITION_ARN}'
+  workflows:
+    test-workflow:
+      jobs:
+        - verify-deployment

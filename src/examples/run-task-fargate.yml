@@ -1,17 +1,19 @@
-version: 2.1
-orbs:
-  aws-ecs: circleci/aws-ecs@x.y.z
-jobs:
-  run-task:
-    docker:
-      - image: 'circleci/python:3.7.1'
-    steps:
-      - aws-ecs/run-task:
-          cluster: cluster1
-          task-definition: myapp
-          subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
-          security-group-ids: $SECURITY_GROUP_IDS
-workflows:
-  run-task:
-    jobs:
-      - run-task
+description: Start the run of an ECS task on Fargate.
+usage:
+  version: 2.1
+  orbs:
+    aws-ecs: circleci/aws-ecs@x.y.z
+  jobs:
+    run-task:
+      docker:
+        - image: 'circleci/python:3.7.1'
+      steps:
+        - aws-ecs/run-task:
+            cluster: cluster1
+            task-definition: myapp
+            subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
+            security-group-ids: $SECURITY_GROUP_IDS
+  workflows:
+    run-task:
+      jobs:
+        - run-task
