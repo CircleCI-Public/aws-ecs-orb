@@ -1,0 +1,31 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+
+parameters:
+  aws-access-key-id:
+    default: AWS_ACCESS_KEY_ID
+    description: AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+    type: env_var_name
+  aws-region:
+    default: AWS_REGION
+    description: AWS region to operate in. Defaulted to $AWS_REGION
+    type: env_var_name
+  aws-secret-access-key:
+    default: AWS_SECRET_ACCESS_KEY
+    description: AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+    type: env_var_name
+  docker-image-for-job:
+    default: circleci/python:3.7.1
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+  task-definition-json:
+    description: Location of your .json task definition file (relative or absolute).
+    type: string
+steps:
+  - aws-cli/install
+  - aws-cli/configure:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-region: << parameters.aws-region >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+  - update-task-definition-from-json:
+      task-definition-json: << parameters.task-definition-json >>

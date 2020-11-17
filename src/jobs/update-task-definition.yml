@@ -1,0 +1,56 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+
+parameters:
+  aws-access-key-id:
+    default: AWS_ACCESS_KEY_ID
+    description: AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+    type: env_var_name
+  aws-region:
+    default: AWS_REGION
+    description: AWS region to operate in. Defaulted to $AWS_REGION
+    type: env_var_name
+  aws-secret-access-key:
+    default: AWS_SECRET_ACCESS_KEY
+    description: AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+    type: env_var_name
+  container-env-var-updates:
+    default: ''
+    description: >
+      Use this to update or set the values of environment variables that
+      will be defined for the containers. (Existing environment variables not
+      included in this parameter will not be removed).
+      Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+      Values should not contain commas.
+    type: string
+  container-image-name-updates:
+    default: ''
+    description: >
+      Use this to update the Docker image names and/or tag names of existing
+      containers that had been defined in the previous task definition.
+      Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+      For each container, specify only either "image-and-tag" or "image" or "tag".
+      If "image-and-tag" is specified, the container image will be updated to the
+      value of the name-value pair.
+      If "image" is specified, the image tag defined in the previous task definition
+      will be retained, if exists.
+      If "tag" is specified, the image name defined in the previous task definition
+      will be used.
+    type: string
+  docker-image-for-job:
+    default: circleci/python:3.7.1
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+  family:
+    description: Name of the task definition's family.
+    type: string
+steps:
+  - aws-cli/install
+  - aws-cli/configure:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-region: << parameters.aws-region >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+  - update-task-definition:
+      container-env-var-updates: << parameters.container-env-var-updates >>
+      container-image-name-updates: << parameters.container-image-name-updates >>
+      family: << parameters.family >>

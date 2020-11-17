@@ -1,0 +1,29 @@
+description: Verify the deployment of an ECS revision.
+usage:
+  jobs:
+    verify-deployment:
+      docker:
+      - image: circleci/python:3.7.1
+      steps:
+      - aws-cli/install
+      - aws-cli/configure:
+          aws-access-key-id: $AWS_ACCESS_KEY_ID
+          aws-region: $AWS_REGION
+      - run:
+          command: "TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \\\n  \
+            \  --task-definition ${MY_APP_PREFIX}-service \\\n    --output text \\\
+            \n    --query 'taskDefinition.taskDefinitionArn')\necho \"export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'\"\
+            \ >> $BASH_ENV\n"
+          name: Get last task definition
+      - aws-ecs/verify-revision-is-deployed:
+          cluster-name: ${MY_APP_PREFIX}-cluster
+          family: ${MY_APP_PREFIX}-service
+          task-definition-arn: ${TASK_DEFINITION_ARN}
+  orbs:
+    aws-cli: circleci/aws-cli@0.1.4
+    aws-ecs: circleci/aws-ecs@0.0.10
+  version: 2.1
+  workflows:
+    test-workflow:
+      jobs:
+      - verify-deployment

@@ -1,0 +1,19 @@
+description: Start the run of an ECS task on EC2.
+usage:
+  jobs:
+    run-task:
+      docker:
+      - image: circleci/python:3.7.1
+      steps:
+      - aws-ecs/run-task:
+          awsvpc: false
+          cluster: cluster1
+          launch-type: EC2
+          task-definition: myapp
+  orbs:
+    aws-ecs: circleci/aws-ecs@x.y.z
+  version: 2.1
+  workflows:
+    run-task:
+      jobs:
+      - run-task

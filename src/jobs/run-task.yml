@@ -1,0 +1,162 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+
+parameters:
+  assign-public-ip:
+    default: DISABLED
+    description: "Assign a public IP or not"
+    enum:
+      - ENABLED
+      - DISABLED
+    type: enum
+  aws-access-key-id:
+    default: AWS_ACCESS_KEY_ID
+    description: AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
+    type: env_var_name
+  aws-region:
+    default: AWS_REGION
+    description: AWS region to operate in. Defaulted to $AWS_REGION
+    type: env_var_name
+  aws-secret-access-key:
+    default: AWS_SECRET_ACCESS_KEY
+    description: AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+    type: env_var_name
+  awsvpc:
+    default: true
+    description: >
+      Does your task definition use awsvpc mode or not. If so,
+      this should be true and you should also include subnet-ids
+      and optionally security-group-ids / assign-public-ips.
+    type: boolean
+  cluster:
+    description: The name or ARN of the cluster on which to run the task.
+    type: string
+  count:
+    default: 1
+    description: >
+      The number of instantiations of the specified task to place on
+      your cluster. You can specify up to 10 tasks per call.
+    type: integer
+  docker-image-for-job:
+    default: circleci/python:3.7.1
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+  enable-ecs-managed-tags:
+    default: false
+    description: Specifies whether to enable Amazon ECS managed tags for the task.
+    type: boolean
+  group:
+    default: ''
+    description: >
+      The name of the task group to associate with the task.
+      The default value is the family name of the task definition
+      (for example, family:my-family-name).
+    type: string
+  launch-type:
+    default: FARGATE
+    description: >
+      The launch type on which to run your task. For more information,
+      see Amazon ECS Launch Types in the Amazon Elastic Container Service 
+      Developer Guide. Possible values EC2, FARGATE.
+    enum:
+      - FARGATE
+      - EC2
+    type: enum
+  overrides:
+    default: ''
+    description: >
+      A list of container overrides in JSON format that specify the name
+      of a container in the specified task definition and the overrides it 
+      should receive.
+      Double quotes in the JSON should be escaped e.g.:
+      {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\": 512}]}
+    type: string
+  placement-constraints:
+    default: ''
+    description: >
+      An array of placement constraint objects to use for the task. You
+      can specify up to 10 constraints per task (including constraints in
+      the task definition and those specified at runtime).
+      Expected format: type=string,field=string.
+    type: string
+  placement-strategy:
+    default: ''
+    description: >
+      The placement strategy objects to use for the task. You can specify
+      a maximum of five strategy rules per task.
+      Expected format: type=string,field=string.
+    type: string
+  platform-version:
+    default: LATEST
+    description: >
+      The platform version the task should run. A platform version is
+      only specified for tasks using the Fargate launch type.
+    type: string
+  propagate-tags:
+    default: false
+    description: >
+      Specifies whether to propagate the tags from the task definition
+      to the task. If no value is specified, the tags are not propagated.
+      Tags can only be propagated to the task during task creation. To add
+      tags to a task after task creation, use the TagResource API action.
+    type: boolean
+  security-group-ids:
+    default: ''
+    description: >
+      List of security group ids separated by commas.
+      Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75
+    type: string
+  started-by:
+    default: ''
+    description: >
+      An optional tag specified when a task is started. For example, if
+      you automatically trigger a task to run a batch process job, you
+      could apply a unique identifier for that job to your task with the
+      startedBy parameter. You can then identify which tasks belong to
+      that job by filtering the results of a ListTasks call with the
+      startedBy value. Up to 36 letters (uppercase and lowercase), numbers, 
+      hyphens, and underscores are allowed.
+    type: string
+  subnet-ids:
+    default: ''
+    description: >
+      List of subnet ids separated by commas.
+      Expected Format: subnet-70faa93b,subnet-bcc54b93
+    type: string
+  tags:
+    default: ''
+    description: >
+      The metadata that you apply to the task to help you categorize
+      and organize them. Each tag consists of a key and an optional value,
+      both of which you define. Expected format: key=string,value=string.
+    type: string
+  task-definition:
+    description: >
+      The family and revision (family:revision) or full ARN of the task
+      definition to run. If a revision is not specified, the latest ACTIVE
+      revision is used.
+    type: string
+steps:
+  - aws-cli/install
+  - aws-cli/configure:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-region: << parameters.aws-region >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+  - run-task:
+      assign-public-ip: << parameters.assign-public-ip >>
+      awsvpc: << parameters.awsvpc >>
+      cluster: << parameters.cluster >>
+      count: << parameters.count >>
+      enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
+      group: << parameters.group >>
+      launch-type: << parameters.launch-type >>
+      overrides: << parameters.overrides >>
+      placement-constraints: << parameters.placement-constraints >>
+      placement-strategy: << parameters.placement-strategy >>
+      platform-version: << parameters.platform-version >>
+      propagate-tags: << parameters.propagate-tags >>
+      security-group-ids: << parameters.security-group-ids >>
+      started-by: << parameters.started-by >>
+      subnet-ids: << parameters.subnet-ids >>
+      tags: << parameters.tags >>
+      task-definition: << parameters.task-definition >>

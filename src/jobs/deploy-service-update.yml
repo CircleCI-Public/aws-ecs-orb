@@ -1,0 +1,155 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+
+parameters:
+  aws-access-key-id:
+    default: AWS_ACCESS_KEY_ID
+    description: AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID'
+    type: env_var_name
+  aws-region:
+    default: AWS_REGION
+    description: AWS region to operate in. Defaulted to $AWS_REGION
+    type: env_var_name
+  aws-secret-access-key:
+    default: AWS_SECRET_ACCESS_KEY
+    description: AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
+    type: env_var_name
+  cluster-name:
+    description: The short name or full ARN of the cluster that hosts the service.
+    type: string
+  codedeploy-application-name:
+    default: ''
+    description: > 
+      The name of the AWS CodeDeploy application used for the deployment.
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+    type: string
+  codedeploy-deployment-group-name:
+    default: ''
+    description: >
+      The name of the AWS CodeDeploy deployment group used for the deployment.
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+    type: string
+  codedeploy-load-balanced-container-name:
+    default: ''
+    description: >
+      The name of the container to be load-balanced via AWS CodeDeploy.
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+    type: string
+  codedeploy-load-balanced-container-port:
+    default: 80
+    description: >
+      The port of the container to be load-balanced via AWS CodeDeploy.
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
+    type: integer
+  container-env-var-updates:
+    default: ''
+    description: >
+      Use this to update or set the values of environment variables that
+      will be defined for the containers. (Existing environment variables not 
+      included in this parameter will not be removed)
+      Expected format: container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+      Values should not contain commas.
+    type: string
+  container-image-name-updates:
+    default: ''
+    description: >
+      Use this to update the Docker image names and/or tag names of existing
+      containers that had been defined in the previous task definition.
+      Expected format: container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+      For each container, specify only either "image-and-tag" or "image" or "tag".
+      If "image-and-tag" is specified, the container image will be updated to the
+      value of the name-value pair.
+      If "image" is specified, the image tag defined in the previous task definition
+      will be retained, if exists.
+      If "tag" is specified, the image name defined in the previous task definition
+      will be used.
+    type: string
+  deployment-controller:
+    default: ECS
+    description: The deployment controller to use for the service. Defaulted to ECS
+    enum:
+    - ECS
+    - CODE_DEPLOY
+    type: enum
+  docker-image-for-job:
+    default: circleci/python:3.7.1
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+  fail-on-verification-timeout:
+    default: true
+    description: >
+      Whether to exit with an error if the verification of the deployment
+      status does not complete within the number of polling attempts.
+      Only in use when verify-revision-is-deployed is set to true.
+    type: boolean
+  family:
+    description: Name of the task definition's family.
+    type: string
+  force-new-deployment:
+    default: false
+    description: >
+      Whether to force a new deployment of the service.
+      Not applicable to ECS services that are of the Blue/Green Deployment type.
+    type: boolean
+  max-poll-attempts:
+    default: 50
+    description: >
+      The maximum number of attempts to poll the deployment status before
+      giving up.
+      Only in use when verify-revision-is-deployed is set to true.
+    type: integer
+  poll-interval:
+    default: 20
+    description: >
+      The polling interval, in seconds.
+      Only in use when verify-revision-is-deployed is set to true.
+    type: integer
+  service-name:
+    default: ''
+    description: The name of the service to update. If undefined, we assume `family`
+      is the name of both the service and task definition.
+    type: string
+  skip-task-definition-registration:
+    default: false
+    description: Whether to skip registration of a new task definition.
+    type: boolean
+  verification-timeout:
+    default: 10m
+    description: >
+      The maximum amount of time to wait for a blue/green deployment to
+      complete before timing out.
+      Only in use when the deployment controller is the blue/green deployment type.
+    type: string
+  verify-revision-is-deployed:
+    default: false
+    description: >
+      Runs the verify-revision-is-deployed Orb command to verify that
+      the revision has been deployed and is the only deployed revision
+      for the service. Note: enabling this may result in the build
+      being marked as failed if tasks for older revisions fail to be stopped
+      before the max number of polling attempts is reached.
+    type: boolean
+steps:
+  - aws-cli/install
+  - aws-cli/configure:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-region: << parameters.aws-region >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+  - update-service:
+      cluster-name: << parameters.cluster-name >>
+      codedeploy-application-name: << parameters.codedeploy-application-name >>
+      codedeploy-deployment-group-name: << parameters.codedeploy-deployment-group-name >>
+      codedeploy-load-balanced-container-name: << parameters.codedeploy-load-balanced-container-name >>
+      codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
+      container-env-var-updates: << parameters.container-env-var-updates >>
+      container-image-name-updates: << parameters.container-image-name-updates >>
+      deployment-controller: << parameters.deployment-controller >>
+      fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
+      family: << parameters.family >>
+      force-new-deployment: << parameters.force-new-deployment >>
+      max-poll-attempts: << parameters.max-poll-attempts >>
+      poll-interval: << parameters.poll-interval >>
+      service-name: << parameters.service-name >>
+      skip-task-definition-registration: << parameters.skip-task-definition-registration >>
+      verification-timeout: << parameters.verification-timeout >>
+      verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
