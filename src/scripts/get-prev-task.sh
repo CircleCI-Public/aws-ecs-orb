@@ -1,5 +1,7 @@
 set -o noglob
 
+ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
+
 # shellcheck disable=SC2034  # Hold-over from previous iteration.
 PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
 # shellcheck disable=SC2034  # Hold-over from previous iteration.

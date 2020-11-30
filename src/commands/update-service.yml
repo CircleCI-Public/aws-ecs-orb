@@ -156,9 +156,7 @@ steps:
                 --task-definition << parameters.family >> \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
-              echo "export
-              CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >>
-              $BASH_ENV
+              echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
   - when:
       condition:
         equal:
