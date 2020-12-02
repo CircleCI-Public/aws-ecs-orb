@@ -12,7 +12,7 @@ CONTAINER_ENV_VAR_UPDATES="$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES"
 
 # Prepare script for updating container definitions
 
-UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp_update_container_defs.py.XXXXXX)
+UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp _update_container_defs.py.XXXXXX)
 
 chmod +x "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
