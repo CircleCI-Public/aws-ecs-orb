@@ -1,3 +1,6 @@
+# These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
+ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
+
 if [ "$ECS_PARAM_TASK_DEF_ARN" = "" ]; then
     echo "Invalid task-definition-arn parameter value: $ECS_PARAM_TASK_DEF_ARN"
     exit 1

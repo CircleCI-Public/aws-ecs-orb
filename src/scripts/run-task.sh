@@ -1,3 +1,6 @@
+# These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
+ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
+
 set -o noglob
 if [ "$ECS_PARAM_LAUNCH_TYPE" == "FARGATE" ]; then
     echo "Setting --platform-version"
