@@ -1,5 +1,8 @@
 set -o noglob
 
+# These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
+ECS_PARAM_CD_APP_NAME=$(eval echo "$ECS_PARAM_CD_APP_NAME")
+
 DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
 
 DEPLOYMENT_ID=$(aws deploy create-deployment \
