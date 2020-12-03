@@ -16,10 +16,12 @@ if [ -n "$ECS_PARAM_GROUP" ]; then
 fi
 if [ -n "$ECS_PARAM_OVERRIDES" ]; then
     echo "Setting --overrides"
+    echo "DEBUG: $ECS_PARAM_OVERRIDES"
     set -- "$@" --overrides "$ECS_PARAM_OVERRIDES"
 fi
 if [ -n "$ECS_PARAM_TAGS" ]; then
     echo "Setting --tags"
+    echo "DEBUG: $ECS_PARAM_TAGS"
     set -- "$@" --tags "$ECS_PARAM_TAGS"
 fi
 if [ -n "$ECS_PARAM_PLACEMENT_CONSTRAINTS" ]; then
