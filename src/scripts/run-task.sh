@@ -49,6 +49,10 @@ echo "DEBUG: 1 $ECS_PARAM_CLUSTER"
 echo "DEBUG: 2 $ECS_PARAM_TASK_DEF"
 echo "DEBUG: 3 $ECS_PARAM_COUNT"
 echo "DEBUG: 4 $ECS_PARAM_LAUNCH_TYPE"
+echo "DEBUG: Printing settings"
+for word in "$@"; do echo "$word"; done
+echo "DEBUG: Complete printing settings"
+
 
 aws ecs run-task \
     --cluster "$ECS_PARAM_CLUSTER" \
