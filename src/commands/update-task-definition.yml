@@ -50,6 +50,7 @@ steps:
         ECS_PARAM_FAMILY: <<parameters.family>>
         ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container-image-name-updates>>
         ECS_PARAM_CONTAINER_ENV_VAR_UPDATES: <<parameters.container-env-var-updates>>
+        ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update-container-defs.py)>>
 
 
   - run:
