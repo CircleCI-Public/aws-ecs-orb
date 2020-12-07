@@ -16,12 +16,10 @@ if [ -n "$ECS_PARAM_GROUP" ]; then
 fi
 if [ -n "$ECS_PARAM_OVERRIDES" ]; then
     echo "Setting --overrides"
-    echo "DEBUG: $ECS_PARAM_OVERRIDES"
     set -- "$@" --overrides "$ECS_PARAM_OVERRIDES"
 fi
 if [ -n "$ECS_PARAM_TAGS" ]; then
     echo "Setting --tags"
-    echo "DEBUG: $ECS_PARAM_TAGS"
     set -- "$@" --tags "$ECS_PARAM_TAGS"
 fi
 if [ -n "$ECS_PARAM_PLACEMENT_CONSTRAINTS" ]; then
@@ -44,15 +42,6 @@ if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
     echo "Setting --network-configuration"
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
-echo "DEBUG: RUNNING AWS ECS RUN-TASK"
-echo "DEBUG: 1 $ECS_PARAM_CLUSTER"
-echo "DEBUG: 2 $ECS_PARAM_TASK_DEF"
-echo "DEBUG: 3 $ECS_PARAM_COUNT"
-echo "DEBUG: 4 $ECS_PARAM_LAUNCH_TYPE"
-echo "DEBUG: Printing settings"
-for word in "$@"; do echo "$word"; done
-echo "DEBUG: Complete printing settings"
-
 
 aws ecs run-task \
     --cluster "$ECS_PARAM_CLUSTER" \
