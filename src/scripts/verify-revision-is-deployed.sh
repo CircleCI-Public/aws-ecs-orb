@@ -2,6 +2,7 @@
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
 SERVICE_NAME=$(eval echo "$SERVICE_NAME")
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
+ECS_PARAM_TASK_DEF_ARN=$(eval echo "$ECS_PARAM_TASK_DEF_ARN")
 
 if [ "$ECS_PARAM_TASK_DEF_ARN" = "" ]; then
     echo "Invalid task-definition-arn parameter value: $ECS_PARAM_TASK_DEF_ARN"
