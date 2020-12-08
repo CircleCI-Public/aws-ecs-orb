@@ -45,7 +45,7 @@ if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
 fi
 
 aws ecs run-task \
-    --cluster "$ECS_PARAM_CLUSTER" \
+    --cluster "$ECS_PARAM_CLUSTER_NAME" \
     --task-definition "$ECS_PARAM_TASK_DEF" \
     --count "$ECS_PARAM_COUNT" \
     --launch-type "$ECS_PARAM_LAUNCH_TYPE" \
