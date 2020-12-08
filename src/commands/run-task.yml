@@ -132,7 +132,7 @@ steps:
       name: Run Task
       command: <<include(scripts/run-task.sh)>>
       environment:
-        ECS_PARAM_CLUSTER: <<parameters.cluster>>
+        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
         ECS_PARAM_TASK_DEF: <<parameters.task-definition>>
         ECS_PARAM_COUNT: <<parameters.count>>
         ECS_PARAM_STARTED_BY: <<parameters.started-by>>
