@@ -95,7 +95,7 @@ commands:
               echo $GET_DEBUG_DATA
               echo $GET_DEBUG_DATA | grep "Hello World"
               curl -s --retry 10 http://$ELB_DNS_NAME \
-                | grep -E 'Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}' <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
+                | grep 'Hello World.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}'
             done
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
