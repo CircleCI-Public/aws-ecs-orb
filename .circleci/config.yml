@@ -89,8 +89,8 @@ commands:
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"
             for attempt in {1..25}; do
-              echo "Attempt: $attempt / 25"
-              sleep 60s
+              echo "Attempt: $attempt / 15"
+              sleep 5s
               GET_DEBUG_DATA=$(curl -s --retry 10 http://$ELB_DNS_NAME)
               echo $GET_DEBUG_DATA
               echo $GET_DEBUG_DATA | grep "Hello World"
