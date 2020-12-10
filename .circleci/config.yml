@@ -90,6 +90,10 @@ commands:
             echo "ELB DNS NAME: $ELB_DNS_NAME"
             for attempt in {1..25}; do
               echo "Attempt: $attempt / 25"
+              sleep 60s
+              GET_DEBUG_DATA=$(curl -s --retry 10 http://$ELB_DNS_NAME)
+              echo $GET_DEBUG_DATA
+              echo $GET_DEBUG_DATA | grep "Hello World"
               curl -s --retry 10 http://$ELB_DNS_NAME \
                 | grep -E 'Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}' <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
             done
