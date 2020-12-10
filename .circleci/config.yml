@@ -87,9 +87,11 @@ commands:
             TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            echo "ELB DNS NAME: $ELB_DNS_NAME"
             for attempt in {1..25}; do
+              echo "Attempt: $attempt / 25"
               curl -s --retry 10 http://$ELB_DNS_NAME \
-                | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
+                | grep -E 'Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}' <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
             done
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
