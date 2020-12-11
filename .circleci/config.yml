@@ -89,8 +89,9 @@ commands:
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"
             echo "Sleeping for one minute while waiting for AWS to come online."
-            sleep 60s
+            sleep 120s
             echo "Done sleeping"
+            curl --retry 10 http://$ELB_DNS_NAME
             curl -s --retry 10 http://$ELB_DNS_NAME \
                 | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
