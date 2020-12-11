@@ -89,7 +89,7 @@ commands:
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"
             echo "Sleeping for one minute while waiting for AWS to come online."
-            sleep 120s
+            sleep 160s
             echo "Done sleeping"
             curl --retry 10 http://$ELB_DNS_NAME
             curl -s --retry 10 http://$ELB_DNS_NAME \
