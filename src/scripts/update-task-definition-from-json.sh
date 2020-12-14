@@ -1,9 +1,9 @@
-if [ "${TASK_DEFINITION_JSON:0:1}" != "/" ]; then
-    TASK_DEFINITION_JSON="$(pwd)/${TASK_DEFINITION_JSON}"
+if [ "${ECS_PARAM_TASK_DEFINITION_JSON:0:1}" != "/" ]; then
+    ECS_PARAM_TASK_DEFINITION_JSON="$(pwd)/${ECS_PARAM_TASK_DEFINITION_JSON}"
 fi
 
 REVISION=$(aws ecs register-task-definition \
-    --cli-input-json file://"${TASK_DEFINITION_JSON}" \
+    --cli-input-json file://"${ECS_PARAM_TASK_DEFINITION_JSON}" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
 echo "Registered task definition: ${REVISION}"

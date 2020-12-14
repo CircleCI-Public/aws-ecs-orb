@@ -9,4 +9,4 @@ steps:
       name: Register new task definition
       command: <<include(scripts/update-task-definition-from-json.sh)>>
       environment:
-        TASK_DEFINITION_JSON: <<parameters.task-definition-json>>
+        ECS_PARAM_TASK_DEFINITION_JSON: <<parameters.task-definition-json>>

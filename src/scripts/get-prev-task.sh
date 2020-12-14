@@ -5,12 +5,8 @@ ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
 ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES")
 ECS_PARAM_CONTAINER_ENV_VAR_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
 
-# shellcheck disable=SC2034  # Hold-over from previous iteration.
+# shellcheck disable=SC2034
 PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
-# shellcheck disable=SC2034  # Hold-over from previous iteration.
-CONTAINER_IMAGE_NAME_UPDATES="$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES"
-# shellcheck disable=SC2034  # Hold-over from previous iteration.
-CONTAINER_ENV_VAR_UPDATES="$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES"
 
 
 # Prepare script for updating container definitions
@@ -23,7 +19,7 @@ cat <<< "$ECS_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FIL
 
 # Prepare container definitions
 
-CONTAINER_DEFS=$(python "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" "$PREVIOUS_TASK_DEFINITION" "$CONTAINER_IMAGE_NAME_UPDATES" "$CONTAINER_ENV_VAR_UPDATES")
+CONTAINER_DEFS=$(python "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" "$PREVIOUS_TASK_DEFINITION" "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES" "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
 
 
 # Escape single quotes from environment variables for BASH_ENV

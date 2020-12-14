@@ -1,6 +1,6 @@
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
-SERVICE_NAME=$(eval echo "$SERVICE_NAME")
+ECS_PARAM_SERVICE_NAME=$(eval echo "$ECS_PARAM_SERVICE_NAME")
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF_ARN=$(eval echo "$ECS_PARAM_TASK_DEF_ARN")
 
@@ -10,8 +10,8 @@ if [ "$ECS_PARAM_TASK_DEF_ARN" = "" ]; then
 fi
 
 
-if [ -z "${SERVICE_NAME}" ]; then
-    SERVICE_NAME="$ECS_PARAM_FAMILY"
+if [ -z "${ECS_PARAM_SERVICE_NAME}" ]; then
+    ECS_PARAM_SERVICE_NAME="$ECS_PARAM_FAMILY"
 fi
 
 
@@ -24,17 +24,17 @@ while [ "$attempt" -lt "$ECS_PARAM_MAX_POLL_ATTEMPTS" ]
 do
     DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services "${SERVICE_NAME}" \
+        --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
         --query 'services[0].deployments[].[taskDefinition, status]')
     NUM_DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services "${SERVICE_NAME}" \
+        --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
         --query 'length(services[0].deployments)')
     TARGET_REVISION=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
-        --services "${SERVICE_NAME}" \
+        --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
         --query "services[0].deployments[?taskDefinition==\`$ECS_PARAM_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
     echo "Current deployments: $DEPLOYMENTS"

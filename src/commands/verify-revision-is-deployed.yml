@@ -44,7 +44,7 @@ steps:
         one deployed for the service.
       command: <<include(scripts/verify-revision-is-deployed.sh)>>
       environment:
-        SERVICE_NAME: <<parameters.service-name>>
+        ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>
         ECS_PARAM_FAMILY: <<parameters.family>>
         ECS_PARAM_TASK_DEF_ARN: <<parameters.task-definition-arn>>
         ECS_PARAM_MAX_POLL_ATTEMPTS: <<parameters.max-poll-attempts>>
