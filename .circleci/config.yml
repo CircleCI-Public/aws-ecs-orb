@@ -490,7 +490,7 @@ workflows:
           docker-image-for-job: circleci/python:2.7.15
           requires:
             - ec2_test-task-definition-update
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
@@ -509,7 +509,7 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
@@ -529,7 +529,7 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - fargate_test-update-service-job
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
@@ -544,7 +544,7 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
@@ -570,7 +570,7 @@ workflows:
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-job
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
