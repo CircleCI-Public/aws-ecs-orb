@@ -7,18 +7,18 @@ parameters:
     default: 'circleci/python:3.7.1'
   aws-access-key-id:
     description: |
-      AWS access key id for IAM role. Defaulted to $AWS_ACCESS_KEY_ID
-    type: string
-    default: $AWS_ACCESS_KEY_ID
+      AWS access key id for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_ACCESS_KEY_ID.
+    type: env_var_name
+    default: AWS_ACCESS_KEY_ID
   aws-secret-access-key:
     description: |
-      AWS secret key for IAM role. Defaulted to $AWS_SECRET_ACCESS_KEY
-    type: string
-    default: $AWS_SECRET_ACCESS_KEY
+      AWS secret key for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_SECRET_ACCESS_KEY.
+    type: env_var_name
+    default: AWS_SECRET_ACCESS_KEY
   aws-region:
-    description: AWS region to operate in. Defaulted to $AWS_REGION
-    type: string
-    default: $AWS_REGION
+    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    type: env_var_name
+    default: AWS_DEFAULT_REGION
   family:
     description: Name of the task definition's family.
     type: string
@@ -157,8 +157,7 @@ parameters:
     type: boolean
     default: false
 steps:
-  - aws-cli/install
-  - aws-cli/configure:
+  - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
       aws-secret-access-key: << parameters.aws-secret-access-key >>
       aws-region: << parameters.aws-region >>

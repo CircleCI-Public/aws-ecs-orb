@@ -2,16 +2,17 @@ description: Use the AWS CLI and this orb to create a new ECS task definition ba
 usage:
   version: 2.1
   orbs:
-    aws-cli: circleci/aws-cli@0.1.4
-    aws-ecs: circleci/aws-ecs@1.0.5
+    aws-cli: circleci/aws-cli@1.3
+    aws-ecs: circleci/aws-ecs@2.0
   jobs:
     update-tag:
       docker:
         - image: 'circleci/python:3.7.1'
       steps:
-        - aws-cli/install
-        - aws-cli/configure:
-            aws-access-key-id: $AWS_ACCESS_KEY_ID
-            aws-region: $AWS_REGION
+        - aws-cli/setup:
+            # If these values have not been modified from their default, they do not need to be included.
+            aws-access-key-id: AWS_SECRET_ACCESS_KEY
+            aws-secret-access-key: AWS_DEFAULT_REGION
+            aws-region: AWS_DEFAULT_REGION
         - aws-ecs/update-task-definition-from-json:
             task-definition-json: my-app-definition.json

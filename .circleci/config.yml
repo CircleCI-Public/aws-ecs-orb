@@ -3,7 +3,7 @@ version: 2.1
 orbs:
   # Replace this with your own!
   aws-ecs: circleci/aws-ecs@<<pipeline.parameters.dev-orb-version>>
-  aws-cli: circleci/aws-cli@0.1.4
+  aws-cli: circleci/aws-cli@1.3
   orb-tools: circleci/orb-tools@10.0
   # bats: circleci/bats@1.0
   shellcheck: circleci/shellcheck@2.2
@@ -209,10 +209,9 @@ jobs:
       - setup_remote_docker
       - attach_workspace:
           at: workspace
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Load image
           command: |
@@ -253,10 +252,9 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
@@ -279,10 +277,9 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
@@ -299,10 +296,9 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
@@ -440,7 +436,7 @@ workflows:
           requires:
             - ec2_set-up-run-task-test
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          aws-region: $AWS_DEFAULT_REGION
+          aws-region: AWS_DEFAULT_REGION
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
