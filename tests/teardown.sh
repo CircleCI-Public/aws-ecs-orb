@@ -1,6 +1,7 @@
 BASEDIR=$(pwd)
 
 tearDownTF() {
+    terraform init
     terraform destroy -auto-approve \
         -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
         -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
@@ -9,7 +10,7 @@ tearDownTF() {
         -var "aws_resource_prefix=${AWS_RESOURCE_PREFIX}"
 }
 
-cd "${BASEDIR}/terraform_setup/ec2" || exit 1
+cd "${BASEDIR}" || exit 1
 AWS_RESOURCE_PREFIX=ecs-orb-ec2-1
 tearDownTF
 cd "${BASEDIR}/terraform_setup/fargate" || exit 1
