@@ -21,6 +21,15 @@ The following [project environment variables](https://circleci.com/docs/2.0/env-
 | `SKIP_TEST_ENV_CREATION`       | Whether to skip test env setup        |
 | `SKIP_TEST_ENV_TEARDOWN`       | Whether to skip test env teardown     |
 
+## Tear down infra on CircleCI
+If during development of this orb you execute a pipeline on CircleCI that fails to finish, you may need to manually tear down the infrastructure before being able to properly test again in a future pipeline.
+
+This can be done most easily by SSHing into any of the `set-up-test-env` jobs and running the included teardown script.
+
+1. SSH into `set-up-test-env` on CircleCI
+2. `cd project/tests`
+3. `./teardown.sh`
+
 ## Setting up / tearing down test infra locally
 
 You can also set up the same test infrastructure set up by the build pipeline,
