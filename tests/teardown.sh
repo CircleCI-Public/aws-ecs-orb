@@ -10,7 +10,7 @@ tearDownTF() {
         -var "aws_resource_prefix=${AWS_RESOURCE_PREFIX}"
 }
 
-cd "${BASEDIR}" || exit 1
+cd "${BASEDIR}/terraform_setup/ec2" || exit 1
 AWS_RESOURCE_PREFIX=ecs-orb-ec2-1
 tearDownTF
 cd "${BASEDIR}/terraform_setup/fargate" || exit 1
