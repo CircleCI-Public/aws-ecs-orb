@@ -615,6 +615,10 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
       - hold-for-approval:
           type: approval
+          requires:
+            - ec2_tear-down-test-env
+            - codedeploy_fargate_tear-down-test-env
+            - fargate_tear-down-test-env
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
