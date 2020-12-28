@@ -43,10 +43,27 @@ if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
     echo "Setting --network-configuration"
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
+if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
+    echo "Setting --capacity-provider-strategy"
+    set -- "$@" --capacity-provider-strategy "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY"
+fi
 
-set -- "$@" --launch-type "$ECS_PARAM_LAUNCH_TYPE"
+if [ -n "$ECS_PARAM_LAUNCH_TYPE" ]; then
+    if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
+        echo "Error: "
+        echo 'If a "capacity-provider-strategy" is specified, the "launch-type" parameter must be set to an empty string.'
+        exit 1
+    else
+        echo "Setting --launch-type"
+        set -- "$@" --launch-type "$ECS_PARAM_LAUNCH_TYPE"
+    fi
+fi
+
+echo "Setting --count"
 set -- "$@" --count "$ECS_PARAM_COUNT"
+echo "Setting --task-definition"
 set -- "$@" --task-definition "$ECS_PARAM_TASK_DEF"
+echo "Setting --cluster"
 set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
 
 aws ecs run-task "$@"

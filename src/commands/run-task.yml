@@ -1,10 +1,17 @@
 description: |
-  Starts a new ECS task using the specified
-  task definition and other parameters.
+  Starts a new ECS task using the specified task definition and other parameters.
+
+  For more information on ECS Run-Task options, see: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ecs/run-task.html
 parameters:
   cluster:
     description: The name or ARN of the cluster on which to run the task.
     type: string
+  capacity-provider-strategy:
+    description: |
+      The capacity provider strategy to use for the task.
+      If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
+    type: string
+    default: ""
   task-definition:
     description: |
       "The family and revision (family:revision) or full ARN of the task
@@ -24,8 +31,7 @@ parameters:
       could apply a unique identifier for that job to your task with the
       startedBy parameter. You can then identify which tasks belong to
       that job by filtering the results of a ListTasks call with the
-      startedBy value. Up to 36 letters (uppercase and lowercase), num-
-      bers, hyphens, and underscores are allowed.
+      startedBy value. Up to 36 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed.
     type: string
     default: ''
   group:
@@ -52,13 +58,12 @@ parameters:
     default: ''
   launch-type:
     description: |
-      The launch type on which to run your task. For more information, see
-      Amazon ECS Launch Types in the Amazon Elastic Container Service
-      Developer Guide. Possible values EC2, FARGATE.
+      The launch type on which to run your task.
+      Possible values EC2, FARGATE, or an empty string.
+
+      For more information, see Amazon ECS Launch Types in the Amazon Elastic Container Service Developer Guide.
     type: enum
-    enum:
-      - FARGATE
-      - EC2
+    enum: ["FARGATE", "EC2", ""]
     default: FARGATE
   platform-version:
     description: |
@@ -149,3 +154,4 @@ steps:
         ECS_PARAM_TAGS: <<parameters.tags>>
         ECS_PARAM_ENABLE_ECS_MANAGED_TAGS: <<parameters.enable-ecs-managed-tags>>
         ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate-tags>>
+        ECS_PARAM_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity-provider-strategy>>
