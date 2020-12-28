@@ -44,9 +44,9 @@ if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
 
-aws ecs run-task \
-    --cluster "$ECS_PARAM_CLUSTER_NAME" \
-    --task-definition "$ECS_PARAM_TASK_DEF" \
-    --count "$ECS_PARAM_COUNT" \
-    --launch-type "$ECS_PARAM_LAUNCH_TYPE" \
-    "$@"
+set -- "$@" --launch-type "$ECS_PARAM_LAUNCH_TYPE"
+set -- "$@" --count "$ECS_PARAM_COUNT"
+set -- "$@" --task-definition "$ECS_PARAM_TASK_DEF"
+set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
+
+aws ecs run-task "$@"
