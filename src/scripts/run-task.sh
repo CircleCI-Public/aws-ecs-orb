@@ -1,14 +1,6 @@
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-set -x
-echo "DEBUG 1: Cluster name: $ECS_PARAM_CLUSTER_NAME"
-echo "$ECS_PARAM_CLUSTER_NAME" >> "/tmp/myvars.txt"
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
-echo "DEBUG 2: Cluster name: $ECS_PARAM_CLUSTER_NAME"
-echo "$ECS_PARAM_CLUSTER_NAME" >> "/tmp/myvars.txt"
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
-
-echo "DEBUG 3: Cluster name: $ECS_PARAM_CLUSTER_NAME"
-echo "$ECS_PARAM_CLUSTER_NAME" >> "/tmp/myvars.txt"
 
 set -o noglob
 if [ "$ECS_PARAM_LAUNCH_TYPE" == "FARGATE" ]; then
