@@ -403,6 +403,18 @@ workflows:
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
 
+      - build-test-app:
+          name: fargate_spot_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}:${CIRCLE_SHA1}"
+
+      - set-up-test-env:
+          name: fargate_spot_set-up-test-env
+          requires:
+            - fargate_spot_build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}
+          terraform-config-dir: "tests/terraform_setup/fargate_spot"
+
       - set-up-test-env:
           name: ec2_set-up-test-env
           requires:
@@ -447,6 +459,28 @@ workflows:
             - ec2_run-task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
 
+      # test run-task job with fargate spot
+      - set-up-run-task-test:
+          name: fargate_spot_set-up-run-task-test
+          requires:
+            - fargate_spot_set-up-test-env
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360"
+      - aws-ecs/run-task:
+          name: fargate_spot_run-task-test
+          requires:
+            - fargate_spot_set-up-run-task-test
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-cluster"
+          aws-region: AWS_DEFAULT_REGION
+          task-definition: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360"
+          launch-type: "EC2"
+          awsvpc: false
+          overrides: "{\"containerOverrides\":[{\"name\": \"sleep\", \"memory\": 512}]}"
+      - tear-down-run-task-test:
+          name: fargate_spot_tear-down-run-task-test
+          requires:
+            - fargate_spot_run-task-test
+          family-name: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360
+
       # test ecs updates
       - test-service-update:
           name: ec2_test-update-service-command
@@ -467,6 +501,16 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+
+      - test-service-update:
+          name: fargate_spot_test-update-service-command
+          requires:
+            - fargate_spot_set-up-test-env
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}:${CIRCLE_SHA1}"
 
       - test-service-update:
           name: codedeploy_fargate_test-update-service-command
