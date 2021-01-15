@@ -459,12 +459,6 @@ workflows:
             - ec2_run-task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
 
-      # test run-task job with fargate spot
-      - set-up-run-task-test:
-          name: fargate_spot_set-up-run-task-test
-          requires:
-            - fargate_spot_set-up-test-env
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360"
       - aws-ecs/run-task:
           name: fargate_spot_run-task-test
           requires:
@@ -475,6 +469,7 @@ workflows:
           launch-type: "EC2"
           awsvpc: false
           overrides: "{\"containerOverrides\":[{\"name\": \"sleep\", \"memory\": 512}]}"
+
       - tear-down-run-task-test:
           name: fargate_spot_tear-down-run-task-test
           requires:
@@ -547,6 +542,26 @@ workflows:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
                 test-asterisk-expansion: true
+
+      - aws-ecs/deploy-service-update:
+          name: fargate_spot_test-update-service-job
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - fargate_spot_test-update-service-command
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-cluster"
+          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service,name=BUILD_DATE,value=$(date)"
+          # test the force-new-deployment flag
+          force-new-deployment: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-cluster"
 
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
