@@ -459,12 +459,6 @@ workflows:
             - ec2_run-task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
 
-      - tear-down-run-task-test:
-          name: fargate_spot_tear-down-run-task-test
-          requires:
-            - fargate_spot_run-task-test
-          family-name: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360
-
       # test ecs updates
       - test-service-update:
           name: ec2_test-update-service-command
