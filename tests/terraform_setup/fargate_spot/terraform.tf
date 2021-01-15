@@ -40,7 +40,7 @@ resource "aws_ecr_repository" "demo-app-repository" {
 }
 
 resource "aws_cloudformation_stack" "vpc" {
-  name          = "ecs-orb-fg-spot-vpc" # local.aws_vpc_stack_name
+  name          = local.aws_vpc_stack_name
   template_body = file("cloudformation-templates/public-vpc.yml")
   capabilities  = ["CAPABILITY_NAMED_IAM"]
   parameters = {
