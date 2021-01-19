@@ -33,6 +33,9 @@ locals {
 
   # The name of the execution role to be created
   aws_ecs_execution_role_name = "${var.aws_resource_prefix}-ecs-execution-role"
+
+  # The name of the ECS task definition family to be created
+  aws_ecs_family_name = "${var.aws_resource_prefix}-family"
 }
 
 resource "aws_ecr_repository" "demo-app-repository" {
@@ -45,6 +48,9 @@ resource "aws_cloudformation_stack" "vpc" {
   capabilities  = ["CAPABILITY_NAMED_IAM"]
   parameters = {
     ClusterName       = local.aws_ecs_cluster_name
+    InstanceType      = "t2.large"
+    DesiredCapacity   = "2"
+    MaxSize           = "4"
     ExecutionRoleName = local.aws_ecs_execution_role_name
   }
 }
@@ -61,8 +67,11 @@ resource "aws_cloudformation_stack" "ecs_service" {
   parameters = {
     ContainerMemory = 1024
     ContainerPort   = 8080
+    TaskCpu       = 1024
+    TaskMemory    = 2048
     StackName       = local.aws_vpc_stack_name
     ServiceName     = local.aws_ecs_service_name
+    FamilyName    = local.aws_ecs_family_name
     # Note: Since ImageUrl parameter is not specified, the Service
     # will be deployed with the nginx image when created
   }
