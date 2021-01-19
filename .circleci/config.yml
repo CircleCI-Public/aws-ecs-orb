@@ -413,7 +413,7 @@ workflows:
           requires:
             - fargate_spot_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}
-          terraform-config-dir: "tests/terraform_setup/fargate_spot"
+          terraform-config-dir: "tests/terraform_setup/ec2_fgs"
 
       - set-up-test-env:
           name: ec2_set-up-test-env
