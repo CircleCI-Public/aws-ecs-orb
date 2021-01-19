@@ -1,15 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Deploy a service on AWS Fargate with a SPOT capacity provider, hosted in a public subnet, and accessible via a public load balancer.
+Description: Deploy a service into an ECS cluster behind a public load balancer.
 Parameters:
   StackName:
     Type: String
     Default: production
-    Description: The name of the parent Fargate networking stack that you created. Necessary
+    Description: The name of the parent cluster stack that you created. Necessary
                  to locate and reference resources created by that stack.
   ServiceName:
     Type: String
     Default: nginx
     Description: A name for the service
+  FamilyName:
+    Type: String
+    Default: nginx
+    Description: A name for the task definition family
   ImageUrl:
     Type: String
     Default: nginx
@@ -19,14 +23,14 @@ Parameters:
     Type: Number
     Default: 80
     Description: What port number the application inside the docker container is binding to
-  ContainerCpu:
+  TaskCpu:
     Type: Number
     Default: 256
-    Description: How much CPU to give the container. 1024 is 1 CPU
-  ContainerMemory:
+    Description: How much CPU to define for the task. 1024 is 1 CPU
+  TaskMemory:
     Type: Number
     Default: 512
-    Description: How much memory in megabytes to give the container
+    Description: How much memory in megabytes to define for the container
   Path:
     Type: String
     Default: "*"
@@ -59,33 +63,40 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Ref 'ServiceName'
-      Cpu: !Ref 'ContainerCpu'
-      Memory: !Ref 'ContainerMemory'
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-        - EC2
-      ExecutionRoleArn:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
+      Family: !Ref 'FamilyName'
+      Cpu: !Ref 'TaskCpu'
+      Memory: !Ref 'TaskMemory'
       TaskRoleArn:
-        # Just for testing the passing of --task-role-arn argument
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
-        #Fn::If:
-        #  - 'HasCustomRole'
-        #  - !Ref 'Role'
-        #  - !Ref "AWS::NoValue"
+        Fn::If:
+          - 'HasCustomRole'
+          - !Ref 'Role'
+          - !Ref "AWS::NoValue"
+      PlacementConstraints:
+        - Type: memberOf
+          Expression:
+            ec2InstanceId != dummy
+      Volumes:
+        - Name: dummy1
+        - Name: dummy2
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
+          Cpu: 512
+          Memory: 1024
           Image: !Ref 'ImageUrl'
-          Essential: true
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
+        - Name: DummyContainer
+          Cpu: 512
+          Memory: 1024
+          Image: nginx:latest
           Environment:
-            - Name: VERSION_INFO
-              Value: "v0's release's testing of many '' single quotes '''"
+            - Name: DUMMY_VAR_1
+              Value: 'a'
+            - Name: DUMMY_VAR_2
+              Value: "b's knees"
+            - Name: DUMMY_VAR_3
+              Value: "c testing'''now"
+
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
   # as monitor the number of running tasks and replace any that have crashed
@@ -97,22 +108,10 @@ Resources:
       Cluster:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ClusterName']]
-      LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
         MinimumHealthyPercent: 75
       DesiredCount: !Ref 'DesiredCount'
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'FargateContainerSecurityGroup']]
-          Subnets:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'PublicSubnetOne']]
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'StackName', 'PublicSubnetTwo']]
       TaskDefinition: !Ref 'TaskDefinition'
       LoadBalancers:
         - ContainerName: !Ref 'ServiceName'
@@ -132,13 +131,12 @@ Resources:
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
-      TargetType: ip
+      Name: !Ref 'ServiceName'
+      Port: 80
+      Protocol: HTTP
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
         Value: '20'
-      Name: !Ref 'ServiceName'
-      Port: !Ref 'ContainerPort'
-      Protocol: HTTP
       UnhealthyThresholdCount: 2
       VpcId:
         Fn::ImportValue:
