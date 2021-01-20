@@ -11,7 +11,7 @@ usage:
         - aws-ecs/run-task:
             cluster: cluster1
             task-definition: myapp
-            capacity-provider-strategy: "FARGATE_SPOT,weight=1"
+            capacity-provider-strategy: "capacityProvider=FARGATE,weight=1"
             launch-type: ""
   workflows:
     run-task:
