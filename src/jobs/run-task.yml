@@ -140,6 +140,12 @@ parameters:
       tags to a task after task creation, use the TagResource API action."
     type: boolean
     default: false
+  capacity-provider-strategy:
+    description: |
+      The capacity provider strategy to use for the task.
+      If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
+    type: string
+    default: ""
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -163,3 +169,4 @@ steps:
       tags: << parameters.tags >>
       enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
       propagate-tags: << parameters.propagate-tags >>
+      capacity-provider-strategy: << parameters.capacity-provider-strategy >>
