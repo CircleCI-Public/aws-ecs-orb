@@ -69,13 +69,12 @@ parameters:
     default: ''
   launch-type:
     description: |
-      The launch type on which to run your task. For more information, see
-      Amazon ECS Launch Types in the Amazon Elastic Container Service
-      Developer Guide. Possible values EC2, FARGATE.
+      The launch type on which to run your task.
+      Possible values EC2, FARGATE, or an empty string.
+
+      For more information, see Amazon ECS Launch Types in the Amazon Elastic Container Service Developer Guide.
     type: enum
-    enum:
-      - FARGATE
-      - EC2
+    enum: ["FARGATE", "EC2", ""]
     default: FARGATE
   platform-version:
     description: |
