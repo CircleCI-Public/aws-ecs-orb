@@ -66,6 +66,9 @@ Resources:
       Family: !Ref 'FamilyName'
       Cpu: !Ref 'TaskCpu'
       Memory: !Ref 'TaskMemory'
+      RequiresCompatibilities:
+        - FARGATE
+        - EC2
       TaskRoleArn:
         Fn::If:
           - 'HasCustomRole'
