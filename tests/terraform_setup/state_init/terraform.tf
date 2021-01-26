@@ -23,14 +23,6 @@ resource "aws_s3_bucket" "terraform-state-storage-s3-fargate" {
   }
 }
 
-resource "aws_s3_bucket" "terraform-state-storage-s3-fargate-spot" {
-  bucket = "aws-ecs-orb-terraform-state-bucket-fargate-spot"
-  force_destroy = true
-  versioning {
-    enabled = true
-  }
-}
-
 resource "aws_s3_bucket" "terraform-state-storage-s3-codedeploy-fargate" {
   bucket = "aws-ecs-orb-terraform-state-bucket-codedeploy-fargate"
   force_destroy = true
@@ -54,18 +46,6 @@ resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-ec2" {
 
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-fargate" {
   name           = "aws-ecs-orb-terraform-state-lock-db-fargate"
-  hash_key       = "LockID"
-  read_capacity  = 20
-  write_capacity = 20
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-}
-
-resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-fargate-spot" {
-  name           = "aws-ecs-orb-terraform-state-lock-db-fargate-spot"
   hash_key       = "LockID"
   read_capacity  = 20
   write_capacity = 20

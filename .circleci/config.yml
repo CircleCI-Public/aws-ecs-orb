@@ -260,7 +260,7 @@ jobs:
           command: |
             aws ecs describe-task-definition --task-definition << parameters.family-name >> \
               | jq '.taskDefinition' | jq '.memory = "3072"' \
-              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities"])' \
+              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
               > task-definition.json
       - aws-ecs/update-task-definition-from-json:
           task-definition-json: "task-definition.json"
