@@ -7,6 +7,7 @@ orbs:
   orb-tools: circleci/orb-tools@10.0
   # bats: circleci/bats@1.0
   shellcheck: circleci/shellcheck@2.2
+  jq: circleci/jq@2.2.0
 
 # Pipeline Parameters
 ## These parameters are used internally by orb-tools. Skip to the Jobs section.
@@ -105,9 +106,25 @@ jobs:
       - image: cimg/base:stable
     steps:
       - aws-cli/setup
+      - jq/install
       - run:
           name: Get cluster info
-          command: aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          command: |
+            SERVICES_OBJ=$(aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service")
+            VPC_CONF_OBJ=$(echo $SERVICES_OBJ | jq '.services[].networkConfiguration.awsvpcConfiguration')
+            SUBNET_ONE=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[0]')
+            SUBNET_TWO=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[1]')
+            SECURITY_GROUP_IDS=$(echo "$VPC_CONF_OBJ" |  jq '.securityGroups[0]')
+            CLUSTER_NAME=$(echo "$SERVICES_OBJ" |  jq '.clusterArn')
+            echo "export SUBNET_ONE=$SUBNET_ONE" >> $BASH_ENV
+            echo "export SUBNET_TWO=$SUBNET_TWO" >> $BASH_ENV
+            echo "export SECURITY_GROUP_IDS=$SECURITY_GROUP_IDS" >> $BASH_ENV
+            echo "export CLUSTER_NAME=$CLUSTER_NAME" >> $BASH_ENV
+      - aws-ecs/run-task:
+            cluster: $CLUSTER_NAME
+            task-definition: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
+            subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
+            security-group-ids: $SECURITY_GROUP_IDS
   build-test-app:
     docker:
       - image: circleci/golang:1.8
