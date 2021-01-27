@@ -19,6 +19,3 @@ tearDownTF
 cd "${BASEDIR}/terraform_setup/fargate_codedeploy" || exit 1
 AWS_RESOURCE_PREFIX=ecs-orb-cdfg-1
 tearDownTF
-cd "${BASEDIR}/terraform_setup/ec2_fgs" || exit 1
-AWS_RESOURCE_PREFIX=ecs-orb-fgs-1
-tearDownTF
