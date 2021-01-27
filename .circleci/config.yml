@@ -104,6 +104,7 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
+      - aws-cli/setup
       - run:
           name: Get cluster info
           command: aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
