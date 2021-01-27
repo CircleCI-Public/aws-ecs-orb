@@ -103,10 +103,10 @@ jobs:
   test-fargatespot:
     docker:
       - image: cimg/base:stable
-      steps:
-        - run:
-            name: Get cluster info
-            command: aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+    steps:
+      - run:
+          name: Get cluster info
+          command: aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
   build-test-app:
     docker:
       - image: circleci/golang:1.8
