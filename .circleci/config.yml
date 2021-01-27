@@ -98,8 +98,15 @@ commands:
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
 
+# Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
 jobs:
-  # Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
+  test-fargatespot:
+    docker:
+      - image: cimg/base:stable
+      steps:
+        - run:
+            name: Get cluster info
+            command: aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
   build-test-app:
     docker:
       - image: circleci/golang:1.8
@@ -446,6 +453,7 @@ workflows:
           name: fargate_tear-down-test-env
           requires:
             - fargate_test-update-service-skip-registration
+            - test-fargatespot
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
       #################
@@ -524,8 +532,13 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/ec2"
 
       # #################
-      # # EC2-FargateSpot
+      # # FargateSpot
       # #################
+
+      - test-fargatespot:
+          requires:
+            - fargate_set-up-test-env
+
       # - build-test-app:
       #     name: fargate_spot_build-test-app
       #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
