@@ -42,8 +42,16 @@ if [ "$ECS_PARAM_ENABLE_ECS_MANAGED_TAGS" == "true" ]; then
     echo "Setting --propagate-tags"
     set -- "$@" --propagate-tags "TASK_DEFINITION"
 fi
-if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
+if [ "$ECS_PARAM_AWSVPC" == "1" ]; then
     echo "Setting --network-configuration"
+    if [ -z "$ECS_PARAM_SUBNET_ID" ]; then
+        echo '"subnet-ids" is missing.'
+        echo 'When "awsvpc" is enabled, "subnet-ids" must be provided.'
+        exit 1
+    fi
+    ECS_PARAM_SUBNET_ID=$(eval echo "$ECS_PARAM_SUBNET_ID")
+    ECS_PARAM_SEC_GROUP_ID=$(eval echo "$ECS_PARAM_SEC_GROUP_ID")
+    ECS_PARAM_ASSIGN_PUB_IP=$(eval echo "$ECS_PARAM_ASSIGN_PUB_IP")
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
 if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
