@@ -122,7 +122,7 @@ jobs:
             echo "export CLUSTER_NAME=$CLUSTER_NAME" >> $BASH_ENV
       - aws-ecs/run-task:
             cluster: $CLUSTER_NAME
-            task-definition: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
+            task-definition: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360
             subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
             security-group-ids: $SECURITY_GROUP_IDS
   build-test-app:
