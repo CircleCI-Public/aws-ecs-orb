@@ -2,7 +2,9 @@
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
 
-set -x
+echo "DEBUG: task def:"
+echo $ECS_PARAM_TASK_DEF
+
 set -o noglob
 if [ "$ECS_PARAM_LAUNCH_TYPE" == "FARGATE" ]; then
     echo "Setting --platform-version"
@@ -46,6 +48,8 @@ if [ "$ECS_PARAM_AWSVPC" == "true" ]; then
 fi
 if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
     echo "Setting --capacity-provider-strategy"
+    # do not quote
+    # shellcheck disable=SC2086
     set -- "$@" --capacity-provider-strategy $ECS_PARAM_CAPACITY_PROVIDER_STRATEGY
 fi
 
@@ -63,7 +67,7 @@ fi
 echo "Setting --count"
 set -- "$@" --count "$ECS_PARAM_COUNT"
 echo "Setting --task-definition"
-set -- "$@" --task-definition "$ECS_PARAM_TASK_DEF"
+set -- "$@" --task-definition $ECS_PARAM_TASK_DEF
 echo "Setting --cluster"
 set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
 
