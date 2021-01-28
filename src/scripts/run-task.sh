@@ -2,7 +2,7 @@
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
 
-set -o noglob
+set -o -x noglob
 if [ "$ECS_PARAM_LAUNCH_TYPE" == "FARGATE" ]; then
     echo "Setting --platform-version"
     set -- "$@" --platform-version "$ECS_PARAM_PLATFORM_VERSION"
