@@ -51,7 +51,6 @@ if [ "$ECS_PARAM_AWSVPC" == "1" ]; then
     fi
     ECS_PARAM_SUBNET_ID=$(eval echo "$ECS_PARAM_SUBNET_ID")
     ECS_PARAM_SEC_GROUP_ID=$(eval echo "$ECS_PARAM_SEC_GROUP_ID")
-    ECS_PARAM_ASSIGN_PUB_IP=$(eval echo "$ECS_PARAM_ASSIGN_PUB_IP")
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
 if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
