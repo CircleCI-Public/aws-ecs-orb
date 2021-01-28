@@ -120,6 +120,14 @@ jobs:
             echo "export SUBNET_TWO=$SUBNET_TWO" >> $BASH_ENV
             echo "export SECURITY_GROUP_IDS=$SECURITY_GROUP_IDS" >> $BASH_ENV
             echo "export CLUSTER_NAME=$CLUSTER_NAME" >> $BASH_ENV
+      - run:
+          name: Associate cluster
+          command: |
+            aws ecs put-cluster-capacity-providers \
+              --cluster ecs-orb-fg-1-cluster \
+              --capacity-providers FARGATE FARGATE_SPOT  \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+              --region us-east-1
       - aws-ecs/run-task:
             cluster: $CLUSTER_NAME
             capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
