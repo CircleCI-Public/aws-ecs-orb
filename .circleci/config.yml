@@ -135,8 +135,6 @@ jobs:
             task-definition: ecs-orb-fgs-1-sleep360
             subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
             security-group-ids: $SECURITY_GROUP_IDS_FETCHED
-            ## Will add this param soon.
-            #network-configuration: "awsvpcConfiguration={subnets=[string,string],securityGroups=[string,string],assignPublicIp=string}"
   build-test-app:
     docker:
       - image: circleci/golang:1.8

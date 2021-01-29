@@ -12,10 +12,6 @@ parameters:
       If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
     type: string
     default: ""
-  network-configuration:
-    description: The network configuration for the task. This parameter is required for task definitions that use the 'awsvpc' network mode to receive their own elastic network interface, and it is not supported for other network modes.
-    type: string
-    default: ""
   task-definition:
     description: |
       "The family and revision (family:revision) or full ARN of the task
