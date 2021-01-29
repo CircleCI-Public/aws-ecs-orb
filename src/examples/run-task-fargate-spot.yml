@@ -2,11 +2,11 @@ description: Start the run of an ECS task with Fargate Spot instances for increa
 usage:
   version: 2.1
   orbs:
-    aws-ecs: circleci/aws-ecs@x.y.z
+    aws-ecs: circleci/aws-ecs@2.0
   jobs:
     run-task:
       docker:
-        - image: 'cimg/python:3.9.1'
+        - image: cimg/python:3.9.1
       steps:
         - aws-ecs/run-task:
             cluster: $CLUSTER_NAME

@@ -9,7 +9,7 @@ usage:
   jobs:
     update-tag:
       docker:
-        - image: 'circleci/python:3.7.1'
+        - image: cimg/python:3.9.1
       steps:
         - aws-cli/setup:
             # If these values have not been modified from their default, they do not need to be included.
