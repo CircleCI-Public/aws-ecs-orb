@@ -1,7 +1,5 @@
 description: |
-  Polls the service's deployment status at intervals until the given task
-  definition revision is the only one deployed for the service, and for the
-  task definition revision's running task count to match the desired count.
+  Polls the service's deployment status at intervals until the given task definition revision is the only one deployed for the service, and for the task definition revision's running task count to match the desired count.
   Does not support ECS services that are of the Blue/Green Deployment type.
 parameters:
   family:
@@ -12,8 +10,7 @@ parameters:
     type: string
   service-name:
     description: >-
-      The name of the service to update. If undefined, we assume `family` is the
-      name of both the service and task definition.
+      The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition.
     type: string
     default: ''
   task-definition-arn:
@@ -21,8 +18,7 @@ parameters:
     type: string
   max-poll-attempts:
     description: >-
-      The maximum number of attempts to poll for the deployment status before
-      giving up.
+      The maximum number of attempts to poll for the deployment status before giving up.
     type: integer
     default: 50
   poll-interval:
@@ -31,17 +27,14 @@ parameters:
     default: 20
   fail-on-verification-timeout:
     description: |
-      Whether to exit with an error if the verification of the deployment
-      status does not complete within the number of polling attempts.
+      Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.
     type: boolean
     default: true
 steps:
   - run:
       name: Verify that the revision is deployed and older revisions are stopped
       description: |
-        Poll the deployment status at intervals till the given task definition
-        revision has reached its desired running task count and is the only
-        one deployed for the service.
+        Poll the deployment status at intervals till the given task definition revision has reached its desired running task count and is the only one deployed for the service.
       command: <<include(scripts/verify-revision-is-deployed.sh)>>
       environment:
         ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>

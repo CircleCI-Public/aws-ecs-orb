@@ -23,64 +23,45 @@ parameters:
   codedeploy-application-name:
     description: >
       The name of the AWS CodeDeploy application used for the deployment.
-
-      Only effective when the deployment-controller parameter value is
-      "CODE_DEPLOY".
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
     type: string
     default: ''
   codedeploy-deployment-group-name:
     description: >
       The name of the AWS CodeDeploy deployment group used for the deployment.
-
-      Only effective when the deployment-controller parameter value is
-      "CODE_DEPLOY".
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
     type: string
     default: ''
   codedeploy-load-balanced-container-name:
     description: >
       The name of the container to be load-balanced via AWS CodeDeploy.
-
-      Only effective when the deployment-controller parameter value is
-      "CODE_DEPLOY".
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
     type: string
     default: ''
   codedeploy-load-balanced-container-port:
     description: >
       The port of the container to be load-balanced via AWS CodeDeploy.
-
-      Only effective when the deployment-controller parameter value is
-      "CODE_DEPLOY".
+      Only effective when the deployment-controller parameter value is "CODE_DEPLOY".
     type: integer
     default: 80
   container-image-name-updates:
     description: >
-      Use this to update the Docker image names and/or tag names of existing
-
-      containers that had been defined in the previous task definition.
+      Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition.
 
       Expected format:
       container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
 
-      For each container, specify only either "image-and-tag" or "image" or
-      "tag".
+      For each container, specify only either "image-and-tag" or "image" or "tag".
 
-      If "image-and-tag" is specified, the container image will be updated to
-      the value of the name-value pair.
-
-      If "image" is specified, the image tag defined in the previous task
-      definition will be retained, if exists.
-
-      If "tag" is specified, the image name defined in the previous task
-      definition will be used.
+      If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+      If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+      If "tag" is specified, the image name defined in the previous task definition will be used.
     type: string
     default: ''
   container-env-var-updates:
     description: >
-      Use this to update or set the values of environment variables that will be
-      defined for the containers.
-
-      (Existing environment variables not included in this parameter will not be
-      removed)
+      Use this to update or set the values of environment variables that will be defined for the containers.
+      (Existing environment variables not included in this parameter will not be removed)
 
       Expected format:
       container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
@@ -96,27 +77,21 @@ parameters:
     default: false
   verify-revision-is-deployed:
     description: |
-      Runs the verify-revision-is-deployed Orb command to verify that
-      the revision has been deployed and is the only deployed revision
-      for the service. Note: enabling this may result in the build
-      being marked as failed if tasks for older revisions fail to be stopped
-      before the max number of polling attempts is reached.
+      Runs the verify-revision-is-deployed Orb command to verify that the revision has been deployed and is the only deployed revision for the service.
+
+      Note: enabling this may result in the build being marked as failed if tasks for older revisions fail to be stopped before the max number of polling attempts is reached.
     type: boolean
     default: false
   verification-timeout:
     description: >
-      The maximum amount of time to wait for a blue/green deployment to complete
-      before timing out.
+      The maximum amount of time to wait for a blue/green deployment to complete before timing out.
 
-      Only in use when the deployment controller is the blue/green deployment
-      type.
+      Only in use when the deployment controller is the blue/green deployment type.
     type: string
     default: 10m
   max-poll-attempts:
     description: >
-      The maximum number of attempts to poll the deployment status before giving
-      up.
-
+      The maximum number of attempts to poll the deployment status before giving up.
       Only in use when verify-revision-is-deployed is set to true.
     type: integer
     default: 50
@@ -128,8 +103,7 @@ parameters:
     default: 20
   fail-on-verification-timeout:
     description: |
-      Whether to exit with an error if the verification of the deployment
-      status does not complete within the number of polling attempts.
+      Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.
       Only in use when verify-revision-is-deployed is set to true.
     type: boolean
     default: true
