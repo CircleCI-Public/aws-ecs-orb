@@ -567,38 +567,6 @@ workflows:
           requires:
             - fargate_set-up-test-env
 
-      # - build-test-app:
-      #     name: fargate_spot_build-test-app
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}:${CIRCLE_SHA1}"
-      # - set-up-test-env:
-      #     name: fargate_spot_set-up-test-env
-      #     requires:
-      #       - fargate_spot_build-test-app
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}
-      #     terraform-config-dir: "tests/terraform_setup/ec2_fgs"
-      # - set-up-run-task-test:
-      #     name: fargate_spot_set-up-run-task-test
-      #     requires:
-      #       - fargate_spot_set-up-test-env
-      #     family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360"
-      # - aws-ecs/run-task:
-      #     name: fargate_spot_run-task-test
-      #     requires:
-      #       - fargate_spot_set-up-run-task-test
-      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-cluster"
-      #     aws-region: AWS_DEFAULT_REGION
-      #     task-definition: "${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360"
-      #     capacity-provider-strategy: "capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1"
-      #     launch-type: ""
-      #     awsvpc: false
-      #     overrides: '{"containerOverrides":[{"name": "sleep", "memory": 512}]}'
-      # - tear-down-run-task-test:
-      #     name: fargate_spot_tear-down-run-task-test
-      #     requires:
-      #       - fargate_spot_run-task-test
-      #     family-name: ${AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT}-sleep360
-
       #################
       # CodeDeploy
       #################
@@ -686,12 +654,15 @@ workflows:
       # Publish
       #################
 
-      - hold-for-approval:
+      - approve-publish:
           type: approval
           requires:
             - ec2_tear-down-test-env
             - codedeploy_fargate_tear-down-test-env
             - fargate_tear-down-test-env
+          filters:
+            branches:
+              only: master
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -705,7 +676,7 @@ workflows:
           fail-if-semver-not-indicated: true
           publish-version-tag: false
           requires:
-            - hold-for-approval
+            - approve-publish
           filters:
             branches:
               only: master
