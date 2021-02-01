@@ -93,8 +93,23 @@ commands:
             sleep 160s
             echo "Done sleeping"
             curl --retry 10 http://$ELB_DNS_NAME
-            curl -s --retry 10 http://$ELB_DNS_NAME \
-                | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
+            run_with_retry() {
+              MAX_RETRY=6
+              n=0
+              until [ $n -ge $MAX_RETRY ]
+              do
+                # retry many times in case it takes a while for the new task definition to take effect
+                curl -s --retry 10 http://$ELB_DNS_NAME \
+                  | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>> && break
+                n=$[$n+1]
+                sleep 60s
+              done
+              if [ $n -ge $MAX_RETRY ]; then
+                echo "Error - Retry limit reached"
+                exit 1
+              fi
+            }
+            run_with_retry
             if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
