@@ -50,6 +50,6 @@ done
 
 echo "Stopped waiting for deployment to be stable - please check the status of $ECS_PARAM_TASK_DEF_ARN on the AWS ECS console."
 
-if [ "$ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT" = "true" ]; then
+if [ "$ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT" = "1" ]; then
     exit 1
 fi

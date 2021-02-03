@@ -110,7 +110,7 @@ commands:
               fi
             }
             run_with_retry
-            if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
+            if [ "<< parameters.delete-load-balancer >>" == "1" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
 
@@ -204,7 +204,7 @@ jobs:
       - run:
           name: Check if test env should be set up
           command: |
-            if [ "${SKIP_TEST_ENV_CREATION}" = "true" ]
+            if [ "${SKIP_TEST_ENV_CREATION}" = "1" ]
             then
               circleci step halt
             fi
@@ -370,7 +370,7 @@ jobs:
       - run:
           name: Check if test env should be destroyed
           command: |
-            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "true" ]
+            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "1" ]
             then
               circleci step halt
             fi

@@ -16,7 +16,7 @@ DEPLOYMENT_ID=$(aws deploy create-deployment \
     --output text)
 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
-if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "true" ];
+if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ];
 then
 echo "Waiting for deployment to succeed."
 if [ "$(aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}")" ]; then

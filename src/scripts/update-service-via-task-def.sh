@@ -9,7 +9,7 @@ if [ -z "${ECS_PARAM_SERVICE_NAME}" ]; then
     ECS_PARAM_SERVICE_NAME="$ECS_PARAM_FAMILY"
 fi
 
-if [ "$ECS_PARAM_FORCE_NEW_DEPLOY" == "true" ]; then
+if [ "$ECS_PARAM_FORCE_NEW_DEPLOY" == "1" ]; then
     set -- "$@" --force-new-deployment
 fi
 

@@ -31,11 +31,11 @@ if [ -n "$ECS_PARAM_PLACEMENT_STRATEGY" ]; then
     echo "Setting --placement-strategy"
     set -- "$@" --placement-strategy "$ECS_PARAM_PLACEMENT_STRATEGY"
 fi
-if [ "$ECS_PARAM_ENABLE_ECS_MANAGED_TAGS" == "true" ]; then
+if [ "$ECS_PARAM_ENABLE_ECS_MANAGED_TAGS" == "1" ]; then
     echo "Setting --enable-ecs-managed-tags"
     set -- "$@" --enable-ecs-managed-tags
 fi
-if [ "$ECS_PARAM_ENABLE_ECS_MANAGED_TAGS" == "true" ]; then
+if [ "$ECS_PARAM_PROPAGATE_TAGS" == "1" ]; then
     echo "Setting --propagate-tags"
     set -- "$@" --propagate-tags "TASK_DEFINITION"
 fi
