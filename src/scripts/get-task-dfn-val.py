@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-
 import sys
-
 import json
 
 def run(element_name, task_definition_str):
@@ -27,7 +25,8 @@ def run(element_name, task_definition_str):
     elif element_name in task_definition:
         element_value = task_definition[element_name]
         if element_name in str_list_types:
-            output_value = ' '.join(list_item.strip() for list_item in element_value)
+            output_value = ' '.join(list_item.strip()
+                                    for list_item in element_value)
         elif element_name in json_arr_types or element_name in json_obj_types:
             output_value = json.dumps(element_value)
         else:
