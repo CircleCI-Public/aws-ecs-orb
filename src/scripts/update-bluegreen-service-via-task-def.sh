@@ -16,15 +16,14 @@ DEPLOYMENT_ID=$(aws deploy create-deployment \
     --output text)
 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
-if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ];
-then
-echo "Waiting for deployment to succeed."
-if [ "$(aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}")" ]; then
-    echo "Deployment succeeded."
-else
-    echo "Deployment failed."
-    exit 1
-fi
+if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ]; then
+    echo "Waiting for deployment to succeed."
+    if [ "$(aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}")" ]; then
+        echo "Deployment succeeded."
+    else
+        echo "Deployment failed."
+        exit 1
+    fi
 fi
 
 echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> "$BASH_ENV"
