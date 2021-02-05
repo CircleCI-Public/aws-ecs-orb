@@ -7,8 +7,7 @@ def run(element_name, task_definition_str):
         definition = json.loads(task_definition_str)
         task_definition = definition['taskDefinition']
     except:
-        raise Exception('No valid task definition found: ' +
-                        task_definition_str)
+        raise Exception('No valid task definition found: ' + task_definition_str)
     str_list_types = ['requiresCompatibilities']
     json_arr_types = ['placementConstraints', 'volumes', 'tags']
     json_obj_types = ['proxyConfiguration']
@@ -25,8 +24,7 @@ def run(element_name, task_definition_str):
     elif element_name in task_definition:
         element_value = task_definition[element_name]
         if element_name in str_list_types:
-            output_value = ' '.join(list_item.strip()
-                                    for list_item in element_value)
+            output_value = ' '.join(list_item.strip() for list_item in element_value)
         elif element_name in json_arr_types or element_name in json_obj_types:
             output_value = json.dumps(element_value)
         else:
