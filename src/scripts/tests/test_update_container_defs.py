@@ -1,7 +1,7 @@
 import unittest
 import json
 import subprocess
-from update_container_definitions import run
+from update_container_defs import run
 from jsondiff import diff
 
 
@@ -338,13 +338,13 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         """Script results are printed out"""
         task_dfn_input = "{\"taskDefinition\": {\"containerDefinitions\": [{}]}}"
         output = self.execute_script(
-            "python update_container_definitions.py %s '' ''" % (task_dfn_input), 0)
+            "python update_container_defs.py %s '' ''" % (task_dfn_input), 0)
         self.assertFalse(self.get_diff(task_dfn_input, output))
 
     def test_error_message_output(self):
         """An error message is output to stderr when an exception occurs"""
         output = self.execute_script(
-            "python update_container_definitions.py '{}' '' ''", 1)
+            "python update_container_defs.py '{}' '' ''", 1)
         self.assertIn(b"No valid task definition found:", output)
 
     def validate_container_definitions(self, container_definitions):
