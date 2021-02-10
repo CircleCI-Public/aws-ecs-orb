@@ -116,6 +116,31 @@ commands:
 
 # Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
 jobs:
+
+  pytest:
+    docker:
+      - image: cimg/python@3.8
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - cache-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Install Python dependencies
+          command: |
+            pipenv sync --dev
+      - run:
+          name: Run unit tests
+          command: |
+            cd src/python
+            pipenv run pylint --py3k *.py
+            pipenv run coverage run --source . -m pytest
+            pipenv run coverage report --omit "*/test*"
+      - save_cache:
+          key: cache-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ~/.local
+            - ~/.cache
   test-fargatespot:
     docker:
       - image: cimg/base:stable
@@ -139,10 +164,10 @@ jobs:
           name: Associate cluster
           command: |
             aws ecs put-cluster-capacity-providers \
-              --cluster ecs-orb-fg-1-cluster \
+              --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
               --capacity-providers FARGATE FARGATE_SPOT  \
               --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-              --region us-east-1
+              --region ${AWS_DEFAULT_REGION}
       - aws-ecs/run-task:
             cluster: $CLUSTER_NAME
             capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
@@ -337,6 +362,7 @@ jobs:
               --family << parameters.family-name >> \
               --cpu 256 --memory 512 \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
+
   tear-down-run-task-test:
     docker:
       - image: circleci/python:3.7.1
@@ -355,6 +381,7 @@ jobs:
             TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
               --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
             aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
+
   tear-down-test-env:
     parameters:
       terraform-image:
@@ -401,6 +428,7 @@ workflows:
     jobs:
       - orb-tools/lint # Lint Yaml files
       - orb-tools/pack # Pack orb source
+      - pytest
       - shellcheck/check:
           dir: ./src/scripts
           exclude: SC2148
@@ -415,6 +443,7 @@ workflows:
           requires:
             - orb-tools/lint
             - orb-tools/pack
+            - pytest
             # - bats/run
             - shellcheck/check
       # Publish development version(s) of the orb.
