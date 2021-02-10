@@ -132,7 +132,7 @@ jobs:
       - run:
           name: Run unit tests
           command: |
-            cd src/python
+            cd src/scripts
             pipenv run pylint --py3k *.py
             pipenv run coverage run --source . -m pytest
             pipenv run coverage report --omit "*/test*"
