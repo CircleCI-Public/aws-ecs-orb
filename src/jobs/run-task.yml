@@ -1,0 +1,171 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+parameters:
+  docker-image-for-job:
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+    default: 'circleci/python:3.7.1'
+  aws-access-key-id:
+    description: |
+      AWS access key id for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_ACCESS_KEY_ID.
+    type: env_var_name
+    default: AWS_ACCESS_KEY_ID
+  aws-secret-access-key:
+    description: |
+      AWS secret key for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_SECRET_ACCESS_KEY.
+    type: env_var_name
+    default: AWS_SECRET_ACCESS_KEY
+  aws-region:
+    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    type: env_var_name
+    default: AWS_DEFAULT_REGION
+  cluster:
+    description: The name or ARN of the cluster on which to run the task.
+    type: string
+  task-definition:
+    description: |
+      "The family and revision (family:revision) or full ARN of the task
+      definition to run. If a revision is not specified, the latest ACTIVE
+      revision is used."
+    type: string
+  count:
+    description: |
+      "The number of instantiations of the specified task to place on your
+      cluster. You can specify up to 10 tasks per call."
+    type: integer
+    default: 1
+  started-by:
+    description: |
+      An optional tag specified when a task is started. For example, if
+      you automatically trigger a task to run a batch process job, you
+      could apply a unique identifier for that job to your task with the
+      startedBy parameter. You can then identify which tasks belong to
+      that job by filtering the results of a ListTasks call with the
+      startedBy value. Up to 36 letters (uppercase and lowercase), num-
+      bers, hyphens, and underscores are allowed.
+    type: string
+    default: ''
+  group:
+    description: |
+      The name of the task group to associate with the task.
+      The default value is the family name of the task definition
+      (for example, family:my-family-name).
+    type: string
+    default: ''
+  placement-constraints:
+    description: |
+      "An array of placement constraint objects to use for the task. You
+      can specify up to 10 constraints per task (including constraints in
+      the task definition and those specified at runtime).
+      Expected format: type=string,field=string."
+    type: string
+    default: ''
+  placement-strategy:
+    description: |
+      "The placement strategy objects to use for the task. You can specify
+      a maximum of five strategy rules per task.
+      Expected format: type=string,field=string."
+    type: string
+    default: ''
+  launch-type:
+    description: |
+      The launch type on which to run your task.
+      Possible values EC2, FARGATE, or an empty string.
+
+      For more information, see Amazon ECS Launch Types in the Amazon Elastic Container Service Developer Guide.
+    type: enum
+    enum: ["FARGATE", "EC2", ""]
+    default: FARGATE
+  platform-version:
+    description: |
+      "The platform version the task should run. A platform version is only
+      specified for tasks using the Fargate launch type."
+    type: string
+    default: LATEST
+  awsvpc:
+    description: |
+      "Does your task definition use awsvpc mode or not. If so,
+      this should be true and you should also include subnet-ids
+      and optionally security-group-ids / assign-public-ips."
+    type: boolean
+    default: true
+  subnet-ids:
+    description: |
+      "List of subnet ids separated by commas.
+      Expected Format: subnet-70faa93b,subnet-bcc54b93"
+    type: string
+    default: ''
+  security-group-ids:
+    description: |
+      "List of security group ids separated by commas.
+      Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75"
+    type: string
+    default: ''
+  assign-public-ip:
+    description: |
+      "Assign a public IP or not"
+    type: enum
+    enum:
+      - ENABLED
+      - DISABLED
+    default: DISABLED
+  overrides:
+    description: >
+      A list of container overrides in JSON format that specify the name of
+      a container in the specified task definition and the overrides it
+      should receive.
+      Double quotes in the JSON should be escaped e.g.:
+      {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\":
+      512}]}
+    type: string
+    default: ''
+  tags:
+    description: |
+      "The metadata that you apply to the task to help you categorize and
+      organize them. Each tag consists of a key and an optional value,
+      both of which you define. Expected format: key=string,value=string."
+    type: string
+    default: ''
+  enable-ecs-managed-tags:
+    description: |
+      "Specifies whether to enable Amazon ECS managed tags for the task."
+    type: boolean
+    default: false
+  propagate-tags:
+    description: |
+      "Specifies whether to propagate the tags from the task definition to
+      the task. If no value is specified, the tags are not propagated.
+      Tags can only be propagated to the task during task creation. To add
+      tags to a task after task creation, use the TagResource API action."
+    type: boolean
+    default: false
+  capacity-provider-strategy:
+    description: |
+      The capacity provider strategy to use for the task.
+      If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
+    type: string
+    default: ""
+steps:
+  - aws-cli/setup:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+      aws-region: << parameters.aws-region >>
+  - run-task:
+      cluster: << parameters.cluster >>
+      task-definition: << parameters.task-definition >>
+      count: << parameters.count >>
+      started-by: << parameters.started-by >>
+      group: << parameters.group >>
+      placement-constraints: << parameters.placement-constraints >>
+      placement-strategy: << parameters.placement-strategy >>
+      launch-type: << parameters.launch-type >>
+      platform-version: << parameters.platform-version >>
+      awsvpc: << parameters.awsvpc >>
+      subnet-ids: << parameters.subnet-ids >>
+      security-group-ids: << parameters.security-group-ids >>
+      assign-public-ip: << parameters.assign-public-ip >>
+      overrides: << parameters.overrides >>
+      tags: << parameters.tags >>
+      enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
+      propagate-tags: << parameters.propagate-tags >>
+      capacity-provider-strategy: << parameters.capacity-provider-strategy >>

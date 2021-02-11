@@ -1,42 +1,127 @@
 version: 2.1
 
-orb_promotion_filters: &orb_promotion_filters
-  branches:
-    ignore: /.*/
-  tags:
-    only: /^(major|minor|patch)-release-v\d+\.\d+\.\d+$/
-
-executors:
-  cli:
-    resource_class: small
-    docker:
-      - image: circleci/circleci-cli
-  node:
-    resource_class: small
-    docker:
-      - image: circleci/node
-
 orbs:
-  aws-cli: circleci/aws-cli@0.1.4
-  aws-ecs: circleci/aws-ecs@dev:alpha
-  circleci-cli: circleci/circleci-cli@0.1.2
-  queue: eddiewebb/queue@1.0.110
-  orb-tools: circleci/orb-tools@8.27.3
+  # Replace this with your own!
+  aws-ecs: circleci/aws-ecs@<<pipeline.parameters.dev-orb-version>>
+  aws-cli: circleci/aws-cli@1.3
+  orb-tools: circleci/orb-tools@10.0
+  # bats: circleci/bats@1.0
+  shellcheck: circleci/shellcheck@2.2
+  jq: circleci/jq@2.2.0
 
+# Pipeline Parameters
+## These parameters are used internally by orb-tools. Skip to the Jobs section.
 parameters:
   run-integration-tests:
+    description: An internal flag to prevent integration test from running before a development version has been created.
     type: boolean
     default: false
+  dev-orb-version:
+    description: >
+      The development version of the orb to test.
+      This value is automatically adjusted by the "trigger-integration-tests-workflow" job to correspond with the specific version created by the commit and should not be edited.
+      A "dev:alpha" version must exist for the initial pipeline run.
+    type: string
+    default: "dev:alpha"
 
+commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+        description: "CodeDeploy application name"
+        type: string
+      deployment-group-name:
+        description: "CodeDeploy application name"
+        type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service-name:
+        description: "Name of the ECS service"
+        type: string
+      cluster-name:
+        description: "Name of the cluster"
+        type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster-name >> \
+              --service << parameters.service-name >> \
+              --force
+  test-deployment:
+    description: "Test the deployment"
+    parameters:
+      service-name:
+        description: "Name of the ECS service"
+        type: string
+      cluster-name:
+        description: "Name of the cluster"
+        type: string
+      test-asterisk-expansion:
+        description: "Checks that asterisk expansion is prevented"
+        type: boolean
+        default: false
+      delete-load-balancer:
+        description: "Whether to delete the load balancer after the test"
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Test deployment (for orb testing and is not part of the orb)
+          command: |
+            set -x
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            echo "ELB DNS NAME: $ELB_DNS_NAME"
+            echo "Sleeping for one minute while waiting for AWS to come online."
+            sleep 160s
+            echo "Done sleeping"
+            curl --retry 10 http://$ELB_DNS_NAME
+            run_with_retry() {
+              MAX_RETRY=6
+              n=0
+              until [ $n -ge $MAX_RETRY ]
+              do
+                # retry many times in case it takes a while for the new task definition to take effect
+                curl -s --retry 10 http://$ELB_DNS_NAME \
+                  | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>> && break
+                n=$[$n+1]
+                sleep 60s
+              done
+              if [ $n -ge $MAX_RETRY ]; then
+                echo "Error - Retry limit reached"
+                exit 1
+              fi
+            }
+            run_with_retry
+            if [ "<< parameters.delete-load-balancer >>" == "1" ]; then
+              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
+            fi
+
+# Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
 jobs:
-  build-orb:
+
+  pytest:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/python:3.7.9
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - cache-{{ checksum "tools/package-lock.json" }}
       - restore_cache:
           keys:
             - cache-{{ checksum "Pipfile.lock" }}
@@ -45,60 +130,51 @@ jobs:
           command: |
             pipenv sync --dev
       - run:
-          name: Install JS dependencies
-          command: |
-            sudo apt-get update
-            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-            sudo apt-get install -y nodejs
-            cd tools
-            npm install
-      - run:
           name: Run unit tests
           command: |
-            cd src/python
+            cd src/scripts
             pipenv run pylint --py3k *.py
             pipenv run coverage run --source . -m pytest
             pipenv run coverage report --omit "*/test*"
-      - run:
-          name: Build orb
-          command: |
-            ./build_orb.sh
-            cat src/orb.yml
-      - circleci-cli/install
-      - run:
-          name: Validate orb
-          command: |
-            circleci orb validate src/orb.yml
       - save_cache:
           key: cache-{{ checksum "Pipfile.lock" }}
           paths:
             - ~/.local
             - ~/.cache
-      - save_cache:
-          key: cache-{{ checksum "tools/package-lock.json" }}
-          paths:
-            - ~/tools/node_modules
-
-      - persist_to_workspace:
-          root: src
-          paths:
-            - orb.yml
-
-  trigger-integration-tests:
+  test-fargatespot:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/base:stable
     steps:
-      - checkout
+      - aws-cli/setup
+      - jq/install
       - run:
-          name: Trigger integration workflow
+          name: Get cluster info
           command: |
-            curl -u ${CIRCLE_TOKEN}: -X POST --header "Content-Type: application/json" -d "{
-              \"branch\": \"${CIRCLE_BRANCH}\",
-              \"parameters\": {
-                \"run-integration-tests\": true
-              }
-            }" "https://circleci.com/api/v2/project/github/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
-
+            SERVICES_OBJ=$(aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service")
+            VPC_CONF_OBJ=$(echo $SERVICES_OBJ | jq '.services[].networkConfiguration.awsvpcConfiguration')
+            SUBNET_ONE=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[0]')
+            SUBNET_TWO=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[1]')
+            SECURITY_GROUP_IDS=$(echo "$VPC_CONF_OBJ" |  jq '.securityGroups[0]')
+            CLUSTER_NAME=$(echo "$SERVICES_OBJ" |  jq '.services[].clusterArn')
+            echo "export SUBNET_ONE=$SUBNET_ONE" >> $BASH_ENV
+            echo "export SUBNET_TWO=$SUBNET_TWO" >> $BASH_ENV
+            echo "export SECURITY_GROUP_IDS_FETCHED=$SECURITY_GROUP_IDS_FETCHED" >> $BASH_ENV
+            echo "export CLUSTER_NAME=$CLUSTER_NAME" >> $BASH_ENV
+      - run:
+          name: Associate cluster
+          command: |
+            aws ecs put-cluster-capacity-providers \
+              --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
+              --capacity-providers FARGATE FARGATE_SPOT  \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+              --region ${AWS_DEFAULT_REGION}
+      - aws-ecs/run-task:
+            cluster: $CLUSTER_NAME
+            capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
+            launch-type: ""
+            task-definition: ecs-orb-fgs-1-sleep360
+            subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
+            security-group-ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
     docker:
       - image: circleci/golang:1.8
@@ -132,7 +208,6 @@ jobs:
           name: Save image to an archive
           command: |
             mkdir -p docker-images/<<parameters.docker-image-name>>
-
             docker save -o docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
       - persist_to_workspace:
           root: .
@@ -154,7 +229,7 @@ jobs:
       - run:
           name: Check if test env should be set up
           command: |
-            if [ "${SKIP_TEST_ENV_CREATION}" = "true" ]
+            if [ "${SKIP_TEST_ENV_CREATION}" = "1" ]
             then
               circleci step halt
             fi
@@ -181,7 +256,6 @@ jobs:
           command: |
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
-
   test-service-update:
     docker:
       - image: circleci/python:3.7.1
@@ -210,10 +284,9 @@ jobs:
       - setup_remote_docker
       - attach_workspace:
           at: workspace
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Load image
           command: |
@@ -228,7 +301,7 @@ jobs:
       - run:
           name: Push image
           command: |
-            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
             docker push $FULL_IMAGE_NAME
       - unless:
           condition: << parameters.skip-service-update >>
@@ -238,7 +311,7 @@ jobs:
                 service-name: "<< parameters.service-name >>"
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
-                container-env-var-updates: "container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)"
+                container-env-var-updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
                 verify-revision-is-deployed: true
                 fail-on-verification-timeout: false
             - test-deployment:
@@ -254,16 +327,15 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
             aws ecs describe-task-definition --task-definition << parameters.family-name >> \
               | jq '.taskDefinition' | jq '.memory = "3072"' \
-              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities"])' \
+              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
               > task-definition.json
       - aws-ecs/update-task-definition-from-json:
           task-definition-json: "task-definition.json"
@@ -271,7 +343,6 @@ jobs:
           name: Check if task definition was updated
           command: |
             aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
-
   set-up-run-task-test:
     docker:
       - image: circleci/python:3.7.1
@@ -281,10 +352,9 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
@@ -302,10 +372,9 @@ jobs:
         type: string
     steps:
       - checkout
-      - aws-cli/install
-      - aws-cli/configure:
-          aws-access-key-id: "$AWS_ACCESS_KEY_ID"
-          aws-region: "$AWS_DEFAULT_REGION"
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
@@ -328,7 +397,7 @@ jobs:
       - run:
           name: Check if test env should be destroyed
           command: |
-            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "true" ]
+            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "1" ]
             then
               circleci step halt
             fi
@@ -350,183 +419,128 @@ jobs:
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
-  # Orb promotion workflow jobs
-  pre-orb-promotion-check:
-    docker:
-      - image: circleci/python:3.7.1
-    steps:
-      - checkout
-      - run:
-          name: Check that this is a master branch commit
-          command: |
-            git clone "$CIRCLE_REPOSITORY_URL" repository
-            cd repository
-            git branch --contains ${CIRCLE_SHA1} | grep "master"
-  promote-orb-into-production:
-    parameters:
-      orb-name:
-        type: string
-        description: |
-          Semver-less name of the orb to be promoted into production
-      orb-ref:
-        type: string
-        description: |
-          Version information of the orb to be promoted into production
-    executor: circleci-cli/default
-    steps:
-      - checkout
-      - run:
-          name: Promote dev orb to production
-          command: |
-            RELEASE_TYPE=''
-            if [[ "${CIRCLE_TAG}" =~ major-release-* ]]; then
-              RELEASE_TYPE='major'
-            elif [[ "${CIRCLE_TAG}" =~ minor-release-* ]]; then
-              RELEASE_TYPE='minor'
-            elif [[ "${CIRCLE_TAG}" =~ patch-release-* ]]; then
-              RELEASE_TYPE='patch'
-            fi
-            if [ -n "${RELEASE_TYPE}" ]; then
-              circleci orb publish promote \
-              <<parameters.orb-name>>@<<parameters.orb-ref>> \
-              ${RELEASE_TYPE} --token \
-              ${CIRCLE_TOKEN}
-            fi
-commands:
-  wait-for-codedeploy-deployment:
-    description: "Wait for the CodeDeploy deployment to be successful"
-    parameters:
-      application-name:
-          description: "CodeDeploy application name"
-          type: string
-      deployment-group-name:
-          description: "CodeDeploy application name"
-          type: string
-    steps:
-      - run:
-          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
-          command: |
-            DEPLOYMENT_ID=$(aws deploy list-deployments \
-              --application-name << parameters.application-name >> \
-              --deployment-group-name << parameters.deployment-group-name >> \
-              --query "deployments" \
-              --max-items 1 \
-              --output text \
-              | head -n 1)
-            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
-  delete-service:
-    description: "Forcefully delete an ECS service"
-    parameters:
-      service-name:
-          description: "Name of the ECS service"
-          type: string
-      cluster-name:
-          description: "Name of the cluster"
-          type: string
-    steps:
-      - run:
-          name: Delete ECS service
-          command: |
-            aws ecs delete-service \
-              --cluster << parameters.cluster-name >> \
-              --service << parameters.service-name >> \
-              --force
-  test-deployment:
-    description: "Test the deployment"
-    parameters:
-      service-name:
-          description: "Name of the ECS service"
-          type: string
-      cluster-name:
-          description: "Name of the cluster"
-          type: string
-      test-asterisk-expansion:
-          description: "Checks that asterisk expansion is prevented"
-          type: boolean
-          default: false
-      delete-load-balancer:
-          description: "Whether to delete the load balancer after the test"
-          type: boolean
-          default: false
-    steps:
-      - run:
-          name: Test deployment (for orb testing and is not part of the orb)
-          command: |
-            set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
-            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
-            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
-            for attempt in {1..25}; do
-              curl -s --retry 10 http://$ELB_DNS_NAME \
-                | grep -E "Hello World!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>>
-            done
-            if [ "<< parameters.delete-load-balancer >>" == "true" ]; then
-              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
-            fi
 
 workflows:
-  build_deploy-dev:
+  # Prior to producing a development orb (which requires credentials) basic validation, linting, and even unit testing can be performed.
+  # This workflow will run on every commit
+  test-pack:
     unless: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - build-orb
-
-      - queue/block_workflow:
-          consider-branch: false
+      - orb-tools/lint # Lint Yaml files
+      - orb-tools/pack # Pack orb source
+      - pytest
+      - shellcheck/check:
+          dir: ./src/scripts
+          exclude: SC2148
+      # optional: Run BATS tests against your scripts
+      # - bats/run:
+      #     path: ./src/tests
+      # If you accept building open source forks, protect your secrects behind a restricted context.
+      # A job containing restricted context (which holds your orb publishing credentials) may only be accessed by a user with proper permissions.
+      # An open source user may begin a pipeline with a PR, and once the pipeline is approved by an authorized user at this point, the pipeline will continue with the proper context permissions.
+      - hold-for-dev-publish:
+          type: approval
           requires:
-            - build-orb
-
+            - orb-tools/lint
+            - orb-tools/pack
+            - pytest
+            # - bats/run
+            - shellcheck/check
+      # Publish development version(s) of the orb.
       - orb-tools/publish-dev:
           orb-name: circleci/aws-ecs
-          requires:
-            - queue/block_workflow
+          context: orb-publishing # A restricted context containing your private publishing credentials. Will only execute if approved by an authorized user.
+          requires: [hold-for-dev-publish]
+      # Trigger an integration workflow to test the
+      # dev:${CIRCLE_SHA1:0:7} version of your orb
+      - orb-tools/trigger-integration-tests-workflow:
+          name: trigger-integration-dev
           context: orb-publishing
-
-      - trigger-integration-tests:
           requires:
             - orb-tools/publish-dev
-          context: orb-publishing
 
-  integration_tests:
+  # This `integration-test_deploy` workflow will only run
+  # when the run-integration-tests pipeline parameter is set to true.
+  # It is meant to be triggered by the "trigger-integration-tests-workflow"
+  # job, and run tests on <your orb>@dev:${CIRCLE_SHA1:0:7}.
+  integration-test_deploy:
     when: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - build-test-app:
-          name: ec2_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-
+      #################
+      # Fargate
+      #################
       - build-test-app:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-
-      - build-test-app:
-          name: codedeploy_fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-
-      - set-up-test-env:
-          name: ec2_set-up-test-env
-          requires:
-            - ec2_build-test-app
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-
       - set-up-test-env:
           name: fargate_set-up-test-env
           requires:
             - fargate_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
-
-      - set-up-test-env:
-          name: codedeploy_fargate_set-up-test-env
+      - test-service-update:
+          name: fargate_test-update-service-command
           requires:
-            - codedeploy_fargate_build-test-app
-          terraform-image: "hashicorp/terraform:0.12.16"
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-
-      # test run-task job in ec2 env
+            - fargate_set-up-test-env
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-job
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - fargate_test-update-service-command
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          # test the force-new-deployment flag
+          force-new-deployment: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-skip-registration
+          docker-image-for-job: circleci/python:3.4.9
+          requires:
+            - fargate_test-update-service-job
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          # test skipping registration of a new task definition
+          skip-task-definition-registration: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env
+          requires:
+            - fargate_test-update-service-skip-registration
+            - test-fargatespot
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+      #################
+      # EC2
+      #################
+      - build-test-app:
+          name: ec2_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+      - set-up-test-env:
+          name: ec2_set-up-test-env
+          requires:
+            - ec2_build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
       - set-up-run-task-test:
           name: ec2_set-up-run-task-test
           requires:
@@ -537,18 +551,17 @@ workflows:
           requires:
             - ec2_set-up-run-task-test
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          aws-region: $AWS_DEFAULT_REGION
+          aws-region: AWS_DEFAULT_REGION
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
-          overrides: "{\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\": 512}]}"
+          overrides: '{"containerOverrides":[{"name": "sleep", "memory": 512}]}'
       - tear-down-run-task-test:
           name: ec2_tear-down-run-task-test
           requires:
             - ec2_run-task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
 
-      # test ecs updates
       - test-service-update:
           name: ec2_test-update-service-command
           requires:
@@ -558,17 +571,60 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+      - test-task-definition-update:
+          name: ec2_test-task-definition-update
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          requires:
+            - ec2_test-update-service-command
+      - aws-ecs/deploy-service-update:
+          name: ec2_test-update-service-job
+          docker-image-for-job: circleci/python:2.7.15
+          requires:
+            - ec2_test-task-definition-update
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
+          verify-revision-is-deployed: true
+          fail-on-verification-timeout: false
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+                test-asterisk-expansion: true
 
-      - test-service-update:
-          name: fargate_test-update-service-command
+      - tear-down-test-env:
+          name: ec2_tear-down-test-env
+          requires:
+            - ec2_test-update-service-job
+            - ec2_tear-down-run-task-test
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
+
+      # #################
+      # # FargateSpot
+      # #################
+
+      - test-fargatespot:
           requires:
             - fargate_set-up-test-env
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
 
+      #################
+      # CodeDeploy
+      #################
+      - build-test-app:
+          name: codedeploy_fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+      - set-up-test-env:
+          name: codedeploy_fargate_set-up-test-env
+          requires:
+            - codedeploy_fargate_build-test-app
+          terraform-image: "hashicorp/terraform:0.12.16"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
       - test-service-update:
           name: codedeploy_fargate_test-update-service-command
           requires:
@@ -579,78 +635,17 @@ workflows:
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
-
-      - test-task-definition-update:
-          name: ec2_test-task-definition-update
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          requires:
-            - ec2_test-update-service-command
-
-      - aws-ecs/deploy-service-update:
-          name: ec2_test-update-service-job
-          docker-image-for-job: circleci/python:2.7.15
-          requires:
-            - ec2_test-task-definition-update
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value=\"Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)"
-          verify-revision-is-deployed: true
-          fail-on-verification-timeout: false
-          post-steps:
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-                test-asterisk-expansion: true
-
-      - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-job
-          docker-image-for-job: circleci/python:3.4.9
-          requires:
-            - fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)"
-          # test the force-new-deployment flag
-          force-new-deployment: true
-          verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
-          post-steps:
-            - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-
-      - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-skip-registration
-          docker-image-for-job: circleci/python:3.4.9
-          requires:
-            - fargate_test-update-service-job
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
-          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          # test skipping registration of a new task definition
-          skip-task-definition-registration: true
-          verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
-
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-command
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
@@ -665,18 +660,17 @@ workflows:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: false
-
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-and-wait-service-job
           docker-image-for-job: circleci/python:3.4.9
           requires:
             - codedeploy_fargate_test-update-service-job
-          aws-access-key-id: "${AWS_ACCESS_KEY_ID}"
-          aws-region: "${AWS_DEFAULT_REGION}"
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          container-env-var-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value=\"${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}\",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
           deployment-controller: "CODE_DEPLOY"
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
@@ -693,21 +687,6 @@ workflows:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
       - tear-down-test-env:
-          name: ec2_tear-down-test-env
-          requires:
-            - ec2_test-update-service-job
-            - ec2_tear-down-run-task-test
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-
-      - tear-down-test-env:
-          name: fargate_tear-down-test-env
-          requires:
-            - fargate_test-update-service-skip-registration
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate"
-
-      - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
           requires:
             - codedeploy_fargate_test-update-and-wait-service-job
@@ -715,21 +694,33 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
 
-  # Tag-triggered workflow to promote a dev orb into production.
-  # The tag is expected to have been applied manually.
-  production-orb-publishing:
-    jobs:
-      - pre-orb-promotion-check:
-          filters: *orb_promotion_filters
-      - hold-for-approval:
+      #################
+      # Publish
+      #################
+
+      - approve-publish:
           type: approval
           requires:
-            - pre-orb-promotion-check
-          filters: *orb_promotion_filters
-      - promote-orb-into-production:
+            - ec2_tear-down-test-env
+            - codedeploy_fargate_tear-down-test-env
+            - fargate_tear-down-test-env
+          filters:
+            branches:
+              only: master
+      # Publish a semver version of the orb. relies on
+      # the commit subject containing the text "[semver:patch|minor|major|skip]"
+      # as that will determine whether a patch, minor or major
+      # version will be published or if publishing should
+      # be skipped.
+      # e.g. [semver:patch] will cause a patch version to be published.
+      - orb-tools/dev-promote-prod-from-commit-subject:
           orb-name: circleci/aws-ecs
-          orb-ref: dev:${CIRCLE_SHA1:0:7}
           context: orb-publishing
+          add-pr-comment: false
+          fail-if-semver-not-indicated: true
+          publish-version-tag: false
           requires:
-            - hold-for-approval
-          filters: *orb_promotion_filters
+            - approve-publish
+          filters:
+            branches:
+              only: master

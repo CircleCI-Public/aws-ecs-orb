@@ -1,0 +1,137 @@
+description: |
+  Starts a new ECS task using the specified task definition and other parameters.
+
+  For more information on ECS Run-Task options, see: https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ecs/run-task.html
+parameters:
+  cluster:
+    description: The name or ARN of the cluster on which to run the task.
+    type: string
+  capacity-provider-strategy:
+    description: |
+      The capacity provider strategy to use for the task.
+      If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
+    type: string
+    default: ""
+  task-definition:
+    description: |
+      The family and revision (family:revision) or full ARN of the task definition to run. If a revision is not specified, the latest ACTIVE revision is used.
+    type: string
+  count:
+    description: |
+      "The number of instantiations of the specified task to place on your
+      cluster. You can specify up to 10 tasks per call."
+    type: integer
+    default: 1
+  started-by:
+    description: |
+      An optional tag specified when a task is started.
+      For example, if you automatically trigger a task to run a batch process job, you could apply a unique identifier for that job to your task with the startedBy parameter. You can then identify which tasks belong to that job by filtering the results of a ListTasks call with the startedBy value. Up to 36 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed.
+    type: string
+    default: ''
+  group:
+    description: |
+      The name of the task group to associate with the task.
+      The default value is the family name of the task definition (for example, family:my-family-name).
+    type: string
+    default: ''
+  placement-constraints:
+    description: |
+      An array of placement constraint objects to use for the task. You can specify up to 10 constraints per task (including constraints in the task definition and those specified at runtime).
+      Expected format: type=string,field=string.
+    type: string
+    default: ''
+  placement-strategy:
+    description: |
+      The placement strategy objects to use for the task. You can specify a maximum of five strategy rules per task.
+      Expected format: type=string,field=string.
+    type: string
+    default: ''
+  launch-type:
+    description: |
+      The launch type on which to run your task.
+      Possible values EC2, FARGATE, or an empty string.
+
+      For more information, see Amazon ECS Launch Types in the Amazon Elastic Container Service Developer Guide.
+    type: enum
+    enum: ["FARGATE", "EC2", ""]
+    default: FARGATE
+  platform-version:
+    description: |
+      The platform version the task should run.
+      A platform version is only specified for tasks using the Fargate launch type.
+    type: string
+    default: LATEST
+  awsvpc:
+    description: |
+      Does your task defintion use awsvpc mode or not.
+      If so, this should be true and you should also include subnet-ids and optionally security-group-ids / assign-public-ips.
+    type: boolean
+    default: true
+  subnet-ids:
+    description: |
+      List of subnet ids separated by commas.
+      Expected Format: subnet-70faa93b,subnet-bcc54b93
+    type: string
+    default: ''
+  security-group-ids:
+    description: |
+      List of security group ids separated by commas.
+      Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75
+    type: string
+    default: ''
+  assign-public-ip:
+    description: |
+      Assign a public IP or not
+    type: enum
+    enum:
+      - ENABLED
+      - DISABLED
+    default: DISABLED
+  overrides:
+    description: >
+      A list of container overrides in JSON format that specify the name of a container in the specified task definition and the overrides it should receive.
+
+      Double quotes in the JSON should be escaped e.g.:
+      {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\":512}]}
+    type: string
+    default: ''
+  tags:
+    description: |
+      The metadata that you apply to the task to help you categorize and organize them. Each tag consists of a key and an optional value, both of which you define. Expected format: key=string,value=string.
+    type: string
+    default: ''
+  enable-ecs-managed-tags:
+    description: |
+      "Specifies whether to enable Amazon ECS managed tags for the task."
+    type: boolean
+    default: false
+  propagate-tags:
+    description: |
+      Specifies whether to propagate the tags from the task definition to
+      the task.
+      If no value is specified, the tags are not propagated. Tags can only be propagated to the task during task creation. To add tags to a task after task creation, use the TagResource API action.
+    type: boolean
+    default: false
+steps:
+  - run:
+      name: Run Task
+      command: <<include(scripts/run-task.sh)>>
+      environment:
+        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
+        ECS_PARAM_TASK_DEF: <<parameters.task-definition>>
+        ECS_PARAM_COUNT: <<parameters.count>>
+        ECS_PARAM_STARTED_BY: <<parameters.started-by>>
+        ECS_PARAM_GROUP: <<parameters.group>>
+        ECS_PARAM_PLACEMENT_CONSTRAINTS: <<parameters.placement-constraints>>
+        ECS_PARAM_PLACEMENT_STRATEGY: <<parameters.placement-strategy>>
+        ECS_PARAM_LAUNCH_TYPE: <<parameters.launch-type>>
+        ECS_PARAM_PLATFORM_VERSION: <<parameters.platform-version>>
+        ECS_PARAM_AWSVPC: <<parameters.awsvpc>>
+        ECS_PARAM_SUBNET_ID: <<parameters.subnet-ids>>
+        ECS_PARAM_SEC_GROUP_ID: <<parameters.security-group-ids>>
+        ECS_PARAM_ASSIGN_PUB_IP: <<parameters.assign-public-ip>>
+        ECS_PARAM_OVERRIDES: <<parameters.overrides>>
+        ECS_PARAM_TAGS: <<parameters.tags>>
+        ECS_PARAM_ENABLE_ECS_MANAGED_TAGS: <<parameters.enable-ecs-managed-tags>>
+        ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate-tags>>
+        ECS_PARAM_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity-provider-strategy>>

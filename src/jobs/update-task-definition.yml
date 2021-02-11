@@ -1,0 +1,69 @@
+docker:
+  - image: << parameters.docker-image-for-job >>
+parameters:
+  docker-image-for-job:
+    description: The docker image to be used for running this job on CircleCI.
+    type: string
+    default: 'circleci/python:3.7.1'
+  aws-access-key-id:
+    description: |
+      AWS access key id for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_ACCESS_KEY_ID.
+    type: env_var_name
+    default: AWS_ACCESS_KEY_ID
+  aws-secret-access-key:
+    description: |
+      AWS secret key for IAM role. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_SECRET_ACCESS_KEY.
+    type: env_var_name
+    default: AWS_SECRET_ACCESS_KEY
+  aws-region:
+    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    type: env_var_name
+    default: AWS_DEFAULT_REGION
+  family:
+    description: Name of the task definition's family.
+    type: string
+  container-image-name-updates:
+    description: >
+      Use this to update the Docker image names and/or tag names of existing
+
+      containers that had been defined in the previous task definition.
+
+      Expected format:
+      container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+
+      For each container, specify only either "image-and-tag" or "image" or
+      "tag".
+
+      If "image-and-tag" is specified, the container image will be updated to
+      the value of the name-value pair.
+
+      If "image" is specified, the image tag defined in the previous task
+      definition will be retained, if exists.
+
+      If "tag" is specified, the image name defined in the previous task
+      definition will be used.
+    type: string
+    default: ''
+  container-env-var-updates:
+    description: >
+      Use this to update or set the values of environment variables that will be
+      defined for the containers.
+
+      (Existing environment variables not included in this parameter will not be
+      removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
+steps:
+  - aws-cli/setup:
+      aws-access-key-id: << parameters.aws-access-key-id >>
+      aws-secret-access-key: << parameters.aws-secret-access-key >>
+      aws-region: << parameters.aws-region >>
+  - update-task-definition:
+      family: << parameters.family >>
+      container-image-name-updates: << parameters.container-image-name-updates >>
+      container-env-var-updates: << parameters.container-env-var-updates >>

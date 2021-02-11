@@ -1,6 +1,18 @@
 # Changelog
 Documents changes in orb version releases.
 
+## [[2.0.0](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=2.0.0)]
+### Changed
+- Upgrade AWS CLI to v2 and latest aws-cli orb version. [\#118](https://github.com/CircleCI-Public/aws-ecs-orb/pull/118) ([KyleTryon](https://github.com/KyleTryon))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/118
+- Expects environment variable names for AWS credentials instead of Strings. ex: $AWS_SECRET_ACCESS_KEY -> AWS_SECRET_ACCESS_KEY. [\#118](https://github.com/CircleCI-Public/aws-ecs-orb/pull/118) ([KyleTryon](https://github.com/KyleTryon))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/118
+### Added
+- Enhancement: New `capacity-provider-strategy` parameter. [\#118](https://github.com/CircleCI-Public/aws-ecs-orb/pull/118) ([KyleTryon](https://github.com/KyleTryon))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/118
+- Enhancement: New usage example for Fargate SPOT with the `capacity-provider-strategy` parameter. [\#118](https://github.com/CircleCI-Public/aws-ecs-orb/pull/118) ([KyleTryon](https://github.com/KyleTryon))
+https://github.com/CircleCI-Public/aws-ecs-orb/pull/118
+- Changed: `launch-type` parameter is now an enum, which accepts a blank string as one of the values.
 ## [[1.1.0](https://circleci.com/orbs/registry/orb/circleci/aws-ecs?version=1.1.0)]
 ### Added
 - Enhancement: Add update-task-definition-from-json command and job [\#91](https://github.com/CircleCI-Public/aws-ecs-orb/pull/91) ([a10waveracer](https://github.com/a10waveracer))

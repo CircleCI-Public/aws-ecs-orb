@@ -1,0 +1,26 @@
+description: |
+  Use the AWS CLI and this orb to update an ECS service.
+  (Supports both EC2 and Fargate launch types)
+usage:
+  version: 2.1
+  orbs:
+    aws-cli: circleci/aws-cli@1.3
+    aws-ecs: circleci/aws-ecs@2.0
+  jobs:
+    update-tag:
+      docker:
+        - image: cimg/python:3.9.1
+      steps:
+        - aws-cli/setup:
+            # If these values have not been modified from their default, they do not need to be included.
+            aws-access-key-id: AWS_SECRET_ACCESS_KEY
+            aws-secret-access-key: AWS_DEFAULT_REGION
+            aws-region: AWS_DEFAULT_REGION
+        - aws-ecs/update-service:
+            family: '${MY_APP_PREFIX}-service'
+            cluster-name: '${MY_APP_PREFIX}-cluster'
+            container-image-name-updates: 'container=${MY_APP_PREFIX}-service,tag=stable'
+  workflows:
+    deploy:
+      jobs:
+        - update-tag

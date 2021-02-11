@@ -1,0 +1,12 @@
+description: Registers a task definition based on a json file.
+parameters:
+  task-definition-json:
+    description: |
+      Location of your .json task definition file (relative or absolute).
+    type: string
+steps:
+  - run:
+      name: Register new task definition
+      command: <<include(scripts/update-task-definition-from-json.sh)>>
+      environment:
+        ECS_PARAM_TASK_DEFINITION_JSON: <<parameters.task-definition-json>>

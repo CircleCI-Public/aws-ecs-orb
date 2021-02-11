@@ -1,0 +1,51 @@
+description: >-
+  Registers a task definition based on the last task definition, except with the
+  Docker image/tag names and environment variables of the containers updated
+  according to this command's parameters.
+parameters:
+  family:
+    description: Name of the task definition's family.
+    type: string
+  container-image-name-updates:
+    description: >
+      Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition.
+
+      Expected format:
+      container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+
+      For each container, specify only either "image-and-tag" or "image" or "tag".
+
+      If "image-and-tag" is specified, the container image will be updated to the value of the name-value pair.
+      If "image" is specified, the image tag defined in the previous task definition will be retained, if exists.
+      If "tag" is specified, the image name defined in the previous task definition will be used.
+    type: string
+    default: ''
+  container-env-var-updates:
+    description: >
+      Use this to update or set the values of environment variables that will be defined for the containers.
+
+      (Existing environment variables not included in this parameter will not be removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
+steps:
+  - run:
+      name: Retrieve previous task definition and prepare new task definition values
+      command: <<include(scripts/get-prev-task.sh)>>
+      environment:
+        ECS_PARAM_FAMILY: <<parameters.family>>
+        ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container-image-name-updates>>
+        ECS_PARAM_CONTAINER_ENV_VAR_UPDATES: <<parameters.container-env-var-updates>>
+        ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
+        ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
+
+
+  - run:
+      name: Register new task definition
+      command: <<include(scripts/register-new-task-def.sh)>>
+      environment:
+        ECS_PARAM_FAMILY: <<parameters.family>>

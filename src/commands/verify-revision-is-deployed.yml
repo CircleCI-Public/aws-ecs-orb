@@ -1,0 +1,46 @@
+description: |
+  Polls the service's deployment status at intervals until the given task definition revision is the only one deployed for the service, and for the task definition revision's running task count to match the desired count.
+  Does not support ECS services that are of the Blue/Green Deployment type.
+parameters:
+  family:
+    description: Name of the task definition's family.
+    type: string
+  cluster-name:
+    description: The short name or full ARN of the cluster that hosts the service.
+    type: string
+  service-name:
+    description: >-
+      The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition.
+    type: string
+    default: ''
+  task-definition-arn:
+    description: ARN of the task definition whose deployment status is to be monitored.
+    type: string
+  max-poll-attempts:
+    description: >-
+      The maximum number of attempts to poll for the deployment status before giving up.
+    type: integer
+    default: 50
+  poll-interval:
+    description: 'The polling interval, in seconds.'
+    type: integer
+    default: 20
+  fail-on-verification-timeout:
+    description: |
+      Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.
+    type: boolean
+    default: true
+steps:
+  - run:
+      name: Verify that the revision is deployed and older revisions are stopped
+      description: |
+        Poll the deployment status at intervals till the given task definition revision has reached its desired running task count and is the only one deployed for the service.
+      command: <<include(scripts/verify-revision-is-deployed.sh)>>
+      environment:
+        ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>
+        ECS_PARAM_FAMILY: <<parameters.family>>
+        ECS_PARAM_TASK_DEF_ARN: <<parameters.task-definition-arn>>
+        ECS_PARAM_MAX_POLL_ATTEMPTS: <<parameters.max-poll-attempts>>
+        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster-name>>
+        ECS_PARAM_POLL_INTERVAL: <<parameters.poll-interval>>
+        ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT: <<parameters.fail-on-verification-timeout>>

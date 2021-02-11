@@ -9,7 +9,7 @@ provider "aws" {
 # create an S3 bucket to store the state file in
 resource "aws_s3_bucket" "terraform-state-storage-s3-ec2" {
   bucket = "aws-ecs-orb-terraform-state-bucket-ec2"
-
+  force_destroy = true
   versioning {
     enabled = true
   }
@@ -17,7 +17,7 @@ resource "aws_s3_bucket" "terraform-state-storage-s3-ec2" {
 
 resource "aws_s3_bucket" "terraform-state-storage-s3-fargate" {
   bucket = "aws-ecs-orb-terraform-state-bucket-fargate"
-
+  force_destroy = true
   versioning {
     enabled = true
   }
@@ -25,7 +25,7 @@ resource "aws_s3_bucket" "terraform-state-storage-s3-fargate" {
 
 resource "aws_s3_bucket" "terraform-state-storage-s3-codedeploy-fargate" {
   bucket = "aws-ecs-orb-terraform-state-bucket-codedeploy-fargate"
-
+  force_destroy = true
   versioning {
     enabled = true
   }

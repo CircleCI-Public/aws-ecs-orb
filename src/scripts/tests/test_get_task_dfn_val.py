@@ -1,7 +1,7 @@
 import unittest
 import json
 import subprocess
-from get_task_definition_value import run
+from get_task_dfn_val import run
 from jsondiff import diff
 
 
@@ -124,13 +124,13 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
     def test_stdout_output(self):
         """Script results are printed out"""
         output = self.execute_script(
-            "python get_task_definition_value.py 'networkMode' '{\"taskDefinition\": {\"networkMode\": \"awsvpc\"}}'", 0)
+            "python get_task_dfn_val.py 'networkMode' '{\"taskDefinition\": {\"networkMode\": \"awsvpc\"}}'", 0)
         self.assertIn(b"awsvpc", output)
 
     def test_error_message_output(self):
         """An error message is output to stderr when an exception occurs"""
         output = self.execute_script(
-            "python get_task_definition_value.py 'a' '{}'", 1)
+            "python get_task_dfn_val.py 'a' '{}'", 1)
         self.assertIn(b"No valid task definition found:", output)
 
     def execute_script(self, command, result_item_index):

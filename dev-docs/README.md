@@ -17,9 +17,19 @@ The following [project environment variables](https://circleci.com/docs/2.0/env-
 | `CIRCLECI_API_KEY`             | Used by the `queue` orb               |
 | `AWS_RESOURCE_NAME_PREFIX_EC2` | Prefix used to name AWS resources for EC2 launch type integration tests. Set to `ecs-orb-ec2-1`.                                        |
 | `AWS_RESOURCE_NAME_PREFIX_FARGATE` | Prefix used to name AWS resources for Fargate launch type integration tests. Set to `ecs-orb-fg-1`.                               |
+| `AWS_RESOURCE_NAME_PREFIX_FARGATE_SPOT` | Prefix used to name AWS resources for Fargate Spot launch type integration tests. Set to `ecs-orb-fgs-1`.                               |
 | `AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE` | Prefix used to name AWS resources for Fargate launch type integration tests that use CodeDeploy. Set to `ecs-orb-cdfg-1`. |
 | `SKIP_TEST_ENV_CREATION`       | Whether to skip test env setup        |
 | `SKIP_TEST_ENV_TEARDOWN`       | Whether to skip test env teardown     |
+
+## Tear down infra on CircleCI
+If during development of this orb you execute a pipeline on CircleCI that fails to finish, you may need to manually tear down the infrastructure before being able to properly test again in a future pipeline.
+
+This can be done most easily by SSHing into any of the `set-up-test-env` jobs and running the included teardown script.
+
+1. SSH into `set-up-test-env` on CircleCI
+2. `cd project/tests`
+3. `./teardown.sh`
 
 ## Setting up / tearing down test infra locally
 
