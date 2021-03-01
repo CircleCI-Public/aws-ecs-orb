@@ -57,10 +57,10 @@ parameters:
     default: FARGATE
   platform-version:
     description: |
-      The platform version the task should run.
-      A platform version is only specified for tasks using the Fargate launch type.
+      Use this to specify the platform version that the task should run on.
+      A platform version should only be specified for tasks using the Fargate launch type.
     type: string
-    default: LATEST
+    default: ''
   awsvpc:
     description: |
       Does your task defintion use awsvpc mode or not.
