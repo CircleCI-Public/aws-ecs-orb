@@ -32,7 +32,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-secret-updates:
+  container-secrets-updates:
     description: >
       Use this to update or set the values of secrets variables that will be
       defined for the containers.

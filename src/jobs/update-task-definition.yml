@@ -58,7 +58,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-secret-updates:
+  container-secrets-updates:
     description: >
       Use this to update or set the values of secrets variables that will be
       defined for the containers.
@@ -81,4 +81,4 @@ steps:
       family: << parameters.family >>
       container-image-name-updates: << parameters.container-image-name-updates >>
       container-env-var-updates: << parameters.container-env-var-updates >>
-      container-secret-updates: << parameter.container-secret-updates >>
+      container-secrets-updates: << parameter.container-secrets-updates >>
