@@ -5,7 +5,7 @@ import json
 
 # shellcheck disable=SC1036  # Hold-over from previous iteration.
 def run(previous_task_definition, container_image_name_updates,
-        container_env_var_updates):
+        container_env_var_updates, container_secrets_updates=[]):
     try:
         definition = json.loads(previous_task_definition)
         container_definitions = definition['taskDefinition']['containerDefinitions']
@@ -15,6 +15,9 @@ def run(previous_task_definition, container_image_name_updates,
     # Expected format: container=x,name=y,value=z,container=...,name=...,value=
     if container_env_var_updates:
         __upsert_container_definitions(container_definitions, container_env_var_updates, 'environment', ['container', 'name', 'value'])
+    # Expected format: container=x,name=y,valueFrom=z,container=...,name=...,valueFrom=
+    if container_secrets_updates:
+        __upsert_container_definitions(container_definitions, container_secrets_updates, 'secrets', ['container', 'name', 'valueFrom'])
 
     # Build a map of the original container definitions so that the
     # array index positions can be easily looked up
@@ -76,12 +79,12 @@ def __groupby(elements, key):
 
 def __upsert_container_definitions(container_definitions, config_updates, definition_key, config_keys):
         try:
-            container, name, value = config_keys
+            container_key, name_key, value_key = config_keys
             container_map = {
-                container_definition[name]: {
+                container_definition[name_key]: {
                     'index': index,
                     'map': {
-                        dict[name]: dict[value]
+                        dict[name_key]: dict[value_key]
                         for dict in (container_definition.get(definition_key) or [])
                     }
                 }
@@ -110,11 +113,11 @@ def __upsert_container_definitions(container_definitions, config_updates, defini
 
             for update in map_updates:
                 if sorted(update.keys()) != config_keys:
-                    raise ValueError("Incorrect key found in {} variable update parameter: {}".format(definition_key, update.keys))
+                    raise ValueError("Incorrect key found in {} variable update parameter: {}".format(definition_key, update.keys()))
 
-            for container_name, group in __groupby(map_updates, lambda x: x[container]):
+            for container_name, group in __groupby(map_updates, lambda x: x[container_key]):
                 upsert_group_map = {
-                    g[name]: g[value]
+                    g[name_key]: g[value_key]
                     for g in group
                 }
                 container_entry = container_map.get(container_name)
@@ -125,8 +128,8 @@ def __upsert_container_definitions(container_definitions, config_updates, defini
                     container_entry['map'],
                     **upsert_group_map
                 )
-                container_definitions[container_index]['environment'] = [
-                    {'name': key, 'value': value}
+                container_definitions[container_index][definition_key] = [
+                    {name_key: key, value_key: value}
                     for key, value in new_map.items()
                 ]
         except ValueError as value_error:

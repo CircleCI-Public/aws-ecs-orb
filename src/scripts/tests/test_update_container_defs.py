@@ -8,7 +8,7 @@ from jsondiff import diff
 class TestContainerDefinitionsUpdate(unittest.TestCase):
     maxDiff = None
 
-    task_dfn_multi_containers_with_env_vars = '{"taskDefinition": {"family": "web-timer", "containerDefinitions": [ { "name": "web", "image": "nginx:v0", "cpu": 99, "memory": 100, "portMappings": [{ "containerPort": 80, "hostPort": 80 }],  "environment": [{ "name": "hostname", "value": "localhost" }, { "name": "port", "value": "8000" }, { "name": "protocol", "value": "http" }], "essential": true, "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/usr/share/nginx/html", "readOnly": true }] }, { "name": "timer", "image": "busybox:v1", "environment": [{ "name": "version", "value": "1" }, { "name": "scheduled", "value": "false" }, { "name": "year", "value": "2018" }], "cpu": 10, "memory": 20, "entryPoint": ["sh", "-c"], "command": ["while true; do date > /nginx/index.html; sleep 1; done"], "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/nginx/" }] }], "volumes": [{ "name": "webdata", "host": { "sourcePath": "/ecs/webdata" }} ] }}'
+    task_dfn_multi_containers_with_env_vars = '{"taskDefinition": {"family": "web-timer", "containerDefinitions": [ { "name": "web", "image": "nginx:v0", "cpu": 99, "memory": 100, "portMappings": [{ "containerPort": 80, "hostPort": 80 }],  "environment": [{ "name": "hostname", "value": "localhost" }, { "name": "port", "value": "8000" }, { "name": "protocol", "value": "http" }], "essential": true, "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/usr/share/nginx/html", "readOnly": true }] }, { "name": "timer", "image": "busybox:v1", "environment": [{ "name": "version", "value": "1" }, { "name": "scheduled", "value": "false" }, { "name": "year", "value": "2018" }], "secrets": [{"name": "timer", "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter/timer"}], "cpu": 10, "memory": 20, "entryPoint": ["sh", "-c"], "command": ["while true; do date > /nginx/index.html; sleep 1; done"], "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/nginx/" }] }], "volumes": [{ "name": "webdata", "host": { "sourcePath": "/ecs/webdata" }} ] }}'
     task_dfn_multi_containers = '{"taskDefinition": {"family": "web-timer", "containerDefinitions": [ { "name": "web", "image": "nginx:v0", "cpu": 99, "memory": 100, "portMappings": [{ "containerPort": 80, "hostPort": 80 }], "essential": true, "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/usr/share/nginx/html", "readOnly": true }] }, { "name": "timer", "image": "busybox:v1", "cpu": 10, "memory": 20, "entryPoint": ["sh", "-c"], "command": ["while true; do date > /nginx/index.html; sleep 1; done"], "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/nginx/" }] }], "volumes": [{ "name": "webdata", "host": { "sourcePath": "/ecs/webdata" }} ] }}'
     task_dfn_multi_containers_no_tags = '{"taskDefinition": {"family": "web-timer", "containerDefinitions": [ { "name": "web", "image": "nginx", "cpu": 99, "memory": 100, "portMappings": [{ "containerPort": 80, "hostPort": 80 }], "essential": true, "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/usr/share/nginx/html", "readOnly": true }] }, { "name": "timer", "image": "busybox", "cpu": 10, "memory": 20, "entryPoint": ["sh", "-c"], "command": ["while true; do date > /nginx/index.html; sleep 1; done"], "mountPoints": [{ "sourceVolume": "webdata", "containerPath": "/nginx/" }] }], "volumes": [{ "name": "webdata", "host": { "sourcePath": "/ecs/webdata" }} ] }}'
     task_dfn_no_volumes_key = '{"taskDefinition": {"volumes": [], "taskDefinitionArn": "arn:aws:ecs:us-east-1:111:task-definition/sleep360:19", "containerDefinitions": [{"environment": [], "name": "sleep", "mountPoints": [], "image": "busybox", "cpu": 10, "portMappings": [], "command": ["sleep", "360"], "memory": 10, "essential": true, "volumesFrom": []}], "family": "sleep360", "revision": 1}}'
@@ -105,7 +105,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
             expected_diff = '{"0": {"image": "%s"}}' % (
                 new_images[0])
             self._test_image_update(task_dfn,
-                                    image_update_param, '', updated_containers, new_images, expected_diff)
+                                    image_update_param, '', '', updated_containers, new_images, expected_diff)
 
     def test_multi_containers_full_image_name_update_to_1_container_reordered(self):
         """Image names are correctly updated"""
@@ -119,7 +119,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
             expected_diff = '{"1": {"image": "%s"}}' % (
                 new_images[0])
             self._test_image_update(task_dfn,
-                                    image_update_param, '', updated_containers, new_images, expected_diff)
+                                    image_update_param, '', '', updated_containers, new_images, expected_diff)
 
     def test_multi_containers_full_image_name_update_to_2_containers(self):
         """Image names are correctly updated"""
@@ -133,7 +133,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
             expected_diff = '{"0": {"image": "%s"}, "1": {"image": "%s"}}' % (
                 new_images[0], new_images[1])
             self._test_image_update(task_dfn,
-                                    image_update_param, '', updated_containers, new_images, expected_diff)
+                                    image_update_param, '', '', updated_containers, new_images, expected_diff)
 
     def test_multi_containers_full_image_name_update_to_2_containers_reordered(self):
         """Image names are correctly updated"""
@@ -147,7 +147,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
             expected_diff = '{"0": {"image": "%s"}, "1": {"image": "%s"}}' % (
                 new_images[1], new_images[0])
             self._test_image_update(task_dfn,
-                                    image_update_param, '', updated_containers, new_images, expected_diff)
+                                    image_update_param, '', '', updated_containers, new_images, expected_diff)
 
     def test_multi_containers_image_only_update_to_1_container_without_tag(self):
         """Image names are correctly updated"""
@@ -211,7 +211,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         updated_containers = ['web', 'timer']
         expected_diff = '{"0": {"image": "ruby:latest", "environment": {"0": {"value": "127.0.0.1"}, "2": {"value": "https"}}}, "1": {"image": "python:3.7.1", "environment": {"1": {"value": "every week"}}}}'
         self._test_image_update(task_dfn,
-                                image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
+                                image_update_param, env_var_update_param, '', updated_containers, new_images, expected_diff)
 
     def test_adding_env_vars_to_empty_list(self):
         """Env vars are correctly added"""
@@ -224,7 +224,7 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         updated_containers = ['web', 'timer']
         expected_diff = '{"0": {"image": "ruby:latest", "environment": [{"name": "protocol", "value": "https"}, {"name": "hostname", "value": "127.0.0.1"}]}, "1": {"image": "python:3.7.1", "environment": [{"name": "scheduled", "value": "every week"}]}}'
         self._test_image_update(task_dfn,
-            image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
+            image_update_param, env_var_update_param, '', updated_containers, new_images, expected_diff)
 
     def test_adding_new_env_vars(self):
         """New/existing env vars are correctly added/modified and unmodified env vars are preserved"""
@@ -237,13 +237,43 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
         updated_containers = ['web', 'timer']
         expected_diff = '{"0": {"image": "ruby:latest", "environment": {"0": {"value": "127.0.0.1"}, "2": {"value": "https"}, "$insert": [[3, {"name": "maxThreads", "value": "100"}], [4, {"name": "minThreads", "value": "20"}]]}}, "1": {"image": "python:3.7.1", "environment": {"1": {"value": "every week"}}}}'
         self._test_image_update(task_dfn,
-            image_update_param, env_var_update_param, updated_containers, new_images, expected_diff)
+            image_update_param, env_var_update_param, '', updated_containers, new_images, expected_diff)
+
+    def test_secrets_update(self):
+        """secrets are correctly updated"""
+        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers_with_env_vars
+        secrets_update_param = 'container=timer,name=%s,valueFrom=%s,' % (
+            'timer', 'arn:aws:ssm:region:aws_account_id:parameter/credentials')
+        updated_containers = ['timer']
+        expected_diff = '{"1": {"secrets": {"0": {"valueFrom": "arn:aws:ssm:region:aws_account_id:parameter/credentials"}}}}'
+        self._test_image_update(task_dfn,
+                                '', '', secrets_update_param, updated_containers, [], expected_diff)
+
+    def test_adding_secrets_to_empty_list(self):
+        """secrets are correctly added"""
+        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers_with_env_vars
+        secrets_update_param = 'container=web,name=%s,valueFrom=%s,' % (
+            'web', 'arn:aws:ssm:region:aws_account_id:parameter/web')
+        updated_containers = ['web']
+        expected_diff = '{"0": {"secrets": [{"name": "web", "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter/web"}]}}'
+        self._test_image_update(task_dfn,
+            '', '', secrets_update_param, updated_containers, [], expected_diff)
+
+    def test_adding_new_secrets(self):
+        """New/existing secrets are correctly added/modified and unmodified secrets are preserved"""
+        task_dfn = TestContainerDefinitionsUpdate.task_dfn_multi_containers_with_env_vars
+        secrets_update_param = 'container=timer,name=%s,valueFrom=%s,' % (
+            'password', 'arn:aws:ssm:region:aws_account_id:parameter/password')
+        updated_containers = ['timer']
+        expected_diff = '{"1": {"secrets": {"$insert": [[1, {"name": "password", "valueFrom": "arn:aws:ssm:region:aws_account_id:parameter/password"}]]}}}'
+        self._test_image_update(task_dfn,
+            '', '', secrets_update_param, updated_containers, [], expected_diff)
 
     def _test_tag_only_update(self, task_dfn, image_update_param, ev_update_param, updated_containers, existing_images, new_tags, expected_diff):
         """Image names are correctly updated"""
         expected_image_names = [existing_images[i] + ':' +
                                 new_tags[i] for i, v in enumerate(new_tags)]
-        self._test_image_update(task_dfn, image_update_param, ev_update_param,
+        self._test_image_update(task_dfn, image_update_param, ev_update_param, '',
                                 updated_containers, expected_image_names, expected_diff)
 
     def _test_image_only_update(self, task_dfn, image_update_param, ev_update_param, updated_containers, new_images, existing_tags, expected_diff):
@@ -253,12 +283,12 @@ class TestContainerDefinitionsUpdate(unittest.TestCase):
                                     existing_tags[i] for i, v in enumerate(new_images)]
         else:
             expected_image_names = new_images[:]
-        self._test_image_update(task_dfn, image_update_param, ev_update_param,
+        self._test_image_update(task_dfn, image_update_param, ev_update_param, '',
                                 updated_containers, expected_image_names, expected_diff)
 
-    def _test_image_update(self, task_dfn, image_update_param, ev_update_param, updated_containers, expected_image_names, expected_diff):
+    def _test_image_update(self, task_dfn, image_update_param, ev_update_param, secrets_update_param, updated_containers, expected_image_names, expected_diff):
         """Image names are correctly updated"""
-        ret_val = run(task_dfn, image_update_param, ev_update_param)
+        ret_val = run(task_dfn, image_update_param, ev_update_param, secrets_update_param)
         updated_obj = json.loads(ret_val)
         self.validate_container_definitions(updated_obj)
         for i, v in enumerate(expected_image_names):
