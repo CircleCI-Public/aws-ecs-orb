@@ -1,7 +1,7 @@
 from __future__ import absolute_import
+from itertools import groupby
 import sys
 import json
-
 
 # shellcheck disable=SC1036  # Hold-over from previous iteration.
 def run(previous_task_definition, container_image_name_updates,
@@ -12,55 +12,19 @@ def run(previous_task_definition, container_image_name_updates,
     except:
         raise Exception('No valid task definition found: ' + previous_task_definition)
 
+    # Expected format: container=x,name=y,value=z,container=...,name=...,value=
+    if container_env_var_updates:
+        __upsert_container_definitions(container_definitions, container_env_var_updates, 'environment', ['container', 'name', 'value'])
+
     # Build a map of the original container definitions so that the
     # array index positions can be easily looked up
-    container_map = {}
-    for index, container_definition in enumerate(container_definitions):
-        env_var_map = {}
-        env_var_definitions = container_definition.get('environment')
-        if env_var_definitions is not None:
-            for env_var_index, env_var_definition in enumerate(env_var_definitions):
-                env_var_map[env_var_definition['name']] = {'index': env_var_index}
-        container_map[container_definition['name']] = {'image': container_definition['image'], 'index': index, 'environment_map': env_var_map}
-
-    # Expected format: container=...,name=...,value=...,container=...,name=...,value=
-    try:
-        env_kv_pairs = container_env_var_updates.split(',')
-        for index, kv_pair in enumerate(env_kv_pairs):
-            kv = kv_pair.split('=')
-            key = kv[0].strip()
-
-            if key == 'container':
-                container_name = kv[1].strip()
-                env_var_name_kv = env_kv_pairs[index+1].split('=')
-                env_var_name = env_var_name_kv[1].strip()
-                env_var_value_kv = env_kv_pairs[index+2].split('=')
-                env_var_value = env_var_value_kv[1].strip()
-                if env_var_name_kv[0].strip() != 'name' or env_var_value_kv[0].strip() != 'value':
-                    raise ValueError(
-                        'Environment variable update parameter format is incorrect: ' + container_env_var_updates)
-
-                container_entry = container_map.get(container_name)
-                if container_entry is None:
-                    raise ValueError('The container ' + container_name + ' is not defined in the existing task definition')
-                container_index = container_entry['index']
-                env_var_entry = container_entry['environment_map'].get(env_var_name)
-                if env_var_entry is None:
-                    # The existing container definition did not contain environment variables
-                    if container_definitions[container_index].get('environment') is None:
-                        container_definitions[container_index]['environment'] = []
-                    # This env var did not exist in the existing container definition
-                    container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
-                else:
-                    env_var_index = env_var_entry['index']
-                    container_definitions[container_index]['environment'][env_var_index]['value'] = env_var_value
-            elif key and key not in ['container', 'name', 'value']:
-                raise ValueError('Incorrect key found in environment variable update parameter: ' + key)
-    except ValueError as value_error:
-        raise value_error
-    except:
-        raise Exception('Environment variable update parameter could not be processed; please check parameter value: ' + container_env_var_updates)
-
+    container_map = {
+        container_definition['name']: {
+            'image': container_definition['image'],
+            'index': index,
+        }
+        for index, container_definition in enumerate(container_definitions)
+    }
     # Expected format: container=...,image-and-tag|image|tag=...,container=...,image-and-tag|image|tag=...,
     try:
         if container_image_name_updates and "container=" not in container_image_name_updates:
@@ -101,6 +65,74 @@ def run(previous_task_definition, container_image_name_updates,
     except:
         raise Exception('Image name update parameter could not be processed; please check parameter value: ' + container_image_name_updates)
     return json.dumps(container_definitions)
+
+def __chunk(elements, n):
+    for i in range(0, len(elements), n):
+        yield elements[i:i + n]
+
+def __groupby(elements, key):
+    for key, group in groupby(sorted(elements, key=key), key):
+        yield key, group
+
+def __upsert_container_definitions(container_definitions, config_updates, definition_key, config_keys):
+        try:
+            container, name, value = config_keys
+            container_map = {
+                container_definition[name]: {
+                    'index': index,
+                    'map': {
+                        dict[name]: dict[value]
+                        for dict in (container_definition.get(definition_key) or [])
+                    }
+                }
+                for index, container_definition in enumerate(container_definitions)
+            }
+
+            chunks = __chunk(config_updates.split(','), 3)
+            # [
+            #     ["container=x", "name=y", "value=z"]
+            # ]
+
+            map_updates = [
+                { 
+                    key_value_pair.split("=")[0]: key_value_pair.split("=")[1]
+                    for key_value_pair in chunk if key_value_pair
+                }
+                for chunk in chunks
+            ]
+            map_updates = [
+                dict
+                for dict in map_updates if dict # remove empty dict
+            ]
+            # [
+            #     {"container": "x", "name": "y", "value": "z"}
+            # ]
+
+            for update in map_updates:
+                if sorted(update.keys()) != config_keys:
+                    raise ValueError("Incorrect key found in {} variable update parameter: {}".format(definition_key, update.keys))
+
+            for container_name, group in __groupby(map_updates, lambda x: x[container]):
+                upsert_group_map = {
+                    g[name]: g[value]
+                    for g in group
+                }
+                container_entry = container_map.get(container_name)
+                if container_entry is None:
+                    raise ValueError('The container ' + container_name + ' is not defined in the existing task definition')
+                container_index = container_entry['index']
+                new_map = dict(
+                    container_entry['map'],
+                    **upsert_group_map
+                )
+                container_definitions[container_index]['environment'] = [
+                    {'name': key, 'value': value}
+                    for key, value in new_map.items()
+                ]
+        except ValueError as value_error:
+            raise value_error
+        except:
+            raise Exception("{} variable update parameter could not be processed; please check parameter value: {}".format(definition_key, config_updates))
 
 
 if __name__ == '__main__':
