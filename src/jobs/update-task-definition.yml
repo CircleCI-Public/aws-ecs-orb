@@ -58,6 +58,20 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  container-secret-updates:
+    description: >
+      Use this to update or set the values of secrets variables that will be
+      defined for the containers.
+
+      (Existing secrets variables not included in this parameter will not be
+      removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,valueFrom=<env-var-value>,container=...,name=...,valueFrom=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -67,3 +81,4 @@ steps:
       family: << parameters.family >>
       container-image-name-updates: << parameters.container-image-name-updates >>
       container-env-var-updates: << parameters.container-env-var-updates >>
+      container-secret-updates: << parameter.container-secret-updates >>
