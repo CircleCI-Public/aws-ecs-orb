@@ -119,8 +119,11 @@ parameters:
 
       (Existing environment variables not included in this parameter will not be removed)
 
-      Expected format:
-      key=string,value=string,key=...,value=...,
+      Expected formats:
+        - Shorthand Syntax
+          key=string,value=string,key=...,value=...,
+        - JSON Syntax
+         [{"key": "string","value": "string"}...]
 
       Values should not contain commas.
     type: string
