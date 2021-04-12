@@ -121,9 +121,9 @@ parameters:
 
       Expected formats:
         - Shorthand Syntax
-          key=string,value=string,key=...,value=...,
+          key=string,value=string ...
         - JSON Syntax
-         [{"key": "string","value": "string"}...]
+         [{"key": "string","value": "string"} ... ]
 
       Values should not contain commas.
     type: string
