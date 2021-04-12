@@ -156,6 +156,16 @@ parameters:
       Whether to skip registration of a new task definition.
     type: boolean
     default: false
+  task-definition-tags:
+    description: >
+      The metadata that you apply to the task definition to help you categorize and organize them.
+      Each tag consists of a key and an optional value, both of which you define.
+      (Existing environment variables not included in this parameter will not be removed)
+      Expected format:
+      key=string,value=string,key=...,value=...,
+      Values should not contain commas.
+    type: string
+    default: ''
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -178,4 +188,5 @@ steps:
       poll-interval: << parameters.poll-interval >>
       fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
       skip-task-definition-registration: << parameters.skip-task-definition-registration >>
+      task-definition-tags: << parameters.task-definition-tags >>
       verification-timeout: << parameters.verification-timeout >>
