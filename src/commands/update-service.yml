@@ -112,6 +112,22 @@ parameters:
       Whether to skip registration of a new task definition.
     type: boolean
     default: false
+  task-definition-tags:
+    description: >
+      The metadata that you apply to the task definition to help you categorize and organize them.
+      Each tag consists of a key and an optional value, both of which you define.
+
+      (Existing environment variables not included in this parameter will not be removed)
+
+      Expected formats:
+        - Shorthand Syntax
+          key=string,value=string ...
+        - JSON Syntax
+         [{"key": "string","value": "string"} ... ]
+
+      Values should not contain commas.
+    type: string
+    default: ''
 steps:
   - unless:
       condition: << parameters.skip-task-definition-registration >>
@@ -131,6 +147,15 @@ steps:
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn')
               echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
+  - when:
+      condition: << parameters.task-definition-tags >>
+      steps:
+        - run:
+            name: Update task definition with additional tags
+            command: >
+              aws ecs tag-resource \
+                --resource-arn "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
+                --tags "<<parameters.task-definition-tags>>"
   - when:
       condition:
         equal:
