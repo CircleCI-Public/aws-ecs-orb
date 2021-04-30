@@ -154,8 +154,8 @@ steps:
             name: Update task definition with additional tags
             command: >
               aws ecs tag-resource \
-                --resource-arn "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-                --tags "<<parameters.task-definition-tags>>"
+                --resource-arn ${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN} \
+                --tags <<parameters.task-definition-tags>>
   - when:
       condition:
         equal:
