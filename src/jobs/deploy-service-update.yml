@@ -186,7 +186,7 @@ steps:
       codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
       container-image-name-updates: << parameters.container-image-name-updates >>
       container-env-var-updates: << parameters.container-env-var-updates >>
-      container-secrets-updates: << parameter.container-secrets-updates >>
+      container-secrets-updates: << parameters.container-secrets-updates >>
       force-new-deployment: << parameters.force-new-deployment >>
       verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
       max-poll-attempts: << parameters.max-poll-attempts >>
