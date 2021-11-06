@@ -134,7 +134,7 @@ steps:
             family: << parameters.family >>
             container-image-name-updates: << parameters.container-image-name-updates >>
             container-env-var-updates: << parameters.container-env-var-updates >>
-            container-secrets-updates: << parameter.container-secrets-updates >>
+            container-secrets-updates: << parameters.container-secrets-updates >>
   - when:
       condition: << parameters.skip-task-definition-registration >>
       steps:
