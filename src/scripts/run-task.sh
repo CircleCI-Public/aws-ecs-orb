@@ -71,7 +71,7 @@ fi
 echo "Setting --count"
 set -- "$@" --count "$ECS_PARAM_COUNT"
 echo "Setting --task-definition"
-set -- "$@" --task-definition $ECS_PARAM_TASK_DEF
+set -- "$@" --task-definition "$ECS_PARAM_TASK_DEF"
 echo "Setting --cluster"
 set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
 
