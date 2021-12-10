@@ -18,7 +18,7 @@ echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
 if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ]; then
     echo "Waiting for deployment to succeed."
-    if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}" then
+    if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}"; then
         echo "Deployment succeeded."
     else
         echo "Deployment failed."
