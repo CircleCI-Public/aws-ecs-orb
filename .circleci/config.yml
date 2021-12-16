@@ -116,7 +116,6 @@ commands:
 
 # Define one or more jobs which will utilize your orb's commands and parameters to validate your changes.
 jobs:
-
   pytest:
     docker:
       - image: cimg/python:3.7.9
@@ -169,12 +168,12 @@ jobs:
               --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
               --region ${AWS_DEFAULT_REGION}
       - aws-ecs/run-task:
-            cluster: $CLUSTER_NAME
-            capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
-            launch-type: ""
-            task-definition: ecs-orb-fgs-1-sleep360
-            subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
-            security-group-ids: $SECURITY_GROUP_IDS_FETCHED
+          cluster: $CLUSTER_NAME
+          capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
+          launch-type: ""
+          task-definition: ecs-orb-fgs-1-sleep360
+          subnet-ids: "$SUBNET_ONE, $SUBNET_TWO"
+          security-group-ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
     docker:
       - image: circleci/golang:1.8
@@ -448,7 +447,7 @@ workflows:
             - shellcheck/check
       # Publish development version(s) of the orb.
       - orb-tools/publish-dev:
-          orb-name: circleci/aws-ecs
+          orb-name: sweetgreen/aws-ecs
           context: orb-publishing # A restricted context containing your private publishing credentials. Will only execute if approved by an authorized user.
           requires: [hold-for-dev-publish]
       # Trigger an integration workflow to test the
@@ -714,7 +713,7 @@ workflows:
       # be skipped.
       # e.g. [semver:patch] will cause a patch version to be published.
       - orb-tools/dev-promote-prod-from-commit-subject:
-          orb-name: circleci/aws-ecs
+          orb-name: sweetgreen/aws-ecs
           context: orb-publishing
           add-pr-comment: false
           fail-if-semver-not-indicated: true
