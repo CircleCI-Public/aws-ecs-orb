@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
 ECS_PARAM_SERVICE_NAME=$(eval echo "$ECS_PARAM_SERVICE_NAME")
@@ -9,19 +11,15 @@ if [ "$ECS_PARAM_TASK_DEF_ARN" = "" ]; then
     exit 1
 fi
 
-
 if [ -z "${ECS_PARAM_SERVICE_NAME}" ]; then
     ECS_PARAM_SERVICE_NAME="$ECS_PARAM_FAMILY"
 fi
-
 
 echo "Verifying that $ECS_PARAM_TASK_DEF_ARN is deployed.."
 
 attempt=0
 
-while [ "$attempt" -lt "$ECS_PARAM_MAX_POLL_ATTEMPTS" ]
-
-do
+while [ "$attempt" -lt "$ECS_PARAM_MAX_POLL_ATTEMPTS" ]; do
     DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
         --services "${ECS_PARAM_SERVICE_NAME}" \
