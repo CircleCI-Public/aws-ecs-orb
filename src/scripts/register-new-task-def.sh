@@ -1,3 +1,4 @@
+#!/bin/bash
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
@@ -24,7 +25,7 @@ if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLA
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
-    set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
+    set -- "$@" --requires-compatibilities "${CCI_ORB_AWS_ECS_REQ_COMP}"
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then
@@ -59,4 +60,4 @@ REVISION=$(aws ecs register-task-definition \
     --query 'taskDefinition.taskDefinitionArn')
 echo "Registered task definition: ${REVISION}"
 
-echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> "$BASH_ENV"
+echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >>"$BASH_ENV"

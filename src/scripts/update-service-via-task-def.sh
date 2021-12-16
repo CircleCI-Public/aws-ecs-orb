@@ -1,3 +1,4 @@
+#!/bin/bash
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
@@ -20,4 +21,4 @@ DEPLOYED_REVISION=$(aws ecs update-service \
     --output text \
     --query service.taskDefinition \
     "$@")
-echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> "$BASH_ENV"
+echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >>"$BASH_ENV"
