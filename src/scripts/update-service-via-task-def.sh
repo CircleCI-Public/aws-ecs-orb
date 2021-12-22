@@ -13,6 +13,10 @@ if [ "$ECS_PARAM_FORCE_NEW_DEPLOY" == "1" ]; then
     set -- "$@" --force-new-deployment
 fi
 
+if [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ]; then
+    set -- "$@" --deployment-configuration "deploymentCircuitBreaker={enable=true,rollback=true}"
+fi
+
 DEPLOYED_REVISION=$(aws ecs update-service \
     --cluster "$ECS_PARAM_CLUSTER_NAME" \
     --service "${ECS_PARAM_SERVICE_NAME}" \

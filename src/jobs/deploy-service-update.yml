@@ -112,6 +112,12 @@ parameters:
       Not applicable to ECS services that are of the Blue/Green Deployment type.
     type: boolean
     default: false
+  enable-circuit-breaker:
+    description: |
+      Determines whether a service deployment will fail if the service can’t reach a steady state.
+      The deployment circuit breaker can only be used for services using the rolling update (ECS ) deployment type.
+    type: boolean
+    default: false
   verify-revision-is-deployed:
     description: |
       Runs the verify-revision-is-deployed Orb command to verify that
@@ -189,6 +195,7 @@ steps:
       container-image-name-updates: << parameters.container-image-name-updates >>
       container-env-var-updates: << parameters.container-env-var-updates >>
       force-new-deployment: << parameters.force-new-deployment >>
+      enable-circuit-breaker: << parameters.enable-circuit-breaker >>
       verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
       max-poll-attempts: << parameters.max-poll-attempts >>
       poll-interval: << parameters.poll-interval >>
