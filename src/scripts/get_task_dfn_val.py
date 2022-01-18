@@ -10,7 +10,7 @@ def run(element_name, task_definition_str):
         raise Exception('No valid task definition found: ' + task_definition_str)
     str_list_types = ['requiresCompatibilities']
     json_arr_types = ['placementConstraints', 'volumes', 'tags']
-    json_obj_types = ['proxyConfiguration']
+    json_obj_types = ['proxyConfiguration', 'runtimePlatform']
     if element_name in json_arr_types:
         output_value = '[]'
     elif element_name in json_obj_types:

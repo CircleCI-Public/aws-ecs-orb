@@ -14,6 +14,7 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
     task_dfn_placement_constraints = '{"taskDefinition":{"volumes":[],"placementConstraints":[{"expression":"attribute:ecs.instance-type =~ t2.*","type":"memberOf"}],"taskDefinitionArn":"arn:aws:ecs:us-east-1:123456:task-definition/sleep360:19","containerDefinitions":[{"environment":[],"name":"sleep","mountPoints":[],"image":"busybox","cpu":10,"portMappings":[],"command":["sleep","360"],"memory":10,"essential":true,"volumesFrom":[]}],"family":"sleep360","revision":1}}'
     task_dfn_ec2_fargate_compatibilities = '{"taskDefinition":{"containerDefinitions":[{"command":[],"entryPoint":["sh","-c"],"essential":true,"image":"httpd:2.4","logConfiguration":{"logDriver":"awslogs","options":{"awslogs-group":"/ecs/fargate-task-definition","awslogs-region":"us-east-1","awslogs-stream-prefix":"ecs"}},"name":"sample-fargate-app","portMappings":[{"containerPort":80,"hostPort":80,"protocol":"tcp"}]}],"cpu":"256","executionRoleArn":"arn:aws:iam::012345678910:role/ecsTaskExecutionRole","family":"fargate-task-definition","memory":"512","networkMode":"awsvpc","requiresCompatibilities":["EC2", "FARGATE"]}}'
     task_dfn_proxy_configuration_tags_modes = '{"taskDefinition":{"taskDefinitionArn":"arn:aws:ecs:ap-southeast-2:123456789012:task-definition/ecsorbtest1:1","containerDefinitions":[{"name":"sleep","image":"busybox","cpu":10,"memory":10,"portMappings":[],"essential":true,"command":["sleep","360"],"environment":[],"mountPoints":[],"volumesFrom":[],"dependsOn":[{"containerName":"envoy","condition":"HEALTHY"}]},{"name":"envoy","image":"111345817488.dkr.ecr.us-west-2.amazonaws.com/aws-appmesh-envoy:v1.9.1.0-prod","cpu":10,"memory":10,"portMappings":[],"essential":true,"environment":[],"mountPoints":[],"volumesFrom":[],"user":"1337","healthCheck":{"command":["echo test"],"interval":5,"timeout":2,"retries":3,"startPeriod":10}}],"family":"ecsorbtest1","networkMode":"awsvpc","revision":1,"volumes":[],"status":"ACTIVE","requiresAttributes":[{"name":"com.amazonaws.ecs.capability.ecr-auth"},{"name":"ecs.capability.pid-ipc-namespace-sharing"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.17"},{"name":"ecs.capability.aws-appmesh"},{"name":"ecs.capability.container-ordering"},{"name":"ecs.capability.container-health-check"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.18"},{"name":"ecs.capability.task-eni"},{"name":"com.amazonaws.ecs.capability.docker-remote-api.1.29"}],"placementConstraints":[],"compatibilities":["EC2"],"pidMode":"task","ipcMode":"host","proxyConfiguration":{"type":"APPMESH","containerName":"envoy","properties":[{"name":"ProxyIngressPort","value":"15000"},{"name":"AppPorts","value":"8080"},{"name":"IgnoredUID","value":"1337"},{"name":"ProxyEgressPort","value":"15001"}]}},"tags":[{"key":"purpose","value":"orbstest"}]}'
+    task_dfn_runtime_platform = '{"taskDefinition":{"containerDefinitions":[{"name":"sample-app","image":"123456789012.dkr.ecr.us-west-2.amazonaws.com/aws-nodejs-sample:v1","memory":200,"cpu":10,"essential":true}],"family":"example_task_3","runtimePlatform":{"cpuArchitecture":"ARM64","operatingSystemFamily":"LINUX"}}}'
 
     def test_get_task_role(self):
         """Gets the correct value from a task definition"""
@@ -76,6 +77,14 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
         self.get_json_value('proxyConfiguration', TestGetTaskDefinitionValue.task_dfn_proxy_configuration_tags_modes,
                             '{"type":"APPMESH","containerName":"envoy","properties":[{"name":"ProxyIngressPort","value":"15000"},{"name":"AppPorts","value":"8080"},{"name":"IgnoredUID","value":"1337"},{"name":"ProxyEgressPort","value":"15001"}]}')
         self.get_json_value('proxyConfiguration',
+                            TestGetTaskDefinitionValue.task_dfn, '{}')
+
+    def test_get_runtime_platform(self):
+        """Gets the correct value from a task definition"""
+        self.get_json_value('runtimePlatform',
+                            TestGetTaskDefinitionValue.task_dfn_runtime_platform,
+                            '{ "cpuArchitecture": "ARM64", "operatingSystemFamily": "LINUX" }')
+        self.get_json_value('runtimePlatform',
                             TestGetTaskDefinitionValue.task_dfn, '{}')
 
     def test_get_requires_compatibilities(self):
