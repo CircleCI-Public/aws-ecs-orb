@@ -4,6 +4,10 @@ parameters:
   family:
     description: Name of the task definition's family.
     type: string
+  previous-revision:
+    description: Optional previous task's revision number
+    type: string
+    default: ''
   cluster-name:
     description: The short name or full ARN of the cluster that hosts the service.
     type: string
@@ -186,6 +190,7 @@ steps:
             environment:
               ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>
               ECS_PARAM_FAMILY: <<parameters.family>>
+              ECS_PARAM_PREVIOUS_REVISION: <<parameters.previous-revision>>
               ECS_PARAM_FORCE_NEW_DEPLOY: <<parameters.force-new-deployment>>
               ECS_PARAM_CLUSTER_NAME: << parameters.cluster-name >>
 

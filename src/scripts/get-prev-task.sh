@@ -2,12 +2,18 @@ set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
+ECS_PARAM_PREVIOUS_REVISION=$(eval echo "$ECS_PARAM_PREVIOUS_REVISION")
 ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES")
 ECS_PARAM_CONTAINER_ENV_VAR_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
 
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
+if [ -z "${ECS_PARAM_PREVIOUS_REVISION}" ]; then
+  ECS_TASK_DEFINITION_NAME="$ECS_PARAM_FAMILY"
+else
+  ECS_TASK_DEFINITION_NAME="$ECS_PARAM_FAMILY:$ECS_PARAM_PREVIOUS_REVISION"
+fi
 
+PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_TASK_DEFINITION_NAME" --include TAGS)
 
 
 # Prepare script for updating container definitions
