@@ -458,31 +458,31 @@ workflows:
 #          requires:
 #            - orb-tools/publish-dev
       - approve-publish:
-            type: approval
-            #          requires:
-            #            - ec2_tear-down-test-env
-            #            - codedeploy_fargate_tear-down-test-env
-            #            - fargate_tear-down-test-env
-            filters:
-              branches:
-                only: master
-              # Publish a semver version of the orb. relies on
-              # the commit subject containing the text "[semver:patch|minor|major|skip]"
-              # as that will determine whether a patch, minor or major
-              # version will be published or if publishing should
-              # be skipped.
-              # e.g. [semver:patch] will cause a patch version to be published.
-              - orb-tools/dev-promote-prod-from-commit-subject:
-                  orb-name: sweetgreen/aws-ecs
-                  context: orb-publishing
-                  add-pr-comment: false
-                  fail-if-semver-not-indicated: true
-                  publish-version-tag: false
-                  requires:
-                    - approve-publish
-                  filters:
-                    branches:
-                      only: master
+          type: approval
+          #          requires:
+          #            - ec2_tear-down-test-env
+          #            - codedeploy_fargate_tear-down-test-env
+          #            - fargate_tear-down-test-env
+          filters:
+            branches:
+              only: master
+            # Publish a semver version of the orb. relies on
+            # the commit subject containing the text "[semver:patch|minor|major|skip]"
+            # as that will determine whether a patch, minor or major
+            # version will be published or if publishing should
+            # be skipped.
+            # e.g. [semver:patch] will cause a patch version to be published.
+            - orb-tools/dev-promote-prod-from-commit-subject:
+                orb-name: sweetgreen/aws-ecs
+                context: orb-publishing
+                add-pr-comment: false
+                fail-if-semver-not-indicated: true
+                publish-version-tag: false
+                requires:
+                  - approve-publish
+                filters:
+                  branches:
+                    only: master
 
   # This `integration-test_deploy` workflow will only run
   # when the run-integration-tests pipeline parameter is set to true.
