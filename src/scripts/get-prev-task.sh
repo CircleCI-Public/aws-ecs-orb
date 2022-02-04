@@ -2,13 +2,13 @@ set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
+echo "Your task family: ${ECS_PARAM_FAMILY}"
 ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES")
 ECS_PARAM_CONTAINER_ENV_VAR_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
 
 # shellcheck disable=SC2034
 PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
-
-
+echo "Previous task def: ${PREVIOUS_TASK_DEFINITION}"
 
 # Prepare script for updating container definitions
 
@@ -63,7 +63,7 @@ TAGS=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'tags' "$PREVIOUS_TASK_DEFINITION"
 PROXY_CONFIGURATION=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'proxyConfiguration' "$PREVIOUS_TASK_DEFINITION")
 
 RUNTIME_PLATFORM=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'runtimePlatform' "$PREVIOUS_TASK_DEFINITION")
-
+echo "Runtime platform is: ${RUNTIME_PLATFORM}"
 
 # Make task definition values available as env variables
 # shellcheck disable=SC2129
