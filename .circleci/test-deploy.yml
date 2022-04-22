@@ -2,6 +2,9 @@ version: 2.1
 orbs:
   aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
   orb-tools: circleci/orb-tools@11.1
+  aws-cli: circleci/aws-cli@3.1
+  jq: circleci/jq@2.2
+
 filters: &filters
   tags:
     only: /.*/
@@ -315,12 +318,14 @@ workflows:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
       - set-up-test-env:
           name: fargate_set-up-test-env
           requires:
             - fargate_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE_ORBS_AWS]
       - test-service-update:
           name: fargate_test-update-service-command
           requires:
@@ -330,6 +335,7 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
@@ -345,6 +351,7 @@ workflows:
           verify-revision-is-deployed: true
           max-poll-attempts: 40
           poll-interval: 10
+          context: [CPE_ORBS_AWS]
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
@@ -363,6 +370,7 @@ workflows:
           verify-revision-is-deployed: true
           max-poll-attempts: 40
           poll-interval: 10
+          context: [CPE_ORBS_AWS]
       - tear-down-test-env:
           name: fargate_tear-down-test-env
           requires:
@@ -370,6 +378,7 @@ workflows:
             - test-fargatespot
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE_ORBS_AWS]
       #################
       # EC2
       #################
@@ -377,17 +386,20 @@ workflows:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
       - set-up-test-env:
           name: ec2_set-up-test-env
           requires:
             - ec2_build-test-app
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+          context: [CPE_ORBS_AWS]
       - set-up-run-task-test:
           name: ec2_set-up-run-task-test
           requires:
             - ec2_set-up-test-env
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          context: [CPE_ORBS_AWS]
       - aws-ecs/run-task:
           name: ec2_run-task-test
           requires:
@@ -398,11 +410,13 @@ workflows:
           launch-type: "EC2"
           awsvpc: false
           overrides: '{"containerOverrides":[{"name": "sleep", "memory": 512}]}'
+          context: [CPE_ORBS_AWS]
       - tear-down-run-task-test:
           name: ec2_tear-down-run-task-test
           requires:
             - ec2_run-task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
+          context: [CPE_ORBS_AWS]
 
       - test-service-update:
           name: ec2_test-update-service-command
@@ -413,14 +427,17 @@ workflows:
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
       - test-task-definition-update:
           name: ec2_test-task-definition-update
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          context: [CPE_ORBS_AWS]
           requires:
             - ec2_test-update-service-command
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
           docker-image-for-job: circleci/python:2.7.15
+          context: [CPE_ORBS_AWS]
           requires:
             - ec2_test-task-definition-update
           aws-access-key-id: AWS_ACCESS_KEY_ID
@@ -444,6 +461,7 @@ workflows:
             - ec2_tear-down-run-task-test
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
+          context: [CPE_ORBS_AWS]
 
       # #################
       # # FargateSpot
@@ -460,6 +478,7 @@ workflows:
           name: codedeploy_fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
       - set-up-test-env:
           name: codedeploy_fargate_set-up-test-env
           requires:
@@ -467,6 +486,7 @@ workflows:
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE_ORBS_AWS]
       - test-service-update:
           name: codedeploy_fargate_test-update-service-command
           requires:
@@ -477,6 +497,7 @@ workflows:
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           skip-service-update: true
+          context: [CPE_ORBS_AWS]
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
           docker-image-for-job: circleci/python:3.4.9
@@ -494,6 +515,7 @@ workflows:
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
           verify-revision-is-deployed: false
+          context: [CPE_ORBS_AWS]
           post-steps:
             - wait-for-codedeploy-deployment:
                 application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
@@ -505,6 +527,7 @@ workflows:
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-and-wait-service-job
           docker-image-for-job: circleci/python:3.4.9
+          context: [CPE_ORBS_AWS]
           requires:
             - codedeploy_fargate_test-update-service-job
           aws-access-key-id: AWS_ACCESS_KEY_ID
@@ -535,6 +558,7 @@ workflows:
           terraform-image: "hashicorp/terraform:0.12.16"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE_ORBS_AWS]
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:

@@ -1,10 +1,10 @@
 terraform {
   required_version = ">= 0.12"
   backend "s3" {
-    bucket         = "aws-ecs-orb-terraform-state-bucket-fargate"
+    bucket         = "aws-ecs-terraform-state-bucket-fargate"
     key            = "tf/state"
-    region         = "us-east-1"
-    dynamodb_table = "aws-ecs-orb-terraform-state-lock-db-fargate"
+    region         = "us-west-2"
+    dynamodb_table = "aws-ecs-terraform-state-lock-db-fargate"
   }
 }
 

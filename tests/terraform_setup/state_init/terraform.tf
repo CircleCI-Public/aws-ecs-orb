@@ -8,7 +8,7 @@ provider "aws" {
 # terraform state file setup
 # create an S3 bucket to store the state file in
 resource "aws_s3_bucket" "terraform-state-storage-s3-ec2" {
-  bucket = "aws-ecs-orb-terraform-state-bucket-ec2"
+  bucket = "aws-ecs-terraform-state-bucket-ec2"
   force_destroy = true
   versioning {
     enabled = true
@@ -33,7 +33,7 @@ resource "aws_s3_bucket" "terraform-state-storage-s3-codedeploy-fargate" {
 
 # create a dynamodb table for locking the state file
 resource "aws_dynamodb_table" "dynamodb-terraform-state-lock-ec2" {
-  name           = "aws-ecs-orb-terraform-state-lock-db-ec2"
+  name           = "aws-ecs-terraform-state-lock-db-ec2"
   hash_key       = "LockID"
   read_capacity  = 20
   write_capacity = 20
