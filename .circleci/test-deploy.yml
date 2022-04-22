@@ -1,0 +1,413 @@
+version: 2.1
+orbs:
+  aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
+  orb-tools: circleci/orb-tools@11.1
+filters: &filters
+  tags:
+    only: /.*/
+jobs:
+  pytest:
+    docker:
+      - image: cimg/python:3.7.9
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - cache-{{ checksum "Pipfile.lock" }}
+      - run:
+          name: Install Python dependencies
+          command: |
+            pipenv sync --dev
+      - run:
+          name: Run unit tests
+          command: |
+            cd src/scripts
+            pipenv run pylint --py3k *.py
+            pipenv run coverage run --source . -m pytest
+            pipenv run coverage report --omit "*/test*"
+      - save_cache:
+          key: cache-{{ checksum "Pipfile.lock" }}
+          paths:
+            - ~/.local
+            - ~/.cache
+  test-fargatespot:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - aws-cli/setup
+      - jq/install
+      - run:
+          name: Get cluster info
+          command: |
+            SERVICES_OBJ=$(aws ecs describe-services --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" --services "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service")
+            VPC_CONF_OBJ=$(echo $SERVICES_OBJ | jq '.services[].networkConfiguration.awsvpcConfiguration')
+            SUBNET_ONE=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[0]')
+            SUBNET_TWO=$(echo "$VPC_CONF_OBJ" |  jq '.subnets[1]')
+            SECURITY_GROUP_IDS=$(echo "$VPC_CONF_OBJ" |  jq '.securityGroups[0]')
+            CLUSTER_NAME=$(echo "$SERVICES_OBJ" |  jq '.services[].clusterArn')
+            echo "export SUBNET_ONE=$SUBNET_ONE" >> $BASH_ENV
+            echo "export SUBNET_TWO=$SUBNET_TWO" >> $BASH_ENV
+            echo "export SECURITY_GROUP_IDS_FETCHED=$SECURITY_GROUP_IDS_FETCHED" >> $BASH_ENV
+            echo "export CLUSTER_NAME=$CLUSTER_NAME" >> $BASH_ENV
+      - run:
+          name: Associate cluster
+          command: |
+            aws ecs put-cluster-capacity-providers \
+              --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
+              --capacity-providers FARGATE FARGATE_SPOT  \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+              --region ${AWS_DEFAULT_REGION}
+      - aws-ecs/run-task:
+          cluster: $CLUSTER_NAME
+          capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
+          launch-type: ""
+          task-definition: ecs-orb-fgs-1-sleep360
+          subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
+          security-group-ids: $SECURITY_GROUP_IDS_FETCHED
+  build-test-app:
+    docker:
+      - image: circleci/golang:1.8
+    parameters:
+      docker-image-namespace:
+        description: "The namespace in which the built Docker image will be published"
+        type: string
+      docker-image-name:
+        description: "The name for the built Docker image"
+        type: string
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Make the executable
+          command: |
+            cd tests/test_app
+            go build -o demo-app src/main.go
+      - run:
+          name: Build image
+          command: |
+            cd tests/test_app
+            docker build -t <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>> .
+      - run:
+          name: Test image
+          command: |
+            docker run -d -p 8080:8080 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            sleep 10
+            docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:8080 | grep "Hello World!"
+      - run:
+          name: Save image to an archive
+          command: |
+            mkdir -p docker-images/<<parameters.docker-image-name>>
+            docker save -o docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - docker-images
+  set-up-test-env:
+    parameters:
+      terraform-image:
+        type: string
+        default: hashicorp/terraform:0.12.16
+      aws-resource-name-prefix:
+        type: string
+      terraform-config-dir:
+        type: string
+    docker:
+      - image: << parameters.terraform-image >>
+    steps:
+      - run:
+          name: Check if test env should be set up
+          command: |
+            if [ "${SKIP_TEST_ENV_CREATION}" = "1" ]
+            then
+              circleci step halt
+            fi
+      - checkout
+      - run:
+          name: terraform init
+          command: |
+            cd << parameters.terraform-config-dir >>
+            terraform init -input=false
+      - run:
+          name: terraform plan
+          command: |
+            cd << parameters.terraform-config-dir >>
+            terraform plan \
+                -input=false \
+                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
+                -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
+                -var "aws_region=${AWS_DEFAULT_REGION}" \
+                -var "aws_account_id=${AWS_ACCOUNT_ID}" \
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
+                -out tfplan
+      - run:
+          name: terraform apply
+          command: |
+            cd << parameters.terraform-config-dir >>
+            terraform apply -input=false -auto-approve tfplan
+  test-service-update:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      aws-resource-name-prefix:
+        description: "Prefix that the AWS resources for this launch type share"
+        type: string
+      family-name:
+        description: "Family name"
+        type: string
+      service-name:
+        description: "Service name"
+        type: string
+      docker-image-namespace:
+        description: "The namespace in which the Docker image was published"
+        type: string
+      docker-image-name:
+        description: "The name for the previously built Docker image"
+        type: string
+      skip-service-update:
+        description: "Skip updating the ECS service"
+        type: boolean
+        default: false
+    steps:
+      - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: workspace
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+      - run:
+          name: Load image
+          command: |
+            docker load --input workspace/docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar
+      - run:
+          name: Setup common environment variables
+          command: |
+            echo 'export ECR_REPOSITORY_NAME="<< parameters.aws-resource-name-prefix >>"' >> $BASH_ENV
+            echo 'export ECS_CLUSTER_NAME="<< parameters.aws-resource-name-prefix >>-cluster"' >> $BASH_ENV
+            echo 'export ECS_SERVICE_NAME="<< parameters.aws-resource-name-prefix >>-service"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
+      - run:
+          name: Push image
+          command: |
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            docker push $FULL_IMAGE_NAME
+      - unless:
+          condition: << parameters.skip-service-update >>
+          steps:
+            - aws-ecs/update-service:
+                family: "<< parameters.family-name >>"
+                service-name: "<< parameters.service-name >>"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+                container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
+                container-env-var-updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
+                verify-revision-is-deployed: true
+                fail-on-verification-timeout: false
+            - test-deployment:
+                service-name: "<< parameters.aws-resource-name-prefix >>-service"
+                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+  test-task-definition-update:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+      - run:
+          name: Get existing task definition
+          command: |
+            aws ecs describe-task-definition --task-definition << parameters.family-name >> \
+              | jq '.taskDefinition' | jq '.memory = "3072"' \
+              | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
+              > task-definition.json
+      - aws-ecs/update-task-definition-from-json:
+          task-definition-json: "task-definition.json"
+      - run:
+          name: Check if task definition was updated
+          command: |
+            aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
+  set-up-run-task-test:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+      - run:
+          name: Register task definition
+          command: |
+            aws ecs register-task-definition \
+              --family << parameters.family-name >> \
+              --cpu 256 --memory 512 \
+              --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
+  tear-down-run-task-test:
+    docker:
+      - image: circleci/python:3.7.1
+    parameters:
+      family-name:
+        description: "Family name"
+        type: string
+    steps:
+      - checkout
+      - aws-cli/setup:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+      - run:
+          name: Deregister task definition
+          command: |
+            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+              --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
+            aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
+  tear-down-test-env:
+    parameters:
+      terraform-image:
+        type: string
+        default: hashicorp/terraform:0.12.16
+      aws-resource-name-prefix:
+        type: string
+      terraform-config-dir:
+        type: string
+    docker:
+      - image: << parameters.terraform-image >>
+    steps:
+      - run:
+          name: Check if test env should be destroyed
+          command: |
+            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "1" ]
+            then
+              circleci step halt
+            fi
+      - checkout
+      - run:
+          name: terraform init
+          command: |
+            cd << parameters.terraform-config-dir >>
+            terraform init -input=false
+      - run:
+          name: Tear down test environment
+          command: |-
+            cd << parameters.terraform-config-dir >>
+            terraform destroy \
+                -input=false \
+                -auto-approve \
+                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
+                -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
+                -var "aws_region=${AWS_DEFAULT_REGION}" \
+                -var "aws_account_id=${AWS_ACCOUNT_ID}" \
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
+workflows:
+  test-deploy:
+    jobs:
+      # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
+      - orb-tools/pack:
+          filters: *filters
+      - orb-tools/publish:
+          orb-name: circleci/aws-ecs
+          vcs-type: << pipeline.project.type >>
+          pub-type: production
+          requires:
+            - orb-tools/pack
+          context: orb-publisher
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+        description: "CodeDeploy application name"
+        type: string
+      deployment-group-name:
+        description: "CodeDeploy application name"
+        type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service-name:
+        description: "Name of the ECS service"
+        type: string
+      cluster-name:
+        description: "Name of the cluster"
+        type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster-name >> \
+              --service << parameters.service-name >> \
+              --force
+  test-deployment:
+    description: "Test the deployment"
+    parameters:
+      service-name:
+        description: "Name of the ECS service"
+        type: string
+      cluster-name:
+        description: "Name of the cluster"
+        type: string
+      test-asterisk-expansion:
+        description: "Checks that asterisk expansion is prevented"
+        type: boolean
+        default: false
+      delete-load-balancer:
+        description: "Whether to delete the load balancer after the test"
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Test deployment (for orb testing and is not part of the orb)
+          command: |-
+            set -x
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            echo "ELB DNS NAME: $ELB_DNS_NAME"
+            echo "Sleeping for one minute while waiting for AWS to come online."
+            sleep 160s
+            echo "Done sleeping"
+            curl --retry 10 http://$ELB_DNS_NAME
+            run_with_retry() {
+              MAX_RETRY=6
+              n=0
+              until [ $n -ge $MAX_RETRY ]
+              do
+                # retry many times in case it takes a while for the new task definition to take effect
+                curl -s --retry 10 http://$ELB_DNS_NAME \
+                  | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>> && break
+                n=$[$n+1]
+                sleep 60s
+              done
+              if [ $n -ge $MAX_RETRY ]; then
+                echo "Error - Retry limit reached"
+                exit 1
+              fi
+            }
+            run_with_retry
+            if [ "<< parameters.delete-load-balancer >>" == "1" ]; then
+              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
+            fi
