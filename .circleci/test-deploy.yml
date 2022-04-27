@@ -468,6 +468,7 @@ workflows:
       # #################
 
       - test-fargatespot:
+          context: [CPE_ORBS_AWS]
           requires:
             - fargate_set-up-test-env
 
