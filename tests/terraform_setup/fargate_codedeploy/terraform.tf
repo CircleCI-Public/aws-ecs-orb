@@ -22,4 +22,7 @@ locals {
 
 resource "aws_ecr_repository" "demo-app-repository" {
   name = local.aws_ecr_repository_name
+  timeouts{
+    delete = "120m"
+  }
 }
