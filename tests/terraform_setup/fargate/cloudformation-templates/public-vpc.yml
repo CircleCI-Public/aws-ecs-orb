@@ -39,7 +39,8 @@ Resources:
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
-      CidrBlock: !FindInMap ['SubnetConfig', 'VPC', 'CIDR']
+      CidrBlock: 
+        Fn::FindInMap: ['SubnetConfig', 'VPC', 'CIDR']
 
   # Two public subnets, where containers can have public IP addresses
   PublicSubnetOne:
@@ -49,8 +50,10 @@ Resources:
          Fn::Select:
          - 0
          - Fn::GetAZs: {Ref: 'AWS::Region'}
-      VpcId: !Ref 'VPC'
-      CidrBlock: !FindInMap ['SubnetConfig', 'PublicOne', 'CIDR']
+      VpcId:
+        Fn::Ref: 'VPC'
+      CidrBlock: 
+        Fn::FindInMap: ['SubnetConfig', 'PublicOne', 'CIDR']
       MapPublicIpOnLaunch: true
   PublicSubnetTwo:
     Type: AWS::EC2::Subnet
@@ -59,8 +62,10 @@ Resources:
          Fn::Select:
          - 1
          - Fn::GetAZs: {Ref: 'AWS::Region'}
-      VpcId: !Ref 'VPC'
-      CidrBlock: !FindInMap ['SubnetConfig', 'PublicTwo', 'CIDR']
+      VpcId:
+        Fn::Ref: 'VPC'
+      CidrBlock:
+        Fn::FindInMap: ['SubnetConfig', 'PublicTwo', 'CIDR']
       MapPublicIpOnLaunch: true
 
   # Setup networking resources for the public subnets. Containers
@@ -71,12 +76,14 @@ Resources:
   GatewayAttachement:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref 'VPC'
+      VpcId:
+        Fn::Ref: 'VPC'
       InternetGatewayId: !Ref 'InternetGateway'
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
-      VpcId: !Ref 'VPC'
+      VpcId: 
+        Fn::Ref: 'VPC'
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: GatewayAttachement
@@ -114,7 +121,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the Fargate containers
-      VpcId: !Ref 'VPC'
+      VpcId: !
+        Fn::Ref: 'VPC'
   EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -143,7 +151,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the public facing load balancer
-      VpcId: !Ref 'VPC'
+      VpcId: 
+        Fn::Ref: 'VPC'
       SecurityGroupIngress:
           # Allow access to ALB from anywhere on the internet
           - CidrIp: 0.0.0.0/0
@@ -175,7 +184,8 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !Ref 'VPC'
+      VpcId: 
+        Fn::Ref: 'VPC'
   PublicLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:

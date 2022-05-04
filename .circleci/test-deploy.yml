@@ -309,14 +309,24 @@ jobs:
           no_output_timeout: "20m"
           command: |-
             cd << parameters.terraform-config-dir >>
-            terraform destroy \
-                -input=false \
-                -auto-approve \
+            if [ "$(terraform destroy -input=false -auto-approve \
                 -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" > /dev/null; echo $?)" -ne 0 ]; then
+
+
+                echo "retrying terraform destroy"
+                terraform destroy \
+                  -input=false \
+                  -auto-approve \
+                  -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
+                  -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
+                  -var "aws_region=${AWS_DEFAULT_REGION}" \
+                  -var "aws_account_id=${AWS_ACCOUNT_ID}" \
+                  -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
+            fi
 workflows:
   test-deploy:
     jobs:

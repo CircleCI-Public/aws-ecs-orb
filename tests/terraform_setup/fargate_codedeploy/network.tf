@@ -27,9 +27,6 @@ resource "aws_subnet" "public" {
 
 # Internet Gateway for the public subnet
 resource "aws_internet_gateway" "gw" {
-  # timeouts{
-  #   delete = "60m"
-  # }
   vpc_id = aws_vpc.main.id
 }
 
