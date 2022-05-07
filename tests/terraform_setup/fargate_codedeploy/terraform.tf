@@ -12,7 +12,7 @@ provider "aws" {
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
   region     = var.aws_region
-  #version    = "~> 2.7"
+  version    = "~> 2.7"
 }
 
 locals {
@@ -22,7 +22,4 @@ locals {
 
 resource "aws_ecr_repository" "demo-app-repository" {
   name = local.aws_ecr_repository_name
-  timeouts{
-    delete = "120m"
-  }
 }
