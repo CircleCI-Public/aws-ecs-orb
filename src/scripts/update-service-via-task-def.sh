@@ -19,5 +19,6 @@ DEPLOYED_REVISION=$(aws ecs update-service \
     --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
     --output text \
     --query service.taskDefinition \
+    --profile="$ECS_PARAM_PROFILE_NAME" \
     "$@")
 echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> "$BASH_ENV"

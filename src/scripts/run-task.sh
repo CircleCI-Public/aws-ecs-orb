@@ -68,6 +68,10 @@ if [ -n "$ECS_PARAM_LAUNCH_TYPE" ]; then
     fi
 fi
 
+if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
+    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"
+fi
+
 echo "Setting --count"
 set -- "$@" --count "$ECS_PARAM_COUNT"
 echo "Setting --task-definition"

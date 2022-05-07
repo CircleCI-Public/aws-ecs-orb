@@ -4,9 +4,14 @@ parameters:
     description: |
       Location of your .json task definition file (relative or absolute).
     type: string
+  profile-name:
+    description: AWS profile name to be configured.
+    type: string
+    default: ''
 steps:
   - run:
       name: Register new task definition
       command: <<include(scripts/update-task-definition-from-json.sh)>>
       environment:
         ECS_PARAM_TASK_DEFINITION_JSON: <<parameters.task-definition-json>>
+        ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>

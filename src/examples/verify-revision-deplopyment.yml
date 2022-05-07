@@ -11,8 +11,9 @@ usage:
       steps:
         - aws-cli/setup:
             # If these values have not been modified from their default, they do not need to be included.
-            aws-access-key-id: AWS_SECRET_ACCESS_KEY
-            aws-secret-access-key: AWS_DEFAULT_REGION
+            # If they are included, they configure the "default" profile, which is specified below.
+            aws-access-key-id: AWS_ACCESS_KEY_ID
+            aws-secret-access-key: AWS_SECRET_ACCESS_KEY
             aws-region: AWS_DEFAULT_REGION
         - run:
             name: Get last task definition
@@ -20,7 +21,8 @@ usage:
               TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
                   --task-definition ${MY_APP_PREFIX}-service \
                   --output text \
-                  --query 'taskDefinition.taskDefinitionArn')
+                  --query 'taskDefinition.taskDefinitionArn' \
+                  --profile default)
               echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
               $BASH_ENV
         - aws-ecs/verify-revision-is-deployed:
