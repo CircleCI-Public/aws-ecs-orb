@@ -1,6 +1,5 @@
 description: |
   Install AWS CLI and  a task definition from a json file.
-
 docker:
   - image: << parameters.docker-image-for-job >>
 parameters:

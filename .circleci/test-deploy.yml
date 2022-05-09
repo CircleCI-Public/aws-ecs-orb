@@ -399,6 +399,8 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE_ORBS_AWS]
+          filters: *filters
+
       #################
       # EC2
       #################
@@ -482,6 +484,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE_ORBS_AWS]
+          filters: *filters
 
       # #################
       # # FargateSpot
@@ -580,6 +583,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE_ORBS_AWS]
+          filters: *filters
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
@@ -588,9 +592,9 @@ workflows:
           pub-type: production
           requires:
             - orb-tools/pack
-            # - ec2_tear-down-test-env
+            - ec2_tear-down-test-env
             - fargate_tear-down-test-env  
-            # - codedeploy_fargate_tear-down-test-env
+            - codedeploy_fargate_tear-down-test-env
           context: orb-publisher
           filters:
             branches:
