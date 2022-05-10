@@ -1,18 +1,22 @@
 terraform {
-  required_version = ">= 0.12"
+  required_providers {
+    aws = {
+      version = "~> 4.13"
+    }
+  }
   backend "s3" {
     bucket         = "aws-ecs-terraform-state-bucket-ec2"
     key            = "tf/state"
     region         = "us-west-2"
     dynamodb_table = "aws-ecs-terraform-state-lock-db-ec2"
   }
+  required_version = ">= 1.1"
 }
 
 provider "aws" {
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
   region     = var.aws_region
-  version    = "~> 2.7"
 }
 
 locals {
