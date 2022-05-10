@@ -78,7 +78,7 @@ jobs:
           security-group-ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
     docker:
-      - image: circleci/golang:1.8
+      - image: cimg/go:1.18.1
     parameters:
       docker-image-namespace:
         description: "The namespace in which the built Docker image will be published"
@@ -158,7 +158,7 @@ jobs:
             terraform apply -input=false -auto-approve tfplan
   test-service-update:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/python:3.10.4
     parameters:
       aws-resource-name-prefix:
         description: "Prefix that the AWS resources for this launch type share"
@@ -219,7 +219,7 @@ jobs:
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
   test-task-definition-update:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
@@ -244,7 +244,7 @@ jobs:
             aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
   set-up-run-task-test:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
@@ -263,7 +263,7 @@ jobs:
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
   tear-down-run-task-test:
     docker:
-      - image: circleci/python:3.7.1
+      - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
@@ -361,7 +361,7 @@ workflows:
           context: [CPE_ORBS_AWS]
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
-          docker-image-for-job: circleci/python:3.4.9
+          docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update-service-command
@@ -382,7 +382,7 @@ workflows:
                 cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-skip-registration
-          docker-image-for-job: circleci/python:3.4.9
+          docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update-service-job
@@ -470,7 +470,7 @@ workflows:
             - ec2_test-update-service-command
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
-          docker-image-for-job: circleci/python:2.7.15
+          docker-image-for-job: cimg/python:3.10.4
           context: [CPE_ORBS_AWS]
           filters: *filters
           requires:
@@ -541,7 +541,7 @@ workflows:
           context: [CPE_ORBS_AWS]
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
-          docker-image-for-job: circleci/python:3.4.9
+          docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - codedeploy_fargate_test-update-service-command
@@ -568,7 +568,7 @@ workflows:
                 delete-load-balancer: false
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-and-wait-service-job
-          docker-image-for-job: circleci/python:3.4.9
+          docker-image-for-job: cimg/python:3.10.4
           context: [CPE_ORBS_AWS]
           filters: *filters
           requires:
