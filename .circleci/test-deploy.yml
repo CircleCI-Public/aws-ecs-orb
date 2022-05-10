@@ -361,7 +361,7 @@ workflows:
           context: [CPE_ORBS_AWS]
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
-          docker-image-for-job: python:3.4.9
+          docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update-service-command
