@@ -1,3 +1,6 @@
+description: >
+  Install AWS CLI and update the ECS service with the registered task definition.
+
 docker:
   - image: << parameters.docker-image-for-job >>
 parameters:

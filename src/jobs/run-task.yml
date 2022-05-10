@@ -1,3 +1,6 @@
+description: |
+  Install AWS CLI and Start a new ECS task using the specified task definition and other parameters.
+
 docker:
   - image: << parameters.docker-image-for-job >>
 parameters:
