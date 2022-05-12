@@ -24,7 +24,7 @@ parameters:
   profile-name:
     description: AWS profile name to be configured.
     type: string
-    default: default
+    default: ''
   task-definition-json:
     description: |
       Location of your .json task definition file (relative or absolute).

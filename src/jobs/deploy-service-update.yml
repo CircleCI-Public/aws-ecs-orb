@@ -25,7 +25,7 @@ parameters:
   profile-name:
     description: AWS profile name to be configured.
     type: string
-    default: default
+    default: ''
   family:
     description: Name of the task definition's family.
     type: string

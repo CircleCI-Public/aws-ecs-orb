@@ -2,6 +2,7 @@ set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
+ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
     set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
@@ -51,13 +52,16 @@ if [ -n "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}" ] && [ "${CCI_ORB_AWS_ECS_PROXY
     set -- "$@" --proxy-configuration "${CCI_ORB_AWS_ECS_PROXY_CONFIGURATION}"
 fi
 
+if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
+    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"
+fi
+
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
     "$@" \
     --output text \
-    --query 'taskDefinition.taskDefinitionArn'\
-    --profile="$ECS_PARAM_PROFILE_NAME")
+    --query 'taskDefinition.taskDefinitionArn')
 echo "Registered task definition: ${REVISION}"
 
 echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> "$BASH_ENV"

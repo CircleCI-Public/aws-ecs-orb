@@ -1,6 +1,7 @@
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
+ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 
 set -o noglob
 if [ -n "$ECS_PARAM_PLATFORM_VERSION" ]; then

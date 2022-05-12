@@ -25,7 +25,7 @@ parameters:
   profile-name:
     description: AWS profile name to be configured.
     type: string
-    default: default
+    default: ''
   cluster:
     description: The name or ARN of the cluster on which to run the task.
     type: string
