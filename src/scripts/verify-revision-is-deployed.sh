@@ -26,17 +26,20 @@ do
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
         --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
-        --query 'services[0].deployments[].[taskDefinition, status]')
+         --query 'services[0].deployments[].[taskDefinition, status]' \
+        --profile="$ECS_PARAM_PROFILE_NAME")
     NUM_DEPLOYMENTS=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
         --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
-        --query 'length(services[0].deployments)')
+        --query 'length(services[0].deployments)' \
+        --profile="$ECS_PARAM_PROFILE_NAME")
     TARGET_REVISION=$(aws ecs describe-services \
         --cluster "$ECS_PARAM_CLUSTER_NAME" \
         --services "${ECS_PARAM_SERVICE_NAME}" \
         --output text \
-        --query "services[0].deployments[?taskDefinition==\`$ECS_PARAM_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]")
+        --query "services[0].deployments[?taskDefinition==\`$ECS_PARAM_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]" \
+        --profile="$ECS_PARAM_PROFILE_NAME")
     echo "Current deployments: $DEPLOYMENTS"
     if [ "$NUM_DEPLOYMENTS" = "1" ] && [ "$TARGET_REVISION" = "$ECS_PARAM_TASK_DEF_ARN" ]; then
         echo "The task definition revision $TARGET_REVISION is the only deployment for the service and has attained the desired running task count."
