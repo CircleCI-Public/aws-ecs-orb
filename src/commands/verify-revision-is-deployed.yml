@@ -30,6 +30,10 @@ parameters:
       Whether to exit with an error if the verification of the deployment status does not complete within the number of polling attempts.
     type: boolean
     default: true
+  profile-name:
+    description: AWS profile name to be configured.
+    type: string
+    default: ''
 steps:
   - run:
       name: Verify that the revision is deployed and older revisions are stopped
@@ -44,3 +48,4 @@ steps:
         ECS_PARAM_CLUSTER_NAME: <<parameters.cluster-name>>
         ECS_PARAM_POLL_INTERVAL: <<parameters.poll-interval>>
         ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT: <<parameters.fail-on-verification-timeout>>
+        ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>

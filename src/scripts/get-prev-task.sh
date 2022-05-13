@@ -4,9 +4,13 @@ set -o noglob
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
 ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES")
 ECS_PARAM_CONTAINER_ENV_VAR_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
+ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 
+if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
+    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"   
+fi
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS)
+PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS "$@")
 
 
 

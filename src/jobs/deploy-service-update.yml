@@ -22,6 +22,10 @@ parameters:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: env_var_name
     default: AWS_DEFAULT_REGION
+  profile-name:
+    description: AWS profile name to be configured.
+    type: string
+    default: ''
   family:
     description: Name of the task definition's family.
     type: string
@@ -180,6 +184,7 @@ steps:
       aws-access-key-id: << parameters.aws-access-key-id >>
       aws-secret-access-key: << parameters.aws-secret-access-key >>
       aws-region: << parameters.aws-region >>
+      profile-name: << parameters.profile-name >>
   - update-service:
       family: << parameters.family >>
       cluster-name: << parameters.cluster-name >>
@@ -199,3 +204,4 @@ steps:
       skip-task-definition-registration: << parameters.skip-task-definition-registration >>
       task-definition-tags: << parameters.task-definition-tags >>
       verification-timeout: << parameters.verification-timeout >>
+      profile-name: << parameters.profile-name >>

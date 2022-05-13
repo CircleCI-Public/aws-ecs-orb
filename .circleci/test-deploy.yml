@@ -179,6 +179,10 @@ jobs:
         description: "Skip updating the ECS service"
         type: boolean
         default: false
+      profile-name:
+        description: "The profile name to use for AWS credentials"
+        type: string
+        default: "default"
     steps:
       - checkout
       - setup_remote_docker
@@ -201,7 +205,7 @@ jobs:
       - run:
           name: Push image
           command: |
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION --profile "<<parameters.profile-name>>" | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
             docker push $FULL_IMAGE_NAME
       - unless:
           condition: << parameters.skip-service-update >>
@@ -214,6 +218,7 @@ jobs:
                 container-env-var-updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
                 verify-revision-is-deployed: true
                 fail-on-verification-timeout: false
+                profile-name: "<<parameters.profile-name>>"
             - test-deployment:
                 service-name: "<< parameters.aws-resource-name-prefix >>-service"
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
@@ -367,6 +372,7 @@ workflows:
             - fargate_test-update-service-command
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
+          profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
@@ -388,6 +394,7 @@ workflows:
             - fargate_test-update-service-job
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
+          profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition

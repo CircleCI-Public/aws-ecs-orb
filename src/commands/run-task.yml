@@ -112,6 +112,10 @@ parameters:
       If no value is specified, the tags are not propagated. Tags can only be propagated to the task during task creation. To add tags to a task after task creation, use the TagResource API action.
     type: boolean
     default: false
+  profile-name:
+    description: AWS profile name to be configured.
+    type: string
+    default: ''
 steps:
   - run:
       name: Run Task
@@ -135,3 +139,4 @@ steps:
         ECS_PARAM_ENABLE_ECS_MANAGED_TAGS: <<parameters.enable-ecs-managed-tags>>
         ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate-tags>>
         ECS_PARAM_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity-provider-strategy>>
+        ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
