@@ -25,7 +25,7 @@ if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLA
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
-    set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
+    set -- "$@" --requires-compatibilities "${CCI_ORB_AWS_ECS_REQ_COMP}"
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then
@@ -54,6 +54,10 @@ fi
 
 if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
     set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"
+fi
+
+if [ -n "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" ] && [ "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" != "{}" ]; then
+    set -- "$@" --runtime-platform "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}"
 fi
 
 REVISION=$(aws ecs register-task-definition \
