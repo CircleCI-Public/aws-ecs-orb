@@ -60,6 +60,12 @@ if [ -n "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" ] && [ "${CCI_ORB_AWS_ECS_RUNTIME_
     set -- "$@" --runtime-platform "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}"
 fi
 
+{
+    echo "$@" 
+    echo "$ECS_PARAM_FAMILY"
+    echo "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"
+} >> test.txt
+
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
@@ -67,11 +73,6 @@ REVISION=$(aws ecs register-task-definition \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
 
-{
-    echo "$@" 
-    echo "$ECS_PARAM_FAMILY"
-    echo "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"
-} >> test.txt
 echo "Registered task definition: ${REVISION}"
 
 echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> "$BASH_ENV"
