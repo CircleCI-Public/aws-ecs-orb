@@ -66,6 +66,12 @@ REVISION=$(aws ecs register-task-definition \
     "$@" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
+
+{
+    echo "$@" 
+    echo "$ECS_PARAM_FAMILY"
+    echo "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"
+} >> test.txt
 echo "Registered task definition: ${REVISION}"
 
 echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> "$BASH_ENV"
