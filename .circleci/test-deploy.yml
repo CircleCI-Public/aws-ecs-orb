@@ -222,9 +222,6 @@ jobs:
             - test-deployment:
                 service-name: "<< parameters.aws-resource-name-prefix >>-service"
                 cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
-      - store_artifacts:
-          paths:
-            - test.txt
   test-task-definition-update:
     docker:
       - image: cimg/python:3.10.4
