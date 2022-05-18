@@ -66,7 +66,7 @@ TAGS=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'tags' "$PREVIOUS_TASK_DEFINITION"
 
 PROXY_CONFIGURATION=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'proxyConfiguration' "$PREVIOUS_TASK_DEFINITION")
 
-RUNTIME_PLATFORM=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'runtimePlatform' "$PREVIOUS_TASK_DEFINITION")
+# RUNTIME_PLATFORM=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'runtimePlatform' "$PREVIOUS_TASK_DEFINITION")
 
 # Make task definition values available as env variables
 # shellcheck disable=SC2129
