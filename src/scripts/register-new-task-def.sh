@@ -64,6 +64,7 @@ fi
     echo "$@" 
     echo "$ECS_PARAM_FAMILY"
     echo "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"
+    echo "aws ecs register-task-definition --family \"$ECS_PARAM_FAMILY\" --container-definitions \"${CCI_ORB_AWS_ECS_CONTAINER_DEFS}\" $* --output text --query 'taskDefinition.taskDefinitionArn'"
 } >> test.txt
 
 REVISION=$(aws ecs register-task-definition \
@@ -71,7 +72,7 @@ REVISION=$(aws ecs register-task-definition \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
     "$@" \
     --output text \
-    --query 'taskDefinition.taskDefinitionArn')
+    --query 'taskDefinition.taskDefinitionArn') >> test.txt
 
 echo "Registered task definition: ${REVISION}"
 
