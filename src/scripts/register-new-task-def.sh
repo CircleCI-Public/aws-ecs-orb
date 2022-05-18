@@ -64,13 +64,13 @@ fi
     echo "$@" 
     echo "$ECS_PARAM_FAMILY"
     echo "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"
-    echo "aws ecs register-task-definition --family \"$ECS_PARAM_FAMILY\" --container-definitions ${CCI_ORB_AWS_ECS_CONTAINER_DEFS} $* --output text --query 'taskDefinition.taskDefinitionArn'"
+    echo "aws ecs register-task-definition --family \"$ECS_PARAM_FAMILY\" --container-definitions '${CCI_ORB_AWS_ECS_CONTAINER_DEFS}' $* --output text --query 'taskDefinition.taskDefinitionArn'"
 } >> test.txt
 
 # shellcheck disable=SC2016,SC2086
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
-    --container-definitions \'${CCI_ORB_AWS_ECS_CONTAINER_DEFS}\' \
+    --container-definitions '${CCI_ORB_AWS_ECS_CONTAINER_DEFS}' \
     "$@" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
