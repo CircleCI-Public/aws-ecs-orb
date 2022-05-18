@@ -70,7 +70,7 @@ fi
 # shellcheck disable=SC2016,SC2086
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
-    --container-definitions \'"${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"\' \
+    --container-definitions=\'"${CCI_ORB_AWS_ECS_CONTAINER_DEFS}"\' \
     "$@" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn')
