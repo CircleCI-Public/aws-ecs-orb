@@ -82,7 +82,7 @@ class TestGetTaskDefinitionValue(unittest.TestCase):
     def test_get_requires_compatibilities(self):
         """Gets the correct value from a task definition"""
         self.get_literal_value('requiresCompatibilities',
-                               TestGetTaskDefinitionValue.task_dfn_ec2_fargate_compatibilities, 'EC2 FARGATE')
+                               TestGetTaskDefinitionValue.task_dfn_ec2_fargate_compatibilities, 'FARGATE')
         self.get_literal_value('requiresCompatibilities',
                                TestGetTaskDefinitionValue.task_dfn_execution_role_arn, 'FARGATE')
         self.get_literal_value('requiresCompatibilities',
