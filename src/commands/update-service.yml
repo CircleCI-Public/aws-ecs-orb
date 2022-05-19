@@ -75,6 +75,12 @@ parameters:
       Not applicable to ECS services that are of the Blue/Green Deployment type.
     type: boolean
     default: false
+  enable-circuit-breaker:
+    description: |
+      Determines whether a service deployment will fail if the service can't reach a steady state.
+      The deployment circuit breaker can only be used for services using the rolling update (ECS) deployment type.
+    type: boolean
+    default: false
   verify-revision-is-deployed:
     description: |
       Runs the verify-revision-is-deployed Orb command to verify that the revision has been deployed and is the only deployed revision for the service.
@@ -132,6 +138,7 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: ''
+
 steps:
   - unless:
       condition: << parameters.skip-task-definition-registration >>
@@ -194,8 +201,9 @@ steps:
               ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>
               ECS_PARAM_FAMILY: <<parameters.family>>
               ECS_PARAM_FORCE_NEW_DEPLOY: <<parameters.force-new-deployment>>
-              ECS_PARAM_CLUSTER_NAME: << parameters.cluster-name >>
+              ECS_PARAM_CLUSTER_NAME: <<parameters.cluster-name>>
               ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
+              ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable-circuit-breaker>>
 
   - when:
       condition:
