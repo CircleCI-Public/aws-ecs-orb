@@ -9,10 +9,15 @@ ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
     set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"   
 fi
+
+if [ -z "${ECS_PARAM_PREVIOUS_REVISION}" ]; then
+  ECS_TASK_DEFINITION_NAME="$ECS_PARAM_FAMILY"
+else
+  ECS_TASK_DEFINITION_NAME="$ECS_PARAM_FAMILY:$ECS_PARAM_PREVIOUS_REVISION_NUMBER"
+fi
+
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$ECS_PARAM_FAMILY" --include TAGS "$@")
-
-
+PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS "$@")
 
 # Prepare script for updating container definitions
 

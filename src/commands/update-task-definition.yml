@@ -36,6 +36,10 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: ''
+  previous-revision-number:
+    description: Optional previous task's revision number
+    type: string
+    default: ''
 steps:
   - run:
       name: Retrieve previous task definition and prepare new task definition values
@@ -47,8 +51,7 @@ steps:
         ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
         ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
-
-
+        ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous-revision-number>>
   - run:
       name: Register new task definition
       command: <<include(scripts/register-new-task-def.sh)>>

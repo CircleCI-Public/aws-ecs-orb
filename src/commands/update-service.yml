@@ -194,7 +194,7 @@ steps:
               ECS_PARAM_SERVICE_NAME: <<parameters.service-name>>
               ECS_PARAM_FAMILY: <<parameters.family>>
               ECS_PARAM_FORCE_NEW_DEPLOY: <<parameters.force-new-deployment>>
-              ECS_PARAM_CLUSTER_NAME: << parameters.cluster-name >>
+              ECS_PARAM_CLUSTER_NAME: <<parameters.cluster-name>>
               ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
 
   - when:
