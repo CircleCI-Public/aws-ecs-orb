@@ -56,6 +56,10 @@ if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
     set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"
 fi
 
+if [ -n "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" ] && [ "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" != "{}" ]; then
+    set -- "$@" --runtime-platform "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}"
+fi
+
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
