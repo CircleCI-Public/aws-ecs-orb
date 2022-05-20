@@ -17,6 +17,11 @@ fi
 if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
     set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"   
 fi
+
+if [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ]; then
+    set -- "$@" --deployment-configuration "deploymentCircuitBreaker={enable=true,rollback=true}"
+fi
+
 DEPLOYED_REVISION=$(aws ecs update-service \
     --cluster "$ECS_PARAM_CLUSTER_NAME" \
     --service "${ECS_PARAM_SERVICE_NAME}" \

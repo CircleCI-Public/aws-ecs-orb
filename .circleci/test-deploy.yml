@@ -399,6 +399,8 @@ workflows:
           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition
           skip-task-definition-registration: true
+          # test the enable-circuit-breaker flag
+          enable-circuit-breaker: true
           verify-revision-is-deployed: true
           max-poll-attempts: 40
           poll-interval: 10
