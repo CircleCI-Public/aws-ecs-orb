@@ -78,7 +78,7 @@ parameters:
   enable-circuit-breaker:
     description: |
       Determines whether a service deployment will fail if the service can't reach a steady state.
-      The deployment circuit breaker can only be used for services using the rolling update (ECS) deployment type.
+      To use the deployment circuit breaker for CodeDeploy services, the verify-revision-is-deployed parameter must be set to true.
     type: boolean
     default: false
   verify-revision-is-deployed:
@@ -186,6 +186,7 @@ steps:
               ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy-load-balanced-container-port>>
               ECS_PARAM_VERIFY_REV_DEPLOY: <<parameters.verify-revision-is-deployed>>
               ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
+              ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable-circuit-breaker>>
 
       no_output_timeout: << parameters.verification-timeout >>
   - when:

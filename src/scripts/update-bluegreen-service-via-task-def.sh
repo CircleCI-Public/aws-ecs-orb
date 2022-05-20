@@ -20,8 +20,11 @@ if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ]; then
     echo "Waiting for deployment to succeed."
     if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}"; then
         echo "Deployment succeeded."
+    elif [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ]; then
+        echo "Deployment failed. Rolling back."
+        aws deploy stop-deployment --deployment-id "${DEPLOYMENT_ID}" --auto-rollback-enabled
     else
-        echo "Deployment failed."
+        echo "Deployment failed. Exiting."
         exit 1
     fi
 fi
