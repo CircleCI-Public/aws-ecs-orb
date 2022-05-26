@@ -25,7 +25,7 @@ if [ -n "${CCI_ORB_AWS_ECS_PLACEMENT_CONSTRAINTS}" ] && [ "${CCI_ORB_AWS_ECS_PLA
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_REQ_COMP}" ] && [ "${CCI_ORB_AWS_ECS_REQ_COMP}" != "[]" ]; then
-    set -- "$@" --requires-compatibilities ${CCI_ORB_AWS_ECS_REQ_COMP}
+    set -- "$@" --requires-compatibilities "${CCI_ORB_AWS_ECS_REQ_COMP}"
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_CPU}" ]; then

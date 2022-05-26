@@ -332,10 +332,29 @@ jobs:
                   -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                   -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
             fi
+  integration-test-ecs-cli-install:
+    parameters:
+      executor:
+        type: executor
+      version:
+        description: Select a specific version of the AWS ECS CLI. By default the latest version will be used.
+        default: latest
+        type: string
+      install-dir:
+        type: string
+        default: "/usr/local/ecs-cli"
+        description: |
+          Specify the installation directory
+    executor: <<parameters.executor>>
+    steps:
+      - install-ecs-cli:
+          version: <<parameters.version>>
+          install-dir: <<parameters.install-dir>>
 workflows:
   test-deploy:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
+      - 
       #################
       # Fargate
       #################
