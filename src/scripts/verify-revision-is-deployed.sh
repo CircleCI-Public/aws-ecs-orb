@@ -60,3 +60,4 @@ echo "Stopped waiting for deployment to be stable - please check the status of $
 if [ "$ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT" = "1" ]; then
     exit 1
 fi
+
