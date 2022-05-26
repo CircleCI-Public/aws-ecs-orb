@@ -11,6 +11,8 @@ else
     exit 1
 fi
 
+echo "https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-${SYS_ENV_PLATFORM}-amd64-${ECS_PARAM_VERSION}" >> test.txt
+echo "${ECS_PARAM_INSTALL_DIR}" >> test.txt
 
 $SUDO curl -Lo "${ECS_PARAM_INSTALL_DIR}" "https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-${SYS_ENV_PLATFORM}-amd64-${ECS_PARAM_VERSION}"
 
