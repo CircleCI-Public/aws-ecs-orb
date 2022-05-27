@@ -18,6 +18,7 @@ if [ -n "$ECS_PARAM_GROUP" ]; then
 fi
 if [ -n "$ECS_PARAM_OVERRIDES" ]; then
     echo "Setting --overrides"
+    ECS_PARAM_OVERRIDES=$(eval echo "$ECS_PARAM_OVERRIDES")
     set -- "$@" --overrides "$ECS_PARAM_OVERRIDES"
 fi
 if [ -n "$ECS_PARAM_TAGS" ]; then
