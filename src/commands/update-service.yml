@@ -178,6 +178,7 @@ steps:
         - run:
             name: Update ECS Blue/Green service with registered task definition.
             command: <<include(scripts/update-bluegreen-service-via-task-def.sh)>>
+            no_output_timeout: << parameters.verification-timeout >>
             environment:
               DEPLOYMENT_CONTROLLER: <<parameters.deployment-controller>>
               ECS_PARAM_CD_APP_NAME: <<parameters.codedeploy-application-name>>
@@ -187,8 +188,6 @@ steps:
               ECS_PARAM_VERIFY_REV_DEPLOY: <<parameters.verify-revision-is-deployed>>
               ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
               ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable-circuit-breaker>>
-
-      no_output_timeout: << parameters.verification-timeout >>
   - when:
       condition:
         equal:
