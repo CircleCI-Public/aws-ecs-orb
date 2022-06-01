@@ -332,10 +332,39 @@ jobs:
                   -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                   -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
             fi
+  integration-test-ecs-cli-install:
+    parameters:
+      executor:
+        type: executor
+      version:
+        description: Select a specific version of the AWS ECS CLI. By default the latest version will be used.
+        default: latest
+        type: string
+      install-dir:
+        type: string
+        default: "/usr/local/bin/ecs-cli"
+        description: |
+          Specify the installation directory
+      override-installed:
+        type: boolean
+        default: false
+        description: Enable this to override the installed version and install your specified version.
+    executor: <<parameters.executor>>
+    steps:
+      - aws-ecs/install-ecs-cli:
+          version: <<parameters.version>>
+          install-dir: <<parameters.install-dir>>
+          override-installed: <<parameters.override-installed>>
 workflows:
   test-deploy:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
+      - integration-test-ecs-cli-install:
+          version: "v1.9.0"
+          matrix:
+            parameters:
+              executor: [linux, mac]
+          filters: *filters
       #################
       # Fargate
       #################
@@ -623,6 +652,7 @@ workflows:
             - ec2_tear-down-test-env
             - fargate_tear-down-test-env  
             - codedeploy_fargate_tear-down-test-env
+            - integration-test-ecs-cli-install
           context: orb-publisher
           filters:
             branches:
@@ -718,3 +748,10 @@ commands:
             if [ "<< parameters.delete-load-balancer >>" == "1" ]; then
               aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
             fi
+executors:
+  mac:
+    macos:
+      xcode: 13.3.1
+  linux:
+    docker:
+      - image: cimg/base:current
