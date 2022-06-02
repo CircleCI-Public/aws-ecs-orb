@@ -621,8 +621,8 @@ workflows:
           requires:
             - orb-tools/pack
             - ec2_tear-down-test-env
-            - fargate_tear-down-test-env  
-            - codedeploy_fargate_tear-down-test-env
+            # - fargate_tear-down-test-env  
+            # - codedeploy_fargate_tear-down-test-env
           context: orb-publisher
           filters:
             branches:
