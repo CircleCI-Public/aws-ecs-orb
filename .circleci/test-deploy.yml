@@ -449,7 +449,7 @@ workflows:
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
-          overrides: '{\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\":512}]}'
+          overrides: '{\\"containerOverrides\\":[{\\"name\\": \\"sleep\\", \\"memory\\":512}]}'
           context: [CPE_ORBS_AWS]
       - tear-down-run-task-test:
           name: ec2_tear-down-run-task-test
