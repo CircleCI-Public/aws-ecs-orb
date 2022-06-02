@@ -3,7 +3,7 @@ ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
 ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 ECS_PARAM_OVERRIDES=$(eval echo "${ECS_PARAM_OVERRIDES}")
-
+echo "$ECS_PARAM_OVERRIDES" >> test.txt
 set -o noglob
 if [ -n "$ECS_PARAM_PLATFORM_VERSION" ]; then
     echo "Setting --platform-version"
@@ -19,8 +19,7 @@ if [ -n "$ECS_PARAM_GROUP" ]; then
 fi
 if [ -n "$ECS_PARAM_OVERRIDES" ]; then
     echo "Setting --overrides"
-    #shellcheck disable=SC2086
-    set -- "$@" --overrides $ECS_PARAM_OVERRIDES
+    set -- "$@" --overrides "$ECS_PARAM_OVERRIDES"
 fi
 if [ -n "$ECS_PARAM_TAGS" ]; then
     echo "Setting --tags"
