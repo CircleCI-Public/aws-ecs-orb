@@ -57,7 +57,7 @@ if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
     echo "Setting --capacity-provider-strategy"
     # do not quote
     # shellcheck disable=SC2086
-    set -- "$@" --capacity-provider-strategy $ECS_PARAM_CAPACITY_PROVIDER_STRATEGY
+    set -- "$@" --capacity-provider-strategy \"$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY\"
 fi
 
 if [ -n "$ECS_PARAM_LAUNCH_TYPE" ]; then
