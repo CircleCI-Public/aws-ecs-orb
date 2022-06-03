@@ -1,7 +1,17 @@
+if [[ $EUID == 0 ]]; then export SUDO=""; else export SUDO="sudo"; fi
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_CLUSTER_NAME=$(eval echo "$ECS_PARAM_CLUSTER_NAME")
 ECS_PARAM_TASK_DEF=$(eval echo "$ECS_PARAM_TASK_DEF")
 ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
+
+if ! command -v envsubst && [[ "$ECS_PARAM_OVERRIDES" == *"\${"* ]]; then
+    echo "Installing envsubst."
+    $SUDO apt update 
+    $SUDO apt install gettext
+    echo "$ECS_PARAM_OVERRIDES" > json.txt
+    ECS_PARAM_OVERRIDES=$(envsubst < json.txt)
+    $SUDO rm json.txt
+fi
 
 set -o noglob
 if [ -n "$ECS_PARAM_PLATFORM_VERSION" ]; then
