@@ -81,5 +81,5 @@ echo "Setting --task-definition"
 set -- "$@" --task-definition "$ECS_PARAM_TASK_DEF"
 echo "Setting --cluster"
 set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
-echo "$*" >> test.txt
+echo "aws ecs run-task $*" >> test.txt
 aws ecs run-task "$@"
