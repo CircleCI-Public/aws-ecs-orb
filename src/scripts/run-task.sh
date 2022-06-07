@@ -6,11 +6,10 @@ ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
 
 if ! command -v envsubst && [[ "$ECS_PARAM_OVERRIDES" == *"\${"* ]]; then
     echo "Installing envsubst."
-    $SUDO apt update 
-    $SUDO apt install gettext
-    echo "$ECS_PARAM_OVERRIDES" > json.txt
-    ECS_PARAM_OVERRIDES=$(envsubst < json.txt)
-    $SUDO rm json.txt
+    curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-"$(uname -s)"-"$(uname -m)" -o envsubst
+    $SUDO chmod +x envsubst
+    $SUDO mv envsubst /usr/local/bin
+    ECS_PARAM_OVERRIDES=$(echo "${ECS_PARAM_OVERRIDES}" | envsubst)
 fi
 
 set -o noglob
