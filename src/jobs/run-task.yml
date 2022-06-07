@@ -121,9 +121,6 @@ parameters:
       A list of container overrides in JSON format that specify the name of
       a container in the specified task definition and the overrides it
       should receive.
-      Double quotes in the JSON should be escaped e.g.:
-      {\\\"containerOverrides\\\":[{\\\"name\\\": \\\"sleep\\\", \\\"memory\\\":
-      512}]}
     type: string
     default: ''
   tags:
