@@ -152,7 +152,8 @@ parameters:
   run-task-output:
     description: |
           Specifies a local file on to save the output from the aws ecs run-task command.
-    type: string   
+    type: string
+    default: ''
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -180,3 +181,5 @@ steps:
       capacity-provider-strategy: << parameters.capacity-provider-strategy >>
       profile-name: << parameters.profile-name >>
       run-task-output: <<parameters.run-task-output>>
+  - store_artifacts:
+      path: run-task-output.json
