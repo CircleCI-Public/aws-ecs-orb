@@ -113,6 +113,10 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: ''
+  run-task-output:
+    description: |
+          Specifies a local file on to save the output from the aws ecs run-task command.
+    type: string
 steps:
   - run:
       name: Run Task
@@ -137,3 +141,4 @@ steps:
         ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate-tags>>
         ECS_PARAM_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity-provider-strategy>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
+        ECS_PARAM_RUN_OUTPUT: <<parameters.run-task-output>>
