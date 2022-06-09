@@ -359,90 +359,90 @@ workflows:
   test-deploy:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
-      # - integration-test-ecs-cli-install:
-      #     version: "v1.9.0"
-      #     matrix:
-      #       parameters:
-      #         executor: [linux, mac]
-      #     filters: *filters
+      - integration-test-ecs-cli-install:
+          version: "v1.9.0"
+          matrix:
+            parameters:
+              executor: [linux, mac]
+          filters: *filters
       #################
       # Fargate
       #################
-      # - build-test-app:
-      #     name: fargate_build-test-app
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
-      # - set-up-test-env:
-      #     name: fargate_set-up-test-env
-      #     filters: *filters
-      #     requires:
-      #       - fargate_build-test-app
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate"
-      #     context: [CPE_ORBS_AWS]
-      # - test-service-update:
-      #     name: fargate_test-update-service-command
-      #     filters: *filters
-      #     requires:
-      #       - fargate_set-up-test-env
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE_ORBS_AWS]
-      # - aws-ecs/deploy-service-update:
-      #     name: fargate_test-update-service-job
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-command
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_DEFAULT_REGION
-      #     profile-name: "ECS_TEST_PROFILE"
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      #     container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     # test the force-new-deployment flag
-      #     force-new-deployment: true
-      #     verify-revision-is-deployed: true
-      #     max-poll-attempts: 40
-      #     poll-interval: 10
-      #     context: [CPE_ORBS_AWS]
-      #     post-steps:
-      #       - test-deployment:
-      #           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      # - aws-ecs/deploy-service-update:
-      #     name: fargate_test-update-service-skip-registration
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-job
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_DEFAULT_REGION
-      #     profile-name: "ECS_TEST_PROFILE"
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      #     # test skipping registration of a new task definition
-      #     skip-task-definition-registration: true
-      #     # test the enable-circuit-breaker flag
-      #     enable-circuit-breaker: true
-      #     verify-revision-is-deployed: true
-      #     max-poll-attempts: 40
-      #     poll-interval: 10
-      #     context: [CPE_ORBS_AWS]
-      # - tear-down-test-env:
-      #     name: fargate_tear-down-test-env
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-skip-registration
-      #       - test-fargatespot
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate"
-      #     context: [CPE_ORBS_AWS]
+      - build-test-app:
+          name: fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
+          filters: *filters
+      - set-up-test-env:
+          name: fargate_set-up-test-env
+          filters: *filters
+          requires:
+            - fargate_build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE_ORBS_AWS]
+      - test-service-update:
+          name: fargate_test-update-service-command
+          filters: *filters
+          requires:
+            - fargate_set-up-test-env
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-job
+          docker-image-for-job: cimg/python:3.10.4
+          filters: *filters
+          requires:
+            - fargate_test-update-service-command
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          profile-name: "ECS_TEST_PROFILE"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          # test the force-new-deployment flag
+          force-new-deployment: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          context: [CPE_ORBS_AWS]
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-skip-registration
+          docker-image-for-job: cimg/python:3.10.4
+          filters: *filters
+          requires:
+            - fargate_test-update-service-job
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          profile-name: "ECS_TEST_PROFILE"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          # test skipping registration of a new task definition
+          skip-task-definition-registration: true
+          # test the enable-circuit-breaker flag
+          enable-circuit-breaker: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          context: [CPE_ORBS_AWS]
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env
+          filters: *filters
+          requires:
+            - fargate_test-update-service-skip-registration
+            - test-fargatespot
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE_ORBS_AWS]
 
       #################
       # EC2
@@ -542,106 +542,106 @@ workflows:
       # # FargateSpot
       # #################
 
-      # - test-fargatespot:
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
-      #     requires:
-      #       - fargate_set-up-test-env
+      - test-fargatespot:
+          context: [CPE_ORBS_AWS]
+          filters: *filters
+          requires:
+            - fargate_set-up-test-env
 
       #################
       # CodeDeploy
       #################
-      # - build-test-app:
-      #     name: codedeploy_fargate_build-test-app
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
-      # - set-up-test-env:
-      #     name: codedeploy_fargate_set-up-test-env
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_build-test-app
-      #     terraform-image: "hashicorp/terraform:1.1.9"
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-      #     context: [CPE_ORBS_AWS]
-      # - test-service-update:
-      #     name: codedeploy_fargate_test-update-service-command
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_set-up-test-env
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     skip-service-update: true
-      #     context: [CPE_ORBS_AWS]
-      # - aws-ecs/deploy-service-update:
-      #     name: codedeploy_fargate_test-update-service-job
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_test-update-service-command
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_DEFAULT_REGION
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #     container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     deployment-controller: "CODE_DEPLOY"
-      #     codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #     codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #     codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     codedeploy-load-balanced-container-port: 8080
-      #     verify-revision-is-deployed: false
-      #     context: [CPE_ORBS_AWS]
-      #     post-steps:
-      #       - wait-for-codedeploy-deployment:
-      #           application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #           deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #       - test-deployment:
-      #           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #           delete-load-balancer: false
-      # - aws-ecs/deploy-service-update:
-      #     name: codedeploy_fargate_test-update-and-wait-service-job
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_test-update-service-job
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_DEFAULT_REGION
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #     container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     deployment-controller: "CODE_DEPLOY"
-      #     codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #     codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #     codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     codedeploy-load-balanced-container-port: 8080
-      #     verify-revision-is-deployed: true
-      #     verification-timeout: "12m"
-      #     post-steps:
-      #       - test-deployment:
-      #           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #           delete-load-balancer: true
-      #       - delete-service:
-      #           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      # - tear-down-test-env:
-      #     name: codedeploy_fargate_tear-down-test-env
-      #     requires:
-      #       - codedeploy_fargate_test-update-and-wait-service-job
-      #     terraform-image: "hashicorp/terraform:1.1.9"
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
+      - build-test-app:
+          name: codedeploy_fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE_ORBS_AWS]
+          filters: *filters
+      - set-up-test-env:
+          name: codedeploy_fargate_set-up-test-env
+          filters: *filters
+          requires:
+            - codedeploy_fargate_build-test-app
+          terraform-image: "hashicorp/terraform:1.1.9"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE_ORBS_AWS]
+      - test-service-update:
+          name: codedeploy_fargate_test-update-service-command
+          filters: *filters
+          requires:
+            - codedeploy_fargate_set-up-test-env
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          skip-service-update: true
+          context: [CPE_ORBS_AWS]
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-service-job
+          docker-image-for-job: cimg/python:3.10.4
+          filters: *filters
+          requires:
+            - codedeploy_fargate_test-update-service-command
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          verify-revision-is-deployed: false
+          context: [CPE_ORBS_AWS]
+          post-steps:
+            - wait-for-codedeploy-deployment:
+                application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+                deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: false
+      - aws-ecs/deploy-service-update:
+          name: codedeploy_fargate_test-update-and-wait-service-job
+          docker-image-for-job: cimg/python:3.10.4
+          context: [CPE_ORBS_AWS]
+          filters: *filters
+          requires:
+            - codedeploy_fargate_test-update-service-job
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_DEFAULT_REGION
+          family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          deployment-controller: "CODE_DEPLOY"
+          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy-load-balanced-container-port: 8080
+          verify-revision-is-deployed: true
+          verification-timeout: "12m"
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                delete-load-balancer: true
+            - delete-service:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+      - tear-down-test-env:
+          name: codedeploy_fargate_tear-down-test-env
+          requires:
+            - codedeploy_fargate_test-update-and-wait-service-job
+          terraform-image: "hashicorp/terraform:1.1.9"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE_ORBS_AWS]
+          filters: *filters
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
@@ -651,9 +651,9 @@ workflows:
           requires:
             - orb-tools/pack
             - ec2_tear-down-test-env
-            # - fargate_tear-down-test-env  
-            # - codedeploy_fargate_tear-down-test-env
-            # - integration-test-ecs-cli-install
+            - fargate_tear-down-test-env  
+            - codedeploy_fargate_tear-down-test-env
+            - integration-test-ecs-cli-install
           context: orb-publisher
           filters:
             branches:
