@@ -149,6 +149,11 @@ parameters:
       If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
     type: string
     default: ""
+  run-task-output:
+    description: |
+          Specifies a local json file to save the output logs from the aws ecs run-task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
+    type: string
+    default: ''
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -175,3 +180,4 @@ steps:
       propagate-tags: << parameters.propagate-tags >>
       capacity-provider-strategy: << parameters.capacity-provider-strategy >>
       profile-name: << parameters.profile-name >>
+      run-task-output: <<parameters.run-task-output>>

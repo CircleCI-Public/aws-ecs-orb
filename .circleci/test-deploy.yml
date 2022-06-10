@@ -478,6 +478,7 @@ workflows:
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
+          run-task-output: "run-task-output.json"
           overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
           context: [CPE_ORBS_AWS]
       - tear-down-run-task-test:
