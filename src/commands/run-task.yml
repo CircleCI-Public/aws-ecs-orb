@@ -115,7 +115,7 @@ parameters:
     default: ''
   run-task-output:
     description: |
-          Specifies a local json file to save the output logs from the aws ecs run-task command. This will enable users to extract information like task-arn's, task-id's and more from the output.
+          Specifies a local json file to save the output logs from the aws ecs run-task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
     type: string
     default: ''
 steps:
