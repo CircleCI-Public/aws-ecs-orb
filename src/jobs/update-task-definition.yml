@@ -86,7 +86,6 @@ steps:
       profile-name: << parameters.profile-name >>
   - when:
       condition: <<parameters.deploy-scheduled-task>>
-      steps: 
+      steps:
         - deploy-ecs-scheduled-task:
             rule-name: <<parameters.rule-name>>
-  
