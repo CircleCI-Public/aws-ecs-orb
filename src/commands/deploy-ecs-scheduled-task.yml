@@ -1,0 +1,13 @@
+description: |
+  Deploy an ECS Scheduled Task Rule after updating a task definition. The update-task-definition command must be run first.
+
+parameters:
+  rule-name:
+    description: The name of the scheduled task's rule to update.
+    type: string
+steps:
+  - run:
+      name: Deploy rule with updated task definition
+      environment:
+        ECS_PARAM_RULE_NAME: <<parameters.rule-name>>
+      command: <<include(scripts/deploy-ecs-scheduled-task.sh)>>

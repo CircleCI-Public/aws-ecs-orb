@@ -29,6 +29,14 @@ parameters:
     description: |
       Location of your .json task definition file (relative or absolute).
     type: string
+  deploy-scheduled-task:
+    description: >
+      Set this parameter to true to deploy updated task definition to a scheduled task rule.
+    type: boolean
+    default: false
+  rule-name:
+    description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
+    type: string
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -38,3 +46,8 @@ steps:
   - update-task-definition-from-json:
       task-definition-json: << parameters.task-definition-json >>
       profile-name: << parameters.profile-name >>
+  - when:
+      condition: <<parameters.deploy-scheduled-task>>
+      steps: 
+        - deploy-ecs-scheduled-task:
+            rule-name: <<parameters.rule-name>>
