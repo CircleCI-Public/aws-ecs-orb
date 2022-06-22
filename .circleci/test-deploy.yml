@@ -213,7 +213,7 @@ jobs:
             - aws-ecs/update-service:
                 family: "<< parameters.family-name >>"
                 service-name: "<< parameters.service-name >>"
-                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+                cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
                 container-env-var-updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
                 verify-revision-is-deployed: true
@@ -221,7 +221,7 @@ jobs:
                 profile-name: "<<parameters.profile-name>>"
             - test-deployment:
                 service-name: "<< parameters.aws-resource-name-prefix >>-service"
-                cluster-name: "<< parameters.aws-resource-name-prefix >>-cluster"
+                cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
   test-task-definition-update:
     docker:
       - image: cimg/python:3.10.4
@@ -403,7 +403,7 @@ workflows:
           aws-region: AWS_DEFAULT_REGION
           profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
           # test the force-new-deployment flag
           force-new-deployment: true
@@ -414,7 +414,7 @@ workflows:
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-skip-registration
           docker-image-for-job: cimg/python:3.10.4
@@ -425,7 +425,7 @@ workflows:
           aws-region: AWS_DEFAULT_REGION
           profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition
           skip-task-definition-registration: true
           # test the enable-circuit-breaker flag
@@ -518,14 +518,14 @@ workflows:
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
           container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
           verify-revision-is-deployed: true
           fail-on-verification-timeout: false
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
                 test-asterisk-expansion: true
 
       - tear-down-test-env:
@@ -587,7 +587,7 @@ workflows:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
           deployment-controller: "CODE_DEPLOY"
@@ -603,7 +603,7 @@ workflows:
                 deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: false
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-and-wait-service-job
@@ -615,7 +615,7 @@ workflows:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-region: AWS_DEFAULT_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
           deployment-controller: "CODE_DEPLOY"
@@ -628,11 +628,11 @@ workflows:
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: true
             - delete-service:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-                cluster-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
           requires:
@@ -688,7 +688,7 @@ commands:
       service-name:
         description: "Name of the ECS service"
         type: string
-      cluster-name:
+      cluster:
         description: "Name of the cluster"
         type: string
     steps:
@@ -696,7 +696,7 @@ commands:
           name: Delete ECS service
           command: |
             aws ecs delete-service \
-              --cluster << parameters.cluster-name >> \
+              --cluster << parameters.cluster: >> \
               --service << parameters.service-name >> \
               --force
   test-deployment:
@@ -705,7 +705,7 @@ commands:
       service-name:
         description: "Name of the ECS service"
         type: string
-      cluster-name:
+      cluster:
         description: "Name of the cluster"
         type: string
       test-asterisk-expansion:
@@ -721,7 +721,7 @@ commands:
           name: Test deployment (for orb testing and is not part of the orb)
           command: |-
             set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster-name >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"

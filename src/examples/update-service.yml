@@ -18,7 +18,7 @@ usage:
             aws-region: AWS_DEFAULT_REGION
         - aws-ecs/update-service:
             family: '${MY_APP_PREFIX}-service'
-            cluster-name: '${MY_APP_PREFIX}-cluster'
+            cluster: '${MY_APP_PREFIX}-cluster'
             container-image-name-updates: 'container=${MY_APP_PREFIX}-service,tag=stable'
   workflows:
     deploy:
