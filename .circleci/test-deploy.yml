@@ -696,7 +696,7 @@ commands:
           name: Delete ECS service
           command: |
             aws ecs delete-service \
-              --cluster << parameters.cluster: >> \
+              --cluster << parameters.cluster>> \
               --service << parameters.service-name >> \
               --force
   test-deployment:
