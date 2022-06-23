@@ -29,7 +29,7 @@ parameters:
   family:
     description: Name of the task definition's family.
     type: string
-  cluster-name:
+  cluster:
     description: The short name or full ARN of the cluster that hosts the service.
     type: string
   service-name:
@@ -193,7 +193,7 @@ steps:
       profile-name: << parameters.profile-name >>
   - update-service:
       family: << parameters.family >>
-      cluster-name: << parameters.cluster-name >>
+      cluster: << parameters.cluster >>
       service-name: << parameters.service-name >>
       deployment-controller: << parameters.deployment-controller >>
       enable-circuit-breaker: << parameters.enable-circuit-breaker >>

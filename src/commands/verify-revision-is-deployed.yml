@@ -5,7 +5,7 @@ parameters:
   family:
     description: Name of the task definition's family.
     type: string
-  cluster-name:
+  cluster:
     description: The short name or full ARN of the cluster that hosts the service.
     type: string
   service-name:
@@ -45,7 +45,7 @@ steps:
         ECS_PARAM_FAMILY: <<parameters.family>>
         ECS_PARAM_TASK_DEF_ARN: <<parameters.task-definition-arn>>
         ECS_PARAM_MAX_POLL_ATTEMPTS: <<parameters.max-poll-attempts>>
-        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster-name>>
+        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
         ECS_PARAM_POLL_INTERVAL: <<parameters.poll-interval>>
         ECS_PARAM_FAIL_ON_VERIFY_TIMEOUT: <<parameters.fail-on-verification-timeout>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>

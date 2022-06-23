@@ -26,7 +26,7 @@ usage:
               $BASH_ENV
         - aws-ecs/verify-revision-is-deployed:
             family: '${MY_APP_PREFIX}-service'
-            cluster-name: '${MY_APP_PREFIX}-cluster'
+            cluster: '${MY_APP_PREFIX}-cluster'
             task-definition-arn: '${TASK_DEFINITION_ARN}'
   workflows:
     test-workflow:
