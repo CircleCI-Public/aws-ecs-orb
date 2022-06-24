@@ -8,7 +8,7 @@ ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME=$(eval echo "$ECS_PARAM_CD_LOAD_BALANC
 DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
 
 if [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ] && [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "0" ]; then
-    echo "enable-circuit-breaker is set to true, but verify-revision-deploy is set to false.  verfiy-revision-deploy is must be set to true to use enable-circuit-breaker."
+    echo "enable-circuit-breaker is set to true, but verify-revision-deploy is set to false.  verfiy-revision-deploy must be set to true to use enable-circuit-breaker."
     exit 1
 fi
 
