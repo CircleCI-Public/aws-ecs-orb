@@ -34,7 +34,7 @@ def run(previous_task_definition, container_image_name_updates,
                 container_name = kv[1].strip()
                 env_var_name_kv = env_kv_pairs[index+1].split('=')
                 env_var_name = env_var_name_kv[1].strip()
-                env_var_value_kv = env_kv_pairs[index+2].split('=')
+                env_var_value_kv = env_kv_pairs[index+2].split('=', maxsplit=1)
                 env_var_value = env_var_value_kv[1].strip()
                 if env_var_name_kv[0].strip() != 'name' or env_var_value_kv[0].strip() != 'value':
                     raise ValueError(
