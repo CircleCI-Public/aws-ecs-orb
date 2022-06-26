@@ -212,5 +212,3 @@ steps:
       task-definition-tags: << parameters.task-definition-tags >>
       verification-timeout: << parameters.verification-timeout >>
       profile-name: << parameters.profile-name >>
-  - store_artifacts:
-      path: test.txt
