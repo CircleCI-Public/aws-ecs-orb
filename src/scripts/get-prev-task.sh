@@ -30,11 +30,9 @@ cat <<< "$ECS_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FIL
 # Prepare container definitions
 CONTAINER_DEFS=$(python "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" "$PREVIOUS_TASK_DEFINITION" "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES" "$ECS_PARAM_CONTAINER_ENV_VAR_UPDATES")
 
-
 # Escape single quotes from environment variables for BASH_ENV
 
 CLEANED_CONTAINER_DEFS=$(echo "$CONTAINER_DEFS" | sed -E "s:':'\\\'':g")
-
 
 # Prepare script for getting task definition values
 
