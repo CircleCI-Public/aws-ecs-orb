@@ -185,6 +185,24 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  capacity-provider-name:
+    description: >
+      The name of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-base and capacity-provider-weight.
+    type: string
+    default: ''
+  capacity-provider-base:
+    description: >
+      The base of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-name and capacity-provider-weight.
+    type: string
+    default: ''
+  capacity-provider-weight:
+    description: >
+      The base of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-name and capacity-provider-base.
+    type: string
+    default: ''
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -212,3 +230,6 @@ steps:
       task-definition-tags: << parameters.task-definition-tags >>
       verification-timeout: << parameters.verification-timeout >>
       profile-name: << parameters.profile-name >>
+      capacity-provider-name: <<parameters.capacity-provider-name>>
+      capacity-provider-weight: <<parameters.capacity-provider-weight>>
+      capacity-provider-base: <<parameters.capacity-provider-base>>

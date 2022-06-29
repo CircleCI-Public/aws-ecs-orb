@@ -138,6 +138,24 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: ''
+  capacity-provider-name:
+    description: >
+      The name of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-base and capacity-provider-weight.
+    type: string
+    default: ''
+  capacity-provider-base:
+    description: >
+      The base of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-name and capacity-provider-weight.
+    type: string
+    default: ''
+  capacity-provider-weight:
+    description: >
+      The base of AWS Capacity Provider to be added to CodeDeploy deployment.
+      Must be used with capacity-provider-name and capacity-provider-base.
+    type: string
+    default: ''
 
 steps:
   - unless:
@@ -188,6 +206,10 @@ steps:
               ECS_PARAM_VERIFY_REV_DEPLOY: <<parameters.verify-revision-is-deployed>>
               ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
               ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable-circuit-breaker>>
+              ECS_PARAM_CAPACITY_PROVIDER_NAME: <<parameters.capacity-provider-name>>
+              ECS_PARAM_CAPACITY_PROVIDER_WEIGHT: <<parameters.capacity-provider-weight>>
+              ECS_PARAM_CAPACITY_PROVIDER_BASE: <<parameters.capacity-provider-base>>
+
   - when:
       condition:
         equal:
