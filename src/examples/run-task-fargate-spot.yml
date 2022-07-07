@@ -1,4 +1,7 @@
-description: Start the run of an ECS task with Fargate Spot instances for increased cost savings.
+description: >
+  Amazon Fargate Spot Instances let you take advantage of spare compute capacity in the AWS Cloud at steep discounts. Fargate Spot is an AWS Fargate capability that can run interruption-tolerant Amazon Elastic Container Service (Amazon ECS) tasks at up to a 70% discount off the Fargate price. Since tasks can still be interrupted, only fault tolerant applications are suitable for Fargate Spot.
+  
+  CircleCI provides continuous integration and delivery for any platform, as well as your own infrastructure. CircleCI can automatically trigger low-cost, serverless tasks with AWS Fargate Spot in Amazon ECS.
 usage:
   version: 2.1
   orbs:
