@@ -185,22 +185,22 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  capacity-provider-name:
+  codedeploy-capacity-provider-name:
     description: >
       The name of AWS Capacity Provider to be added to CodeDeploy deployment.
       Must be used with capacity-provider-base and capacity-provider-weight.
     type: string
     default: ''
-  capacity-provider-base:
+  codedeploy-capacity-provider-base:
     description: >
       The base of AWS Capacity Provider to be added to CodeDeploy deployment.
-      Must be used with capacity-provider-name and capacity-provider-weight.
+      Must be used with codedeploy-capacity-provider-name and capacity-provider-weight.
     type: string
     default: ''
-  capacity-provider-weight:
+  codedeploy-capacity-provider-weight:
     description: >
       The base of AWS Capacity Provider to be added to CodeDeploy deployment.
-      Must be used with capacity-provider-name and capacity-provider-base.
+      Must be used with codedeploy-capacity-provider-name and capacity-provider-base.
     type: string
     default: ''
 steps:
@@ -230,6 +230,6 @@ steps:
       task-definition-tags: << parameters.task-definition-tags >>
       verification-timeout: << parameters.verification-timeout >>
       profile-name: << parameters.profile-name >>
-      capacity-provider-name: <<parameters.capacity-provider-name>>
-      capacity-provider-weight: <<parameters.capacity-provider-weight>>
-      capacity-provider-base: <<parameters.capacity-provider-base>>
+      codedeploy-capacity-provider-name: <<parameters.codedeploy-capacity-provider-name>>
+      codedeploy-capacity-provider-weight: <<parameters.codedeploy-capacity-provider-weight>>
+      codedeploy-capacity-provider-base: <<parameters.codedeploy-capacity-provider-base>>

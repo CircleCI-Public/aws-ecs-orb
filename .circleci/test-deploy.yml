@@ -595,6 +595,9 @@ workflows:
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
+          codedeploy-capacity-provider-name: "FARGATE"
+          codedeploy-capacity-provider-base: "1"
+          codedeploy-capacity-provider-weight: "0"
           verify-revision-is-deployed: false
           context: [CPE_ORBS_AWS]
           post-steps:
@@ -633,15 +636,17 @@ workflows:
       #       - delete-service:
       #           service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
       #           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      # - tear-down-test-env:
-      #     name: codedeploy_fargate_tear-down-test-env
-      #     requires:
-      #       - codedeploy_fargate_test-update-and-wait-service-job
-      #     terraform-image: "hashicorp/terraform:1.1.9"
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-      #     context: [CPE_ORBS_AWS]
-      #     filters: *filters
+      - tear-down-test-env:
+          name: codedeploy_fargate_tear-down-test-env
+          # requires:
+          #   - codedeploy_fargate_test-update-and-wait-service-job
+          requires:
+            - codedeploy_fargate_test-update-service-job
+          terraform-image: "hashicorp/terraform:1.1.9"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE_ORBS_AWS]
+          filters: *filters
       - orb-tools/pack:
           filters: *filters
       - orb-tools/publish:
