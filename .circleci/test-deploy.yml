@@ -597,7 +597,7 @@ workflows:
           codedeploy-load-balanced-container-port: 8080
           codedeploy-capacity-provider-name: "FARGATE"
           codedeploy-capacity-provider-base: "1"
-          codedeploy-capacity-provider-weight: "0"
+          codedeploy-capacity-provider-weight: "2"
           verify-revision-is-deployed: false
           context: [CPE_ORBS_AWS]
           post-steps:
