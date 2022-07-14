@@ -595,6 +595,9 @@ workflows:
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           codedeploy-load-balanced-container-port: 8080
+          codedeploy-capacity-provider-name: "FARGATE"
+          codedeploy-capacity-provider-base: "1"
+          codedeploy-capacity-provider-weight: "2"
           verify-revision-is-deployed: false
           context: [CPE_ORBS_AWS]
           post-steps:

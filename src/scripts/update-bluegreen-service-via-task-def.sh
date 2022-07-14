@@ -12,11 +12,22 @@ if [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ] && [ "$ECS_PARAM_VERIFY_REV_DE
     exit 1
 fi
 
+if [ -n "$ECS_PARAM_CD_CAPACITY_PROVIDER_NAME" ]; then 
+    if [ -z "$ECS_PARAM_CD_CAPACITY_PROVIDER_WEIGHT" ] || [ -z "$ECS_PARAM_CD_CAPACITY_PROVIDER_BASE" ]; then 
+        echo "Capacity Provider base and weight parameter must all be provided. Please try again"
+        exit 1
+    else 
+        REVISION="{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME\\\", \\\"ContainerPort\\\": $ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT},\\\"CapacityProviderStrategy\\\":[{\\\"CapacityProvider\\\":\\\"$ECS_PARAM_CD_CAPACITY_PROVIDER_NAME\\\", \\\"Base\\\":${ECS_PARAM_CD_CAPACITY_PROVIDER_BASE}, \\\"Weight\\\":${ECS_PARAM_CD_CAPACITY_PROVIDER_WEIGHT}}]}}}]}\"}}"
+    fi
+else
+    REVISION="{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME\\\", \\\"ContainerPort\\\": $ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT}}}}]}\"}}"
+fi 
+
 DEPLOYMENT_ID=$(aws deploy create-deployment \
     --application-name "$ECS_PARAM_CD_APP_NAME" \
     --deployment-group-name "$ECS_PARAM_CD_DEPLOY_GROUP_NAME" \
-    --revision "{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME\\\", \\\"ContainerPort\\\": $ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT}}}}]}\"}}" \
     --query deploymentId \
+    --revision "${REVISION}" \
     --output text)
 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 

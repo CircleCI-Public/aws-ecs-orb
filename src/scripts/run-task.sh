@@ -60,15 +60,15 @@ if [ "$ECS_PARAM_AWSVPC" == "1" ]; then
     ECS_PARAM_SEC_GROUP_ID=$(eval echo "$ECS_PARAM_SEC_GROUP_ID")
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ECS_PARAM_SUBNET_ID],securityGroups=[$ECS_PARAM_SEC_GROUP_ID],assignPublicIp=$ECS_PARAM_ASSIGN_PUB_IP}"
 fi
-if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
+if [ -n "$ECS_PARAM_CD_CAPACITY_PROVIDER_STRATEGY" ]; then
     echo "Setting --capacity-provider-strategy"
     # do not quote
     # shellcheck disable=SC2086
-    set -- "$@" --capacity-provider-strategy $ECS_PARAM_CAPACITY_PROVIDER_STRATEGY
+    set -- "$@" --capacity-provider-strategy $ECS_PARAM_CD_CAPACITY_PROVIDER_STRATEGY
 fi
 
 if [ -n "$ECS_PARAM_LAUNCH_TYPE" ]; then
-    if [ -n "$ECS_PARAM_CAPACITY_PROVIDER_STRATEGY" ]; then
+    if [ -n "$ECS_PARAM_CD_CAPACITY_PROVIDER_STRATEGY" ]; then
         echo "Error: "
         echo 'If a "capacity-provider-strategy" is specified, the "launch-type" parameter must be set to an empty string.'
         exit 1
