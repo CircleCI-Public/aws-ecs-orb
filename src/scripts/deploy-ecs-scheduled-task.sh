@@ -5,8 +5,8 @@ if [ -z "$td_arn" ]; then
     exit 1
 fi
 
-CLI_OUTPUT_FILE=$(mktmp cli-output.json.XXXX)
-CLI_INPUT_FILE=$(mktmp cli-input.json.XXXX)
+CLI_OUTPUT_FILE=$(mktemp cli-output.json.XXXX)
+CLI_INPUT_FILE=$(mktemp cli-input.json.XXXX)
 
 aws events list-targets-by-rule --rule "$ECS_PARAM_RULE_NAME" --output json > "$CLI_OUTPUT_FILE"
 
