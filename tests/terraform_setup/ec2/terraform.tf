@@ -41,6 +41,7 @@ locals {
 
 resource "aws_ecr_repository" "demo-app-repository" {
   name = local.aws_ecr_repository_name
+  force_delete = true
 }
 
 resource "aws_cloudformation_stack" "vpc" {
