@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      version = "~> 4.13"
+      version = "~> 4.22.0"
     }
   }
   backend "s3" {
@@ -41,6 +41,7 @@ locals {
 
 resource "aws_ecr_repository" "demo-app-repository" {
   name = local.aws_ecr_repository_name
+  force_delete = true
 }
 
 resource "aws_cloudformation_stack" "vpc" {
