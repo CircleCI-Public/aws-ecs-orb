@@ -65,7 +65,6 @@ if [ -n "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}" ] && [ "${CCI_ORB_AWS_ECS_EPHEMER
     set -- "$@" --ephemeral-storage "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}"
 fi
 
-echo "$@" >> test.txt
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \

@@ -73,26 +73,6 @@ RUNTIME_PLATFORM=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'runtimePlatform' "$PR
 
 EPHEMERAL_STORAGE=$(echo "${PREVIOUS_TASK_DEFINITION}" | jq ".taskDefinition.ephemeralStorage //empty" -c)
 
-{
-  echo "PREVIOUS_TASK_DEFINITION: ${PREVIOUS_TASK_DEFINITION}"
-  echo "CLEANED_CONTAINER_DEFS: ${CLEANED_CONTAINER_DEFS}"
-  echo "CONTAINER_DEFS: ${CONTAINER_DEFS}"
-  echo "Task role: ${TASK_ROLE}"
-  echo "Execution role: ${EXECUTION_ROLE}"
-  echo "Network mode: ${NETWORK_MODE}"
-  echo "Volumes: ${VOLUMES}"
-  echo "Placement contraints: ${PLACEMENT_CONSTRAINTS}"
-  echo "Required compatibilities: ${REQ_COMP}"
-  echo "Task cpu: ${TASK_CPU}"
-  echo "Task memory: ${TASK_MEMORY}"
-  echo "Pid mode: ${PID_MODE}"
-  echo "IPC mode: ${IPC_MODE}"
-  echo "TAGS: ${TAGS}"
-  echo "PROXY CONFIGURATION: ${PROXY_CONFIGURATION}"
-  echo "RUNTIME PLATFORM: ${RUNTIME_PLATFORM}"
-  echo "EPHEMERAL_STORAGE: ${EPHEMERAL_STORAGE}"
-} >> test.txt
-
 # Make task definition values available as env variables
 # shellcheck disable=SC2129
 echo "export CCI_ORB_AWS_ECS_TASK_ROLE='${TASK_ROLE}'" >> "$BASH_ENV"

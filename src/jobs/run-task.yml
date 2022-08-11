@@ -181,5 +181,3 @@ steps:
       capacity-provider-strategy: << parameters.capacity-provider-strategy >>
       profile-name: << parameters.profile-name >>
       run-task-output: <<parameters.run-task-output>>
-  - store_artifacts:
-      path: test.txt
