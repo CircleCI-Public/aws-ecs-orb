@@ -71,6 +71,8 @@ PROXY_CONFIGURATION=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'proxyConfiguration
 
 RUNTIME_PLATFORM=$(python "$GET_TASK_DFN_VAL_SCRIPT_FILE" 'runtimePlatform' "$PREVIOUS_TASK_DEFINITION")
 
+EPHEMERAL_STORAGE=$(echo "${PREVIOUS_TASK_DEFINITION}" | jq ".taskDefinition.ephemeralStorage //empty" -c)
+
 # Make task definition values available as env variables
 # shellcheck disable=SC2129
 echo "export CCI_ORB_AWS_ECS_TASK_ROLE='${TASK_ROLE}'" >> "$BASH_ENV"
@@ -100,5 +102,7 @@ echo "export CCI_ORB_AWS_ECS_TAGS='${TAGS}'" >> "$BASH_ENV"
 echo "export CCI_ORB_AWS_ECS_PROXY_CONFIGURATION='${PROXY_CONFIGURATION}'" >> "$BASH_ENV"
 
 echo "export CCI_ORB_AWS_ECS_RUNTIME_PLATFORM='${RUNTIME_PLATFORM}'" >> "$BASH_ENV"
+
+echo "export CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE='${EPHEMERAL_STORAGE}'" >> "$BASH_ENV"
 
 rm "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE" "$GET_TASK_DFN_VAL_SCRIPT_FILE"

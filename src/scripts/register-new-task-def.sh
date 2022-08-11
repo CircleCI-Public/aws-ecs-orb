@@ -61,6 +61,10 @@ if [ -n "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}" ] && [ "${CCI_ORB_AWS_ECS_RUNTIME_
     set -- "$@" --runtime-platform "${CCI_ORB_AWS_ECS_RUNTIME_PLATFORM}"
 fi
 
+if [ -n "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}" ] && [ "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}" != "{}" ]; then
+    set -- "$@" --ephemeral-storage "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}"
+fi
+
 REVISION=$(aws ecs register-task-definition \
     --family "$ECS_PARAM_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
