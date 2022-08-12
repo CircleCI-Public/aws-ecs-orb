@@ -4,6 +4,7 @@ set -o noglob
 ECS_PARAM_CD_APP_NAME=$(eval echo "$ECS_PARAM_CD_APP_NAME")
 ECS_PARAM_CD_DEPLOY_GROUP_NAME=$(eval echo "$ECS_PARAM_CD_DEPLOY_GROUP_NAME")
 ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME=$(eval echo "$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME")
+ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME=$(eval echo "$ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME")
 
 DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
 
@@ -23,12 +24,18 @@ else
     REVISION="{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME\\\", \\\"ContainerPort\\\": $ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT}}}}]}\"}}"
 fi 
 
+if [ -n "$ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME" ]; then
+    set -- "$@" --deployment-config-name "${ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME}"
+fi
+
 DEPLOYMENT_ID=$(aws deploy create-deployment \
     --application-name "$ECS_PARAM_CD_APP_NAME" \
     --deployment-group-name "$ECS_PARAM_CD_DEPLOY_GROUP_NAME" \
     --query deploymentId \
     --revision "${REVISION}" \
+    "$@" \
     --output text)
+
 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
 if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ]; then
