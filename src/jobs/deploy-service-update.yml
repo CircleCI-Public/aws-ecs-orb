@@ -203,6 +203,13 @@ parameters:
       Must be used with codedeploy-capacity-provider-name and capacity-provider-base.
     type: string
     default: ''
+  deployment-config-name:
+    description: >
+      The name of a CODE DEPLOY deployment configuration associated with the IAM user or AWS account.
+      If not specified, the value configured in the deployment group is used as the default.
+    type: string
+    default: ''
+
 steps:
   - aws-cli/setup:
       aws-access-key-id: << parameters.aws-access-key-id >>
@@ -233,3 +240,4 @@ steps:
       codedeploy-capacity-provider-name: <<parameters.codedeploy-capacity-provider-name>>
       codedeploy-capacity-provider-weight: <<parameters.codedeploy-capacity-provider-weight>>
       codedeploy-capacity-provider-base: <<parameters.codedeploy-capacity-provider-base>>
+      deployment-config-name: <<parameters.deployment-config-name>>

@@ -156,6 +156,12 @@ parameters:
       Must be used with codedeploy-capacity-provider-name and codedeploy-capacity-provider-base.
     type: string
     default: ''
+  deployment-config-name:
+    description: >
+      The name of a CODE DEPLOY deployment configuration associated with the IAM user or AWS account.
+      If not specified, the value configured in the deployment group is used as the default.
+    type: string
+    default: ''
 
 steps:
   - unless:
@@ -210,6 +216,7 @@ steps:
               ECS_PARAM_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy-capacity-provider-name>>
               ECS_PARAM_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy-capacity-provider-weight>>
               ECS_PARAM_CD_CAPACITY_PROVIDER_BASE: <<parameters.codedeploy-capacity-provider-base>>
+              ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME: <<parameters.deployment-config-name>>
 
   - when:
       condition:
