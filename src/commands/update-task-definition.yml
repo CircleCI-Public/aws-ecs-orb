@@ -52,6 +52,8 @@ steps:
         ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
         ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous-revision-number>>
+  - store_artifacts:
+      path: test.txt
   - run:
       name: Register new task definition
       command: <<include(scripts/register-new-task-def.sh)>>
