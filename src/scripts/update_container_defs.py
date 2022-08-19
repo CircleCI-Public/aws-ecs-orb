@@ -143,7 +143,7 @@ def run(previous_task_definition, container_image_name_updates,
 
 if __name__ == '__main__':
     try:
-        print(run(sys.argv[1], sys.argv[2], sys.argv[3]))
+        print(run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
     except Exception as e:
         sys.stderr.write(str(e) + "\n")
         exit(1)
