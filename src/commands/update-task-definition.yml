@@ -45,6 +45,17 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  container-docker-label-updates:
+    description: >
+      Use this to update or set the values of docker label variables that will be defined for the containers.
+      (Existing secrets variables not included in this parameter will not be removed)
+
+      Expected format:
+      container=<container-name>,<key>=<env-var-name>,<key>=<env-var-value>,container=...,<key>=...,<key>=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
   profile-name:
     description: AWS profile name to be configured.
     type: string
@@ -66,6 +77,7 @@ steps:
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
         ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous-revision-number>>
         ECS_PARAM_CONTAINER_SECRET_UPDATES: <<parameters.container-secret-updates>>
+        ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container-docker-label-updates >>
   - run:
       name: Register new task definition
       command: <<include(scripts/register-new-task-def.sh)>>

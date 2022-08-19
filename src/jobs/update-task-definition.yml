@@ -78,6 +78,17 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  container-docker-label-updates:
+    description: >
+      Use this to update or set the values of docker label variables that will be defined for the containers.
+      (Existing secrets variables not included in this parameter will not be removed)
+
+      Expected format:
+      container=<container-name>,<key>=<env-var-name>,<key>=<env-var-value>,container=...,<key>=...,<key>=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
   deploy-scheduled-task:
     description: >
       Set this parameter to true to deploy updated task definition to a scheduled task rule.
@@ -96,8 +107,9 @@ steps:
       family: << parameters.family >>
       container-image-name-updates: << parameters.container-image-name-updates >>
       container-env-var-updates: << parameters.container-env-var-updates >>
-      profile-name: << parameters.profile-name >>
       container-secret-updates: << parameters.container-secret-updates >>
+      container-docker-label-updates: << parameters.container-docker-label-updates >>
+      profile-name: << parameters.profile-name >>
   - when:
       condition: <<parameters.deploy-scheduled-task>>
       steps:
