@@ -32,6 +32,19 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  container-secret-updates:
+    description: >
+      Use this to update or set the values of secrets variables that will be
+      defined for the containers.
+      (Existing secrets variables not included in this parameter will not be
+      removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,valueFrom=<env-var-value>,container=...,name=...,valueFrom=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
   profile-name:
     description: AWS profile name to be configured.
     type: string
@@ -52,6 +65,7 @@ steps:
         ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
         ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous-revision-number>>
+        ECS_PARAM_CONTAINER_SECRET_UPDATES: <<parameters.container-secret-updates>>
   - run:
       name: Register new task definition
       command: <<include(scripts/register-new-task-def.sh)>>

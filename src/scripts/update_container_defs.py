@@ -5,7 +5,7 @@ import json
 
 # shellcheck disable=SC1036  # Hold-over from previous iteration.
 def run(previous_task_definition, container_image_name_updates,
-        container_env_var_updates):
+        container_env_var_updates, container_secret_updates):
     try:
         definition = json.loads(previous_task_definition)
         container_definitions = definition['taskDefinition']['containerDefinitions']
@@ -46,10 +46,10 @@ def run(previous_task_definition, container_image_name_updates,
                 container_index = container_entry['index']
                 env_var_entry = container_entry['environment_map'].get(env_var_name)
                 if env_var_entry is None:
-                    # The existing container definition did not contain environment variables
+                    # The existing container definition does not contain environment variables
                     if container_definitions[container_index].get('environment') is None:
                         container_definitions[container_index]['environment'] = []
-                    # This env var did not exist in the existing container definition
+                    # This env var does not exist in the existing container definition
                     container_definitions[container_index]['environment'].append({'name': env_var_name, 'value': env_var_value})
                 else:
                     env_var_index = env_var_entry['index']
@@ -60,6 +60,44 @@ def run(previous_task_definition, container_image_name_updates,
         raise value_error
     except:
         raise Exception('Environment variable update parameter could not be processed; please check parameter value: ' + container_env_var_updates)
+
+    # Expected format: container=...,name=...,valueFrom=...,container=...,name=...,valueFrom=...
+
+    try:
+        secret_kv_pairs = container_secret_updates.split(',')
+        for index, kv_pair in enumerate(secret_kv_pairs):
+            kv = kv_pair.split('=')
+            key = kv[0].strip()
+            if key == 'container':
+                container_name = kv[1].strip()
+                secret_name_kv = secret_kv_pairs[index+1].split('=')
+                secret_name = secret_name_kv[1].strip()
+                secret_value_kv = secret_kv_pairs[index+2].split('=', maxsplit=1)
+                secret_value = secret_value_kv[1].strip()
+                if secret_name_kv[0].strip() != 'name' or secret_value_kv[0].strip() != 'valueFrom':
+                    raise ValueError(
+                        'Container secret update parameter format is incorrect: ' + container_secret_updates)
+
+                container_entry = container_map.get(container_name)
+                if container_entry is None:
+                    raise ValueError('The container ' + container_name + ' is not defined in the existing task definition')
+                container_index = container_entry['index']
+                secret_entry = container_entry['environment_map'].get(secret_name)
+                if secret_entry is None:
+                    # The existing container definition does not contain secrets variable
+                    if container_definitions[container_index].get('secrets') is None:
+                        container_definitions[container_index]['secrets'] = []
+                    # The secrets variable does not exist in the existing container definition
+                    container_definitions[container_index]['secrets'].append({'name': secret_name, 'valueFrom': secret_value})
+                else:
+                    secret_index = secret_entry['index']
+                    container_definitions[container_index]['secrets'][secret_index]['valueFrom'] = secret_value
+            elif key and key not in ['container', 'name', 'valueFrom']:
+                raise ValueError('Incorrect key found in secret updates parameter: ' + key)
+    except ValueError as value_error:
+        raise value_error
+    except:
+        raise Exception('Container secrets update parameter could not be processed; please check parameter value: ' + container_secret_updates)
 
     # Expected format: container=...,image-and-tag|image|tag=...,container=...,image-and-tag|image|tag=...,
     try:
@@ -105,7 +143,7 @@ def run(previous_task_definition, container_image_name_updates,
 
 if __name__ == '__main__':
     try:
-        print(run(sys.argv[1], sys.argv[2], sys.argv[3]))
+        print(run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
     except Exception as e:
         sys.stderr.write(str(e) + "\n")
         exit(1)
