@@ -87,8 +87,6 @@ def run(previous_task_definition, container_image_name_updates,
                 else:
                     docker_label_index = docker_label_entry['index']
                     container_definitions[container_index]['dockerLabels'][docker_label_index][docker_label_key] = docker_label_value
-           #  elif key and key not in ['container']:
-                # raise ValueError('Incorrect key found in environment variable update parameter: ' + key)
     except ValueError as value_error:
         raise value_error
     except:
