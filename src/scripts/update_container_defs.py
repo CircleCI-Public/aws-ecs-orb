@@ -2,10 +2,9 @@ from __future__ import absolute_import
 import sys
 import json
 
-
 # shellcheck disable=SC1036  # Hold-over from previous iteration.
 def run(previous_task_definition, container_image_name_updates,
-        container_env_var_updates, container_secret_updates):
+        container_env_var_updates, container_secret_updates, container_docker_label_updates):
     try:
         definition = json.loads(previous_task_definition)
         container_definitions = definition['taskDefinition']['containerDefinitions']
@@ -60,6 +59,40 @@ def run(previous_task_definition, container_image_name_updates,
         raise value_error
     except:
         raise Exception('Environment variable update parameter could not be processed; please check parameter value: ' + container_env_var_updates)
+
+    # Expected format: container=...,string=...,string=...,container=...,string=...,string=
+    
+    try:
+        docker_label_kv_pairs = container_docker_label_updates.split(',')
+        for index, kv_pair in enumerate(docker_label_kv_pairs):
+            kv = kv_pair.split('=')
+            key = kv[0].strip()
+
+            if key == 'container':
+                container_name = kv[1].strip()
+                docker_label_kv = docker_label_kv_pairs[index+1].split('=')
+                docker_label_key = docker_label_kv[0].strip()
+                docker_label_value = docker_label_kv[1].strip()
+                container_entry = container_map.get(container_name)
+                if container_entry is None:
+                    raise ValueError('The container ' + container_name + ' is not defined in the existing task definition')
+                container_index = container_entry['index']
+                docker_label_entry = container_entry['environment_map'].get(docker_label_key)
+                if docker_label_entry is None:
+                    # The existing container definition does not contain environment variables
+                    if container_definitions[container_index].get('dockerLabels') is None:
+                        container_definitions[container_index]['dockerLabels'] = {}
+                    # This env var does not exist in the existing container definition
+                    container_definitions[container_index]['dockerLabels'][docker_label_key] =  docker_label_value
+                else:
+                    docker_label_index = docker_label_entry['index']
+                    container_definitions[container_index]['dockerLabels'][docker_label_index][docker_label_key] = docker_label_value
+           #  elif key and key not in ['container']:
+                # raise ValueError('Incorrect key found in environment variable update parameter: ' + key)
+    except ValueError as value_error:
+        raise value_error
+    except:
+        raise Exception('Docker label update parameter could not be processed; please check parameter value: ' + container_docker_label_updates)
 
     # Expected format: container=...,name=...,valueFrom=...,container=...,name=...,valueFrom=...
 
@@ -143,7 +176,7 @@ def run(previous_task_definition, container_image_name_updates,
 
 if __name__ == '__main__':
     try:
-        print(run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]))
+        print(run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]))
     except Exception as e:
         sys.stderr.write(str(e) + "\n")
         exit(1)
