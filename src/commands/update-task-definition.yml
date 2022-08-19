@@ -55,7 +55,7 @@ parameters:
 
       Values should not contain commas.
     type: string
-    default: ''    
+    default: ''
   profile-name:
     description: AWS profile name to be configured.
     type: string

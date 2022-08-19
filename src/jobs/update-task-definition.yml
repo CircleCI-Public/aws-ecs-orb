@@ -109,6 +109,7 @@ steps:
       container-env-var-updates: << parameters.container-env-var-updates >>
       container-secret-updates: << parameters.container-secret-updates >>
       container-docker-label-updates: << parameters.container-docker-label-updates >>
+      profile-name: << parameters.profile-name >>
   - when:
       condition: <<parameters.deploy-scheduled-task>>
       steps:
