@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
   orb-tools: circleci/orb-tools@11.1
-  aws-cli: circleci/aws-cli@3.1
+  aws-cli: circleci/aws-cli@dev:alpha
   jq: circleci/jq@2.2
 
 filters: &filters
@@ -118,11 +118,27 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        default: hashicorp/terraform:3.1.0
+        default: "hashicorp/terraform:1.1.9"
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
         type: string
+      profile-name:
+        type: string
+        default: 'default'
+      role-arn:
+        type: string
+        default: ''
+      role-session-name:
+        type: string
+        default: '${CIRCLE_JOB}'
+      aws-access-key-id:
+        type: env_var_name
+        default: AWS_ACCESS_KEY_ID
+      aws-secret-access-key:
+        type: env_var_name
+        default: AWS_SECRET_ACCESS_KEY
+      
     docker:
       - image: << parameters.terraform-image >>
     steps:
@@ -134,7 +150,15 @@ jobs:
               circleci step halt
             fi
       - checkout
-
+      - when: 
+          condition: << parameters.role-arn >>
+          steps:
+            - aws-cli/setup:
+                profile-name: << parameters.profile-name >>
+                role-arn: << parameters.role-arn >>
+                aws-secret-access-key: << parameters.aws-secret-access-key >>
+                aws-access-key-id: << parameters.aws-access-key-id >>
+                role-session-name: << parameters.role-session-name >>
       - run:
           name: terraform init
           command: |
@@ -566,7 +590,9 @@ workflows:
           terraform-image: "hashicorp/terraform:1.1.9"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          context: [CPE_ORBS_AWS]
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECR_OIDC_TEST"
+          # role-session-name: 
       # - test-service-update:
       #     name: codedeploy_fargate_test-update-service-command
       #     filters: *filters
