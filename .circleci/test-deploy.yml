@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
   orb-tools: circleci/orb-tools@11.1
-  aws-cli: circleci/aws-cli@dev:alpha
+  aws-cli: circleci/aws-cli@3.1
   jq: circleci/jq@2.2
 
 filters: &filters
@@ -156,8 +156,6 @@ jobs:
             - aws-cli/setup:
                 profile-name: << parameters.profile-name >>
                 role-arn: << parameters.role-arn >>
-                aws-secret-access-key: << parameters.aws-secret-access-key >>
-                aws-access-key-id: << parameters.aws-access-key-id >>
                 role-session-name: << parameters.role-session-name >>
       - run:
           name: terraform init
@@ -591,7 +589,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECR_OIDC_TEST"
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           # role-session-name: 
       # - test-service-update:
       #     name: codedeploy_fargate_test-update-service-command
