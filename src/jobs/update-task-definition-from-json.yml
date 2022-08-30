@@ -34,7 +34,7 @@ parameters:
   session-duration:
     description: The duration of the session in seconds
     type: string
-    default: "3600"    
+    default: "3600"
   profile-name:
     description: AWS profile name to be configured.
     type: string
