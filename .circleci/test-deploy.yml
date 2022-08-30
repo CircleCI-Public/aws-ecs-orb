@@ -42,7 +42,7 @@ jobs:
         default: 'default'
       role-arn:
         type: string
-        default: ''    
+        default: ''  
     steps:
       - aws-cli/setup:
           profile-name: << parameters.profile-name >>
@@ -397,13 +397,10 @@ jobs:
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" > /dev/null; echo $?)" -ne 0 ]; then
 
-
                 echo "Retrying terraform destroy"
-                terraform destroy \
-                  -input=false \
-                  -auto-approve \
+                terraform destroy -input=false -auto-approve \
                   -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
-                  -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \                 
+                  -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
                   -var "aws_region=${AWS_DEFAULT_REGION}" \
                   -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                   -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
@@ -441,9 +438,9 @@ workflows:
             parameters:
               executor: [linux, mac]
           filters: *filters
-      #################
-      # Fargate
-      #################
+      # #################
+      # # Fargate
+      # #################
       - build-test-app:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -525,9 +522,9 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
 
-      #################
-      # EC2
-      #################
+      # #################
+      # # EC2
+      # #################
       - build-test-app:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -614,7 +611,6 @@ workflows:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
                 test-asterisk-expansion: true
-
       - tear-down-test-env:
           name: ec2_tear-down-test-env
           filters: *filters
@@ -626,13 +622,14 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
 
-      # #################
-      # # FargateSpot
-      # #################
+      #################
+      # FargateSpot
+      #################
 
       - test-fargatespot:
           context: [CPE-OIDC]
           filters: *filters
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           requires:
             - fargate_set-up-test-env
 
@@ -736,24 +733,24 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
-      # - orb-tools/pack:
-      #     filters: *filters
-      # - orb-tools/publish:
-      #     orb-name: circleci/aws-ecs
-      #     vcs-type: << pipeline.project.type >>
-      #     pub-type: production
-      #     requires:
-      #       - orb-tools/pack
-      #       - ec2_tear-down-test-env
-      #       - fargate_tear-down-test-env  
-      #       - codedeploy_fargate_tear-down-test-env
-      #       - integration-test-ecs-cli-install
-      #     context: orb-publisher
-      #     filters:
-      #       branches:
-      #         ignore: /.*/
-      #       tags:
-      #         only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      - orb-tools/pack:
+          filters: *filters
+      - orb-tools/publish:
+          orb-name: circleci/aws-ecs
+          vcs-type: << pipeline.project.type >>
+          pub-type: production
+          requires:
+            - orb-tools/pack
+            - ec2_tear-down-test-env
+            - fargate_tear-down-test-env  
+            - codedeploy_fargate_tear-down-test-env
+            - integration-test-ecs-cli-install
+          context: orb-publisher
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 commands:
   wait-for-codedeploy-deployment:
     description: "Wait for the CodeDeploy deployment to be successful"
