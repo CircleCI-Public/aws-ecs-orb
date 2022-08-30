@@ -418,7 +418,6 @@ workflows:
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
       - set-up-test-env:
           name: fargate_set-up-test-env
@@ -503,7 +502,6 @@ workflows:
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
       - set-up-test-env:
           name: ec2_set-up-test-env
