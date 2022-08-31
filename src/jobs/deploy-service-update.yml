@@ -33,7 +33,7 @@ parameters:
     type: string
     default: ""
   role-session-name:
-    description: An identifier for the assumed role session. Environment varaibles will be evaluated. 
+    description: An identifier for the assumed role session. Environment varaibles will be evaluated.
     type: string
     default: ${CIRCLE_JOB}
   session-duration:
