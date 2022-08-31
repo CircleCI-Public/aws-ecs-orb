@@ -72,7 +72,7 @@ parameters:
   container-secret-updates:
     description: >
       Use this to update or set the values of secret variables that will be defined for the containers.
-      (Existing secrets variables not included in this parameter will not beremoved)
+      (Existing secrets variables not included in this parameter will not be removed)
 
       Expected format:
       container=<container-name>,name=<env-var-name>,valueFrom=<env-var-value>,container=...,name=...,valueFrom=...,
