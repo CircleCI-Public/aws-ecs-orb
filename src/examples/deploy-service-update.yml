@@ -2,13 +2,13 @@ description: Update an ECS service.
 usage:
   version: 2.1
   orbs:
-    aws-ecr: circleci/aws-ecr@6.15
-    aws-ecs: circleci/aws-ecs@2.0.0
+    aws-ecr: circleci/aws-ecr@8.1
+    aws-ecs: circleci/aws-ecs@3.2
   workflows:
     build-and-deploy:
       jobs:
         - aws-ecr/build-and-push-image:
-            account-url: AWS_ECR_ACCOUNT_URL
+            registry-id: AWS_ECR_REGISTRY_ID
             repo: '${MY_APP_PREFIX}'
             region: AWS_REGION
             tag: '${CIRCLE_SHA1}'
