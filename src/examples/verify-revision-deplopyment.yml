@@ -2,18 +2,20 @@ description: Verify the deployment of an ECS revision.
 usage:
   version: 2.1
   orbs:
-    aws-cli: circleci/aws-cli@1.3
-    aws-ecs: circleci/aws-ecs@2.0
+    aws-cli: circleci/aws-cli@3.1
+    aws-ecs: circleci/aws-ecs@3.2
   jobs:
     verify-deployment:
       docker:
-        - image: cimg/python:3.9.1
+        - image: cimg/python:3.10
       steps:
         - aws-cli/setup:
-             # If they are included, they configure the "default" profile, which is specified below.
-            aws-access-key-id: AWS_SECRET_ACCESS_KEY
-            aws-secret-access-key: AWS_DEFAULT_REGION
-            aws-region: AWS_DEFAULT_REGION
+            # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
+            role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
+            aws-region: AWS_REGION
+            profile-name: "OIDC-PROFILE"
+            session-duration: 3600
+            role-session-name: "example-session-name"
         - run:
             name: Get last task definition
             command: >
@@ -31,4 +33,5 @@ usage:
   workflows:
     test-workflow:
       jobs:
-        - verify-deployment
+        - verify-deployment:
+            context: [CircleCI_OIDC_Token]

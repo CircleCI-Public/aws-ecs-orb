@@ -1,13 +1,13 @@
 description: |
-  Use the AWS CLI and this orb to update an ECS service.
-  (Supports both EC2 and Fargate launch types)
+  Use the AWS CLI and this orb to deploy an ECS Scheduled Task Rule after updating a task definition.
+  The update-task-definition or update-task-definition-from-json command must be run first.
 usage:
   version: 2.1
   orbs:
     aws-cli: circleci/aws-cli@3.1
     aws-ecs: circleci/aws-ecs@3.2
   jobs:
-    update-tag:
+    deploy-scheduled-task:
       docker:
         - image: cimg/python:3.10
       steps:
@@ -18,12 +18,12 @@ usage:
             profile-name: "OIDC-PROFILE"
             session-duration: 3600
             role-session-name: "example-session-name"
-        - aws-ecs/update-service:
-            family: '${MY_APP_PREFIX}-service'
-            cluster: '${MY_APP_PREFIX}-cluster'
-            container-image-name-updates: 'container=${MY_APP_PREFIX}-service,tag=stable'
+        - aws-ecs/update-task-definition-from-json:
+            task-definition-json: my-app-definition.json
+        - aws-ecs/deploy-ecs-scheduled-task:
+            rule-name: "example-rule"
   workflows:
     deploy:
       jobs:
-        - update-tag:
+        - deploy-scheduled-task:
             context: [CircleCI_OIDC_Token]
