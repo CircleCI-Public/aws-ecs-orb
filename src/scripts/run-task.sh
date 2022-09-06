@@ -9,7 +9,9 @@ if ! command -v envsubst && [[ "$ECS_PARAM_OVERRIDES" == *"\${"* ]]; then
     curl -L https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-"$(uname -s)"-"$(uname -m)" -o envsubst
     $SUDO chmod +x envsubst
     $SUDO mv envsubst /usr/local/bin
-    ECS_PARAM_OVERRIDES=$(echo "${ECS_PARAM_OVERRIDES}" | envsubst)
+fi
+if [[ "$ECS_PARAM_OVERRIDES" == *"\${"* ]]; then
+    ECS_PARAM_OVERRIDES="$(echo "${ECS_PARAM_OVERRIDES}" | envsubst)"
 fi
 
 set -o noglob
