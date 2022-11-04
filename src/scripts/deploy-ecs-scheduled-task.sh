@@ -1,3 +1,6 @@
+# These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
+ECS_PARAM_RULE_NAME=$(eval echo "$ECS_PARAM_RULE_NAME")
+
 td_arn=$CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN
 
 if [ -z "$td_arn" ]; then
@@ -16,4 +19,4 @@ if < "$CLI_OUTPUT_FILE" jq ' .Targets[] | has("EcsParameters")' | grep "false"; 
 fi
 
 < "$CLI_OUTPUT_FILE" jq --arg td_arn "$td_arn" '.Targets[].EcsParameters.TaskDefinitionArn |= $td_arn' > "$CLI_INPUT_FILE"
-aws events put-targets --rule $ECS_PARAM_RULE_NAME --cli-input-json "$(cat "$CLI_INPUT_FILE")"
+aws events put-targets --rule "$ECS_PARAM_RULE_NAME" --cli-input-json "$(cat "$CLI_INPUT_FILE")"
