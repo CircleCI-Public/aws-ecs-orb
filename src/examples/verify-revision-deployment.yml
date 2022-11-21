@@ -1,0 +1,38 @@
+description: Verify the deployment of an ECS revision.
+usage:
+  version: 2.1
+  orbs:
+    aws-cli: circleci/aws-cli@3.1
+    aws-ecs: circleci/aws-ecs@3.2
+  jobs:
+    verify-deployment:
+      docker:
+        - image: cimg/python:3.10
+      steps:
+        - aws-cli/setup:
+            # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
+            role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
+            aws-region: AWS_REGION
+            profile-name: "OIDC-PROFILE"
+            session-duration: 3600
+            role-session-name: "example-session-name"
+        - run:
+            name: Get last task definition
+            command: >
+              TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
+                  --task-definition ${MY_APP_PREFIX}-service \
+                  --output text \
+                  
+                  --query 'taskDefinition.taskDefinitionArn' \
+                  --profile default)
+              echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
+              $BASH_ENV
+        - aws-ecs/verify-revision-is-deployed:
+            family: '${MY_APP_PREFIX}-service'
+            cluster: '${MY_APP_PREFIX}-cluster'
+            task-definition-arn: '${TASK_DEFINITION_ARN}'
+  workflows:
+    test-workflow:
+      jobs:
+        - verify-deployment:
+            context: [CircleCI_OIDC_Token]
