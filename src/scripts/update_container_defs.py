@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from __future__ import absolute_import
 import sys
 import json
@@ -61,7 +62,7 @@ def run(previous_task_definition, container_image_name_updates,
         raise Exception('Environment variable update parameter could not be processed; please check parameter value: ' + container_env_var_updates)
 
     # Expected format: container=...,string=...,string=...,container=...,string=...,string=
-    
+
     try:
         docker_label_kv_pairs = container_docker_label_updates.split(',')
         for index, kv_pair in enumerate(docker_label_kv_pairs):

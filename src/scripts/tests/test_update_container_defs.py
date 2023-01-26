@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import unittest
 import json
 import subprocess

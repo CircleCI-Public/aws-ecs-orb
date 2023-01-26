@@ -1,5 +1,14 @@
 set -o noglob
 
+if [ ! "${BASH_ENV_PYTHON_ALIASED}" ]; then
+  echo "if [ ! $(command -v python) ]; then
+  shopt -s expand_aliases
+  alias python=python3
+  alias pip=pip3
+  fi
+  BASH_ENV_PYTHON_ALIASED=true" >> "$BASH_ENV"
+fi
+
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ECS_PARAM_FAMILY=$(eval echo "$ECS_PARAM_FAMILY")
 ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES")
@@ -9,7 +18,7 @@ ECS_PARAM_CONTAINER_SECRET_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_SECRET_UPDA
 ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES=$(eval echo "$ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES")
 
 if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
-    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"   
+    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"
 fi
 
 if [ -z "${ECS_PARAM_PREVIOUS_REVISION}" ]; then
