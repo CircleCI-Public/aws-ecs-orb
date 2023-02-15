@@ -24,6 +24,12 @@ else
     REVISION="{\"revisionType\": \"AppSpecContent\", \"appSpecContent\": {\"content\": \"{\\\"version\\\": 1, \\\"Resources\\\": [{\\\"TargetService\\\": {\\\"Type\\\": \\\"AWS::ECS::Service\\\", \\\"Properties\\\": {\\\"TaskDefinition\\\": \\\"${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}\\\", \\\"LoadBalancerInfo\\\": {\\\"ContainerName\\\": \\\"$ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME\\\", \\\"ContainerPort\\\": $ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT}}}}]}\"}}"
 fi 
 
+PROFILE_ARGUMENTS=()
+
+if [ -n "$ECS_PARAM_PROFILE_NAME" ]; then
+    PROFILE_ARGUMENTS+=("--profile" "${ECS_PARAM_PROFILE_NAME}")
+fi 
+
 if [ -n "$ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME" ]; then
     set -- "$@" --deployment-config-name "${ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME}"
 fi
@@ -34,17 +40,18 @@ DEPLOYMENT_ID=$(aws deploy create-deployment \
     --query deploymentId \
     --revision "${REVISION}" \
     "$@" \
+    "${PROFILE_ARGUMENTS[@]}" \
     --output text)
 
 echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
 if [ "$ECS_PARAM_VERIFY_REV_DEPLOY" == "1" ]; then
     echo "Waiting for deployment to succeed."
-    if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}"; then
+    if aws deploy wait deployment-successful "${PROFILE_ARGUMENTS[@]}" --deployment-id "${DEPLOYMENT_ID}"; then
         echo "Deployment succeeded."
     elif [ "$ECS_PARAM_ENABLE_CIRCUIT_BREAKER" == "1" ]; then
         echo "Deployment failed. Rolling back."
-        aws deploy stop-deployment --deployment-id "${DEPLOYMENT_ID}" --auto-rollback-enabled
+        aws deploy stop-deployment "${PROFILE_ARGUMENTS[@]}" --deployment-id "${DEPLOYMENT_ID}" --auto-rollback-enabled
     else
         echo "Deployment failed. Exiting."
         exit 1
