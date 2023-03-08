@@ -42,7 +42,7 @@ jobs:
         default: 'default'
       role-arn:
         type: string
-        default: ''  
+        default: ''
     steps:
       - aws-cli/setup:
           profile-name: << parameters.profile-name >>
@@ -148,21 +148,29 @@ jobs:
       aws-secret-access-key:
         type: env_var_name
         default: AWS_SECRET_ACCESS_KEY
-      
+      skip-creation-env:
+        type: boolean
+        default: false
+
     docker:
       - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be set up
+          environment:
+            SKIP_TEST_ENV_CREATION: <<parameters.skip-creation-env>>
           command: |
-            if [ "${SKIP_TEST_ENV_CREATION}" = "1" ]
+            if [ "${SKIP_TEST_ENV_CREATION}" = "true" ]
             then
               circleci step halt
             fi
       - checkout
-      - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
-          role-arn: << parameters.role-arn >>
+      - when:
+          condition: << parameters.role-arn >>
+          steps:
+            - aws-cli/setup:
+                profile-name: << parameters.profile-name >>
+                role-arn: << parameters.role-arn >>
       - run:
           name: terraform init
           command: |
@@ -251,7 +259,7 @@ jobs:
           steps:
             - aws-cli/setup:
                 profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>          
+                role-arn: << parameters.role-arn >>
             - aws-ecs/update-service:
                 family: "<< parameters.family-name >>"
                 service-name: "<< parameters.service-name >>"
@@ -276,7 +284,7 @@ jobs:
         default: 'default'
       role-arn:
         type: string
-        default: ''    
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
@@ -309,7 +317,7 @@ jobs:
         default: "default"
       role-arn:
         type: string
-        default: ''        
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
@@ -335,7 +343,7 @@ jobs:
         default: 'default'
       role-arn:
         type: string
-        default: ''            
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
@@ -369,23 +377,28 @@ jobs:
       role-arn:
         type: string
         default: ''
+      skip-teardown-env:
+        type: boolean
+        default: false
     docker:
       - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be destroyed
+          environment:
+            SKIP_TEST_ENV_TEARDOWN: <<parameters.skip-teardown-env>>
           command: |
-            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "1" ]
+            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "true" ]
             then
               circleci step halt
             fi
       - checkout
-      - when: 
+      - when:
           condition: << parameters.role-arn >>
           steps:
             - aws-cli/setup:
                 profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>   
+                role-arn: << parameters.role-arn >>
       - run:
           name: terraform init
           command: |
@@ -504,7 +517,7 @@ workflows:
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"          
+                profile-name: "ECS_TEST_PROFILE"
           docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
@@ -663,7 +676,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST" 
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
           name: codedeploy_fargate_test-update-service-command
           filters: *filters
@@ -713,7 +726,7 @@ workflows:
           name: codedeploy_fargate_test-update-and-wait-service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"          
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           docker-image-for-job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
@@ -758,7 +771,7 @@ workflows:
           requires:
             - orb-tools/pack
             - ec2_tear-down-test-env
-            - fargate_tear-down-test-env  
+            - fargate_tear-down-test-env
             - codedeploy_fargate_tear-down-test-env
             - integration-test-ecs-cli-install
           context: orb-publisher
