@@ -57,7 +57,10 @@ Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
 
 Resources:
-
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ecs-orb-logs
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   TaskDefinition:
@@ -82,13 +85,19 @@ Resources:
         - Name: !Ref 'ServiceName'
           Cpu: 512
           Memory: 1024
-          Image: !Ref 'ImageUrl'
+          Image: nginx:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: ecs-orb-logs
+              awslogs-region: us-west-2
+              awslogs-stream-prefix: ecs-orb-ec2-stream
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
-          Image: nginx:latest
+          Image: nginx:latest    
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'
@@ -96,7 +105,12 @@ Resources:
               Value: "b's knees"
             - Name: DUMMY_VAR_3
               Value: "c testing'''now"
-
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: ecs-orb-logs
+              awslogs-region: us-west-2
+              awslogs-stream-prefix: ecs-orb-ec2-stream
   # The service. The service is a resource which allows you to run multiple
   # copies of a type of task, and gather up their logs and metrics, as well
   # as monitor the number of running tasks and replace any that have crashed
