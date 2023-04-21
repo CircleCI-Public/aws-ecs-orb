@@ -130,13 +130,13 @@ Resources:
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 1
+      HealthyThresholdCount: 2
       Name: !Ref 'ServiceName'
       Port: 80
       Protocol: HTTP
       TargetGroupAttributes:
       - Key: deregistration_delay.timeout_seconds
-        Value: '30'
+        Value: '20'
       UnhealthyThresholdCount: 2
       VpcId:
         Fn::ImportValue:
