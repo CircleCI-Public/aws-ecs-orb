@@ -57,7 +57,10 @@ Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
 
 Resources:
-
+  MyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ecs-orb-logs
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   TaskDefinition:
@@ -83,6 +86,12 @@ Resources:
           Cpu: 512
           Memory: 1024
           Image: !Ref 'ImageUrl'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: ecs-orb-logs
+              awslogs-region: us-west-2
+              awslogs-stream-prefix: ecs-orb-ec2-stream
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
         - Name: DummyContainer
