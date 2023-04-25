@@ -61,6 +61,10 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: ecs-orb-logs
+  MyAccessLogsBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: "my-elb-logs-bucket"
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   TaskDefinition:

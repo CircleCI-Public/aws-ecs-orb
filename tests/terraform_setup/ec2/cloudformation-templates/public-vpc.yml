@@ -262,6 +262,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Scheme: internet-facing
+      AccessLogs:
+        S3BucketName: my-elb-logs-bucket
+        S3BucketPrefix: elb-logs
+        EmitInterval: 5
       LoadBalancerAttributes:
       - Key: idle_timeout.timeout_seconds
         Value: '30'
