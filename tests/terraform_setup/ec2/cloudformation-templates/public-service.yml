@@ -83,9 +83,9 @@ Resources:
         - Name: dummy2
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
-          Cpu: 10
-          Memory: 300
-          Image: "httpd2:4"
+          Cpu: 512
+          Memory: 1024
+          Image: nginx
           LogConfiguration:
             LogDriver: awslogs
             Options:

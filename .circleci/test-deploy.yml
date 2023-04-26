@@ -163,10 +163,6 @@ jobs:
                 profile-name: << parameters.profile-name >>
                 role-arn: << parameters.role-arn >>
       - run:
-          name: Docker login
-          command: |
-           aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-      - run:
           name: terraform init
           command: |
             cd << parameters.terraform-config-dir >>
