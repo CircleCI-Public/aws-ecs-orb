@@ -85,7 +85,7 @@ Resources:
         - Name: !Ref 'ServiceName'
           Cpu: 512
           Memory: 1024
-          Image: nginx
+          Image: httpd:2.4
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -97,7 +97,7 @@ Resources:
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
-          Image: nginx:latest
+          Image: httpd:2.4
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'
