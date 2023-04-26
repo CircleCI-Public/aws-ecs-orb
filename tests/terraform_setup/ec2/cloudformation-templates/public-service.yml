@@ -85,7 +85,11 @@ Resources:
         - Name: !Ref 'ServiceName'
           Cpu: 512
           Memory: 1024
-          Image: httpd:2.4
+          Image: nginx:latest
+          Command:
+            - "nginx"
+            - "-g"
+            - "daemon off;"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -97,7 +101,11 @@ Resources:
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
-          Image: httpd:2.4
+          Image: nginx:latest
+          Command:
+            - "nginx"
+            - "-g"
+            - "daemon off;"
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'
