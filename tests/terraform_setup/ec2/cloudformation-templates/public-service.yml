@@ -61,10 +61,6 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: ecs-orb-logs
-  MyAccessLogsBucket:
-    Type: "AWS::S3::Bucket"
-    Properties:
-      BucketName: "my-elb-logs-bucket"
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   TaskDefinition:
@@ -98,12 +94,10 @@ Resources:
               awslogs-stream-prefix: ecs-orb-ec2-stream
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
-          entryPoint: [ "sh", "-c"]
-          command: [ "/bin/sh -c \"echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p> </div></body></html>' >  /usr/local/apache2/htdocs/index.html && httpd-foreground\""]
         - Name: DummyContainer
-          Cpu: 10
-          Memory: 300
-          Image: "httpd2:4"
+          Cpu: 512
+          Memory: 1024
+          Image: nginx:latest
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'
@@ -111,8 +105,6 @@ Resources:
               Value: "b's knees"
             - Name: DUMMY_VAR_3
               Value: "c testing'''now"
-          entryPoint: [ "sh", "-c"]
-          command: [ "/bin/sh -c \"echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p> </div></body></html>' >  /usr/local/apache2/htdocs/index.html && httpd-foreground\""]
           LogConfiguration:
             LogDriver: awslogs
             Options:
