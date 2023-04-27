@@ -111,9 +111,9 @@ jobs:
       - run:
           name: Test image
           command: |
-            docker run -d -p 8080:8080 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            docker run -d -p 80:80 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
             sleep 10
-            docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:8080 | grep "Hello World!"
+            docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:80 | grep "Hello World!"
       - run:
           name: Save image to an archive
           command: |
