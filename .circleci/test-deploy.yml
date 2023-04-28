@@ -127,7 +127,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        default: "hashicorp/terraform:1.1.9"
+        default: "hashicorp/terraform:1.4.0"
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -345,7 +345,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        default: hashicorp/terraform:1.1.9
+        default: hashicorp/terraform:1.4.0
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -647,7 +647,7 @@ workflows:
           filters: *filters
           requires:
             - codedeploy_fargate_build-test-app
-          terraform-image: "hashicorp/terraform:1.1.9"
+          terraform-image: "hashicorp/terraform:1.4.0"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
@@ -727,7 +727,7 @@ workflows:
           name: codedeploy_fargate_tear-down-test-env
           requires:
             - codedeploy_fargate_test-update-and-wait-service-job
-          terraform-image: "hashicorp/terraform:1.1.9"
+          terraform-image: "hashicorp/terraform:1.4.0"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
