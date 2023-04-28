@@ -438,89 +438,89 @@ workflows:
       #       parameters:
       #         executor: [linux, mac]
       #     filters: *filters
-      # # #################
-      # # # Fargate
-      # # #################
-      # - build-test-app:
-      #     name: fargate_build-test-app
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE-OIDC]
-      #     filters: *filters
-      # - set-up-test-env:
-      #     name: fargate_set-up-test-env
-      #     filters: *filters
-      #     requires:
-      #       - fargate_build-test-app
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate"
-      #     context: [CPE-OIDC]
-      #     role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      # - test-service-update:
-      #     name: fargate_test-update-service-command
-      #     filters: *filters
-      #     requires:
-      #       - fargate_set-up-test-env
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE-OIDC]
-      #     role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      # - aws-ecs/deploy-service-update:
-      #     name: fargate_test-update-service-job
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-command
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_REGION
-      #     profile-name: "ECS_TEST_PROFILE"
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      #     container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     # test the force-new-deployment flag
-      #     force-new-deployment: true
-      #     verify-revision-is-deployed: true
-      #     max-poll-attempts: 40
-      #     poll-interval: 10
-      #     context: [CPE-OIDC]
-      #     role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      #     post-steps:
-      #       - test-deployment:
-      #           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      # - aws-ecs/deploy-service-update:
-      #     name: fargate_test-update-service-skip-registration
-      #     docker-image-for-job: cimg/python:3.10.4
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-job
-      #     aws-access-key-id: AWS_ACCESS_KEY_ID
-      #     aws-region: AWS_REGION
-      #     profile-name: "ECS_TEST_PROFILE"
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      #     # test skipping registration of a new task definition
-      #     skip-task-definition-registration: true
-      #     # test the enable-circuit-breaker flag
-      #     enable-circuit-breaker: true
-      #     verify-revision-is-deployed: true
-      #     max-poll-attempts: 40
-      #     poll-interval: 10
-      #     context: [CPE-OIDC]
-      #     role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      # - tear-down-test-env:
-      #     name: fargate_tear-down-test-env
-      #     filters: *filters
-      #     requires:
-      #       - fargate_test-update-service-skip-registration
-      #       - test-fargatespot
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate"
-      #     context: [CPE-OIDC]
-      #     role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #################
+      # Fargate
+      #################
+      - build-test-app:
+          name: fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE-OIDC]
+          filters: *filters
+      - set-up-test-env:
+          name: fargate_set-up-test-env
+          filters: *filters
+          requires:
+            - fargate_build-test-app
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - test-service-update:
+          name: fargate_test-update-service-command
+          filters: *filters
+          requires:
+            - fargate_set-up-test-env
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-job
+          docker-image-for-job: cimg/python:3.10.4
+          filters: *filters
+          requires:
+            - fargate_test-update-service-command
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_REGION
+          profile-name: "ECS_TEST_PROFILE"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          # test the force-new-deployment flag
+          force-new-deployment: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          post-steps:
+            - test-deployment:
+                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+      - aws-ecs/deploy-service-update:
+          name: fargate_test-update-service-skip-registration
+          docker-image-for-job: cimg/python:3.10.4
+          filters: *filters
+          requires:
+            - fargate_test-update-service-job
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-region: AWS_REGION
+          profile-name: "ECS_TEST_PROFILE"
+          family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
+          # test skipping registration of a new task definition
+          skip-task-definition-registration: true
+          # test the enable-circuit-breaker flag
+          enable-circuit-breaker: true
+          verify-revision-is-deployed: true
+          max-poll-attempts: 40
+          poll-interval: 10
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env
+          filters: *filters
+          requires:
+            - fargate_test-update-service-skip-registration
+            - test-fargatespot
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE-OIDC]
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
 
       # # #################
       # # # EC2
