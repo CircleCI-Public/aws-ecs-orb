@@ -172,7 +172,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       Name: !Join ['-', [!Ref 'AWS::StackName', 'drop-1']]
-      Port: 80
+      Port: 8080
       Protocol: HTTP
       UnhealthyThresholdCount: 2
       VpcId: !Ref 'VPC'
@@ -185,7 +185,7 @@ Resources:
         - TargetGroupArn: !Ref 'DummyTargetGroupPublic'
           Type: 'forward'
       LoadBalancerArn: !Ref 'PublicLoadBalancer'
-      Port: 80
+      Port: 8080
       Protocol: HTTP
 
   # This is an IAM role which authorizes ECS to manage resources on your
