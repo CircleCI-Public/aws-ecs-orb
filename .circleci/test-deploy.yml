@@ -733,24 +733,24 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
-      - orb-tools/pack:
-          filters: *filters
-      - orb-tools/publish:
-          orb-name: circleci/aws-ecs
-          vcs-type: << pipeline.project.type >>
-          pub-type: production
-          requires:
-            - orb-tools/pack
-            - ec2_tear-down-test-env
-            - fargate_tear-down-test-env  
-            - codedeploy_fargate_tear-down-test-env
-            - integration-test-ecs-cli-install
-          context: orb-publisher
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      # - orb-tools/pack:
+      #     filters: *filters
+      # - orb-tools/publish:
+      #     orb-name: circleci/aws-ecs
+      #     vcs-type: << pipeline.project.type >>
+      #     pub-type: production
+      #     requires:
+      #       - orb-tools/pack
+      #       - ec2_tear-down-test-env
+      #       - fargate_tear-down-test-env  
+      #       - codedeploy_fargate_tear-down-test-env
+      #       - integration-test-ecs-cli-install
+      #     context: orb-publisher
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 commands:
   wait-for-codedeploy-deployment:
     description: "Wait for the CodeDeploy deployment to be successful"
