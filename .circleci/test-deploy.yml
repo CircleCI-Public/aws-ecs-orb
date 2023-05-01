@@ -1,8 +1,8 @@
 version: 2.1
 orbs:
   aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
-  orb-tools: circleci/orb-tools@11.1
-  aws-cli: circleci/aws-cli@3.1
+  orb-tools: circleci/orb-tools@11.6
+  aws-cli: circleci/aws-cli@3.1.5
   jq: circleci/jq@2.2
 
 filters: &filters
@@ -68,7 +68,7 @@ jobs:
               --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
               --capacity-providers FARGATE FARGATE_SPOT  \
               --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
-              --region ${AWS_REGION}
+              --region ${AWS_DEFAULT_REGION}
       - run:
           name: Register task definition
           command: |
@@ -111,14 +111,18 @@ jobs:
       - run:
           name: Test image
           command: |
-            docker run -d -p 8080:8080 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            set -x
+            docker run -d -p 8080:80 --name built-image <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
             sleep 10
-            docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:8080 | grep "Hello World!"
+            docker run --network container:built-image appropriate/curl --retry 10 --retry-connrefused http://localhost:80 | grep "Hello World!"
+            set +x
       - run:
           name: Save image to an archive
           command: |
             mkdir -p docker-images/<<parameters.docker-image-name>>
+            set -x
             docker save -o docker-images/<<parameters.docker-image-name>>/<<parameters.docker-image-name>>.tar <<parameters.docker-image-namespace>>/<<parameters.docker-image-name>>
+            set +x
       - persist_to_workspace:
           root: .
           paths:
@@ -127,7 +131,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        default: "hashicorp/terraform:1.1.9"
+        default: "hashicorp/terraform:1.4.0"
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -156,35 +160,38 @@ jobs:
               circleci step halt
             fi
       - checkout
-      - when: 
-          condition: << parameters.role-arn >>
-          steps:
-            - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>
+      - aws-cli/setup:
+          profile-name: << parameters.profile-name >>
+          role-arn: << parameters.role-arn >>
       - run:
           name: terraform init
           command: |
+            set -x
             cd << parameters.terraform-config-dir >>
             terraform init -input=false
+            set +x
       - run:
           name: terraform plan
           command: |
             cd << parameters.terraform-config-dir >>
+            set -x
             terraform plan \
                 -input=false \
                 -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
                 -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
                 -var "aws_session_token=${AWS_SESSION_TOKEN}" \
-                -var "aws_region=${AWS_REGION}" \
+                -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
                 -out tfplan
+            set +x
       - run:
           name: terraform apply
           command: |
+            set -x
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
+            set +x
   test-service-update:
     docker:
       - image: cimg/python:3.10.4
@@ -233,11 +240,11 @@ jobs:
             echo 'export ECR_REPOSITORY_NAME="<< parameters.aws-resource-name-prefix >>"' >> $BASH_ENV
             echo 'export ECS_CLUSTER_NAME="<< parameters.aws-resource-name-prefix >>-cluster"' >> $BASH_ENV
             echo 'export ECS_SERVICE_NAME="<< parameters.aws-resource-name-prefix >>-service"' >> $BASH_ENV
-            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
+            echo 'export FULL_IMAGE_NAME="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${ECR_REPOSITORY_NAME}:${CIRCLE_SHA1}"' >> $BASH_ENV
       - run:
           name: Push image
           command: |
-            aws ecr get-login-password --region $AWS_REGION --profile "<<parameters.profile-name>>" | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION --profile "<<parameters.profile-name>>" | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
             docker push $FULL_IMAGE_NAME
       - unless:
           condition: << parameters.skip-service-update >>
@@ -275,7 +282,7 @@ jobs:
       - aws-cli/setup:
           profile-name: << parameters.profile-name >>
           role-arn: << parameters.role-arn >>
-          aws-region: AWS_REGION
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
@@ -308,7 +315,7 @@ jobs:
       - aws-cli/setup:
           role-arn: << parameters.role-arn >>
           profile-name: << parameters.profile-name >>
-          aws-region: AWS_REGION
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
@@ -334,7 +341,7 @@ jobs:
       - aws-cli/setup:
           profile-name: << parameters.profile-name >>
           role-arn: << parameters.role-arn >>
-          aws-region: AWS_REGION
+          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
@@ -345,7 +352,7 @@ jobs:
     parameters:
       terraform-image:
         type: string
-        default: hashicorp/terraform:1.1.9
+        default: "hashicorp/terraform:1.4.0"
       aws-resource-name-prefix:
         type: string
       terraform-config-dir:
@@ -438,12 +445,12 @@ workflows:
             parameters:
               executor: [linux, mac]
           filters: *filters
-      # #################
-      # # Fargate
-      # #################
+      #################
+      # Fargate
+      #################
       - build-test-app:
           name: fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
@@ -464,18 +471,20 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-job
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile-name: "ECS_TEST_PROFILE"
           docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update-service-command
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-region: AWS_REGION
           profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
@@ -486,19 +495,20 @@ workflows:
           max-poll-attempts: 40
           poll-interval: 10
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           post-steps:
             - test-deployment:
                 service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
       - aws-ecs/deploy-service-update:
           name: fargate_test-update-service-skip-registration
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile-name: "ECS_TEST_PROFILE"          
           docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update-service-job
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-region: AWS_REGION
           profile-name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
@@ -510,7 +520,6 @@ workflows:
           max-poll-attempts: 40
           poll-interval: 10
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - tear-down-test-env:
           name: fargate_tear-down-test-env
           filters: *filters
@@ -522,12 +531,12 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
 
-      # #################
-      # # EC2
-      # #################
+      #################
+      # EC2
+      #################
       - build-test-app:
           name: ec2_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
@@ -550,18 +559,19 @@ workflows:
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/run-task:
           name: ec2_run-task-test
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
             - ec2_set-up-run-task-test
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          aws-region: AWS_REGION
           task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           launch-type: "EC2"
           awsvpc: false
           run-task-output: "run-task-output.json"
           overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - tear-down-run-task-test:
           name: ec2_tear-down-run-task-test
           filters: *filters
@@ -578,7 +588,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
@@ -592,14 +602,16 @@ workflows:
             - ec2_test-update-service-command
       - aws-ecs/deploy-service-update:
           name: ec2_test-update-service-job
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile-name: "ECS_TEST_PROFILE"
+          profile-name: "ECS_TEST_PROFILE"
           docker-image-for-job: cimg/python:3.10.4
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
             - ec2_test-task-definition-update
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-region: AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
@@ -622,9 +634,9 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
 
-      #################
+      # ################
       # FargateSpot
-      #################
+      # ################
 
       - test-fargatespot:
           context: [CPE-OIDC]
@@ -637,17 +649,17 @@ workflows:
       # CodeDeploy
       #################
       - build-test-app:
-          name: codedeploy_fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          context: [CPE-OIDC]
-          filters: *filters
+            name: codedeploy_fargate_build-test-app
+            docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+            docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+            context: [CPE-OIDC]
+            filters: *filters
       - set-up-test-env:
           name: codedeploy_fargate_set-up-test-env
           filters: *filters
           requires:
             - codedeploy_fargate_build-test-app
-          terraform-image: "hashicorp/terraform:1.1.9"
+          terraform-image: "hashicorp/terraform:1.4.0"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
@@ -667,6 +679,9 @@ workflows:
           context: [CPE-OIDC]
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-service-job
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           docker-image-for-job: cimg/python:3.10.4
           filters: *filters
           requires:
@@ -680,13 +695,12 @@ workflows:
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy-load-balanced-container-port: 8080
+          codedeploy-load-balanced-container-port: 80
           codedeploy-capacity-provider-name: "FARGATE"
           codedeploy-capacity-provider-base: "1"
           codedeploy-capacity-provider-weight: "2"
           verify-revision-is-deployed: false
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           post-steps:
             - wait-for-codedeploy-deployment:
                 application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
@@ -697,9 +711,11 @@ workflows:
                 delete-load-balancer: false
       - aws-ecs/deploy-service-update:
           name: codedeploy_fargate_test-update-and-wait-service-job
+          auth:
+            - aws-cli/setup:
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"          
           docker-image-for-job: cimg/python:3.10.4
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
             - codedeploy_fargate_test-update-service-job
@@ -712,7 +728,7 @@ workflows:
           codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy-load-balanced-container-port: 8080
+          codedeploy-load-balanced-container-port: 80
           verify-revision-is-deployed: true
           verification-timeout: "12m"
           post-steps:
@@ -727,7 +743,7 @@ workflows:
           name: codedeploy_fargate_tear-down-test-env
           requires:
             - codedeploy_fargate_test-update-and-wait-service-job
-          terraform-image: "hashicorp/terraform:1.1.9"
+          terraform-image: "hashicorp/terraform:1.4.0"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]

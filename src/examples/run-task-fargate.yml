@@ -2,12 +2,15 @@ description: Start the run of an ECS task on Fargate.
 usage:
   version: 2.1
   orbs:
-    aws-ecs: circleci/aws-ecs@3.2
+    aws-ecs: circleci/aws-ecs@4.0
   jobs:
     run-task:
       docker:
         - image: cimg/python:3.10
       steps:
+        - aws-cli/setup:
+            profile: "OIDC-USER"
+            role-arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
         - aws-ecs/run-task:
             cluster: cluster1
             task-definition: myapp

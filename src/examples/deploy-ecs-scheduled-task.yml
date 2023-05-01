@@ -5,7 +5,7 @@ usage:
   version: 2.1
   orbs:
     aws-cli: circleci/aws-cli@3.1
-    aws-ecs: circleci/aws-ecs@3.2
+    aws-ecs: circleci/aws-ecs@4.0
   jobs:
     deploy-scheduled-task:
       docker:

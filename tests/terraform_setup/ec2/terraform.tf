@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      version = "~> 4.22.0"
+      version = "~> 4.63.0"
     }
   }
   backend "s3" {
@@ -69,7 +69,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
   parameters = {
     TaskCpu       = 1024
     TaskMemory    = 2048
-    ContainerPort = 8080
+    ContainerPort = 80
     StackName     = local.aws_vpc_stack_name
     ServiceName   = local.aws_ecs_service_name
     FamilyName    = local.aws_ecs_family_name

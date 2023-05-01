@@ -91,7 +91,11 @@ set -- "$@" --cluster "$ECS_PARAM_CLUSTER_NAME"
 
 
 if [ -n "${ECS_PARAM_RUN_TASK_OUTPUT}" ]; then
+    set -x
     aws ecs run-task "$@" | tee "${ECS_PARAM_RUN_TASK_OUTPUT}"
-else    
+    set +x
+else
+    set -x    
     aws ecs run-task "$@"
+    set +x
 fi
