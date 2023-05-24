@@ -516,7 +516,7 @@ workflows:
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition
-          skip-task_definition_registration: true
+          skip_task_definition_registration: true
           # test the enable_circuit_breaker flag
           enable_circuit_breaker: true
           verify_revision_is_deployed: true
