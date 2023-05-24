@@ -341,7 +341,7 @@ jobs:
         default: ''
     steps:
       - checkout
-      - :
+      - aws-cli/setup:
           profile-name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
           aws-region: AWS_DEFAULT_REGION
@@ -386,7 +386,7 @@ jobs:
       - when:
           condition: << parameters.role-arn >>
           steps:
-            - :
+            - aws-cli/setup:
                 profile-name: << parameters.profile_name >>
                 role-arn: << parameters.role-arn >>
       - run:
@@ -481,7 +481,7 @@ workflows:
       - aws-ecs/deploy_service_update:
           name: fargate_test-update_service-job
           auth:
-            - :
+            - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
                 profile-name: "ECS_TEST_PROFILE"
           docker_image_for_job: cimg/python:3.10.4
@@ -505,7 +505,7 @@ workflows:
       - aws-ecs/deploy_service_update:
           name: fargate_test-update_service-skip-registration
           auth:
-            - :
+            - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
                 profile-name: "ECS_TEST_PROFILE"
           docker_image_for_job: cimg/python:3.10.4
@@ -562,7 +562,7 @@ workflows:
       - aws-ecs/run_task:
           name: ec2_run_task-test
           auth:
-            - :
+            - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
