@@ -271,7 +271,7 @@ steps:
             family: << parameters.family >>
             cluster: << parameters.cluster >>
             service_name: << parameters.service_name >>
-            task_definition-arn: $CCI_ORB_AWS_ECS_DEPLOYED_REVISION
+            task_definition_arn: $CCI_ORB_AWS_ECS_DEPLOYED_REVISION
             max_poll_attempts: << parameters.max_poll_attempts >>
             poll_interval: << parameters.poll_interval >>
             fail_on_verification_timeout: << parameters.fail_on_verification_timeout >>

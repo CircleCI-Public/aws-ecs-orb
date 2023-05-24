@@ -13,7 +13,7 @@ parameters:
       The name of the service to update. If undefined, we assume `family` is the name of both the service and task definition.
     type: string
     default: ''
-  task_definition-arn:
+  task_definition_arn:
     description: ARN of the task definition whose deployment status is to be monitored.
     type: string
   max_poll_attempts:
@@ -43,7 +43,7 @@ steps:
       environment:
         ECS_PARAM_SERVICE_NAME: <<parameters.service_name>>
         ECS_PARAM_FAMILY: <<parameters.family>>
-        ECS_PARAM_TASK_DEF_ARN: <<parameters.task_definition-arn>>
+        ECS_PARAM_TASK_DEF_ARN: <<parameters.task_definition_arn>>
         ECS_PARAM_MAX_POLL_ATTEMPTS: <<parameters.max_poll_attempts>>
         ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
         ECS_PARAM_POLL_INTERVAL: <<parameters.poll_interval>>
