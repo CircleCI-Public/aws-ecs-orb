@@ -1,13 +1,17 @@
 version: 2.1
 orbs:
-  aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
-  orb-tools: circleci/orb-tools@11.6
+  orb-tools: circleci/orb-tools@12.0
   aws-cli: circleci/aws-cli@3.1.5
   jq: circleci/jq@2.2
-
+  aws-ecs: {}
 filters: &filters
   tags:
     only: /.*/
+release-filters: &release-filters
+  branches:
+    ignore: /.*/
+  tags:
+    only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
 jobs:
   pytest:
     docker:
@@ -37,15 +41,15 @@ jobs:
     docker:
       - image: cimg/base:stable
     parameters:
-      profile-name:
+      profile_name:
         type: string
         default: 'default'
       role-arn:
         type: string
-        default: ''  
+        default: ''
     steps:
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
+          profile_name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
       - jq/install
       - run:
@@ -67,24 +71,24 @@ jobs:
             aws ecs put-cluster-capacity-providers \
               --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
               --capacity-providers FARGATE FARGATE_SPOT  \
-              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
+              --default-capacity_provider_strategy capacityProvider=FARGATE,weight=1 \
               --region ${AWS_DEFAULT_REGION}
       - run:
           name: Register task definition
           command: |
-            aws ecs register-task-definition \
+            aws ecs register-task_definition \
               --family ecs-orb-fgs-1-sleep360 \
               --cpu 256 --memory 512 \
               --requires-compatibilities FARGATE \
               --network-mode awsvpc \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
-      - aws-ecs/run-task:
+      - aws-ecs/run_task:
           cluster: $CLUSTER_NAME
-          capacity-provider-strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
-          launch-type: ""
-          task-definition: ecs-orb-fgs-1-sleep360
-          subnet-ids: '$SUBNET_ONE, $SUBNET_TWO'
-          security-group-ids: $SECURITY_GROUP_IDS_FETCHED
+          capacity_provider_strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
+          launch_type: ""
+          task_definition: ecs-orb-fgs-1-sleep360
+          subnet_ids: '$SUBNET_ONE, $SUBNET_TWO'
+          security_group_ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
     docker:
       - image: cimg/go:1.19
@@ -136,7 +140,7 @@ jobs:
         type: string
       terraform-config-dir:
         type: string
-      profile-name:
+      profile_name:
         type: string
         default: 'default'
       role-arn:
@@ -148,7 +152,6 @@ jobs:
       aws-secret-access-key:
         type: env_var_name
         default: AWS_SECRET_ACCESS_KEY
-      
     docker:
       - image: << parameters.terraform-image >>
     steps:
@@ -161,7 +164,7 @@ jobs:
             fi
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
+          profile_name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
       - run:
           name: terraform init
@@ -202,7 +205,7 @@ jobs:
       family-name:
         description: "Family name"
         type: string
-      service-name:
+      service_name:
         description: "Service name"
         type: string
       docker-image-namespace:
@@ -215,7 +218,7 @@ jobs:
         description: "Skip updating the ECS service"
         type: boolean
         default: false
-      profile-name:
+      profile_name:
         description: "The profile name to use for AWS credentials"
         type: string
         default: "default"
@@ -228,7 +231,7 @@ jobs:
       - attach_workspace:
           at: workspace
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
+          profile_name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
       - run:
           name: Load image
@@ -244,110 +247,110 @@ jobs:
       - run:
           name: Push image
           command: |
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION --profile "<<parameters.profile-name>>" | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION --profile "<<parameters.profile_name>>" | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
             docker push $FULL_IMAGE_NAME
       - unless:
           condition: << parameters.skip-service-update >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>          
-            - aws-ecs/update-service:
+                profile_name: << parameters.profile_name >>
+                role-arn: << parameters.role-arn >>
+            - aws-ecs/update_service:
                 family: "<< parameters.family-name >>"
-                service-name: "<< parameters.service-name >>"
+                service_name: "<< parameters.service_name >>"
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
-                container-image-name-updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
-                container-env-var-updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
-                verify-revision-is-deployed: true
-                fail-on-verification-timeout: false
-                profile-name: "<<parameters.profile-name>>"
+                container_image_name_updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
+                container_env_var_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
+                verify_revision_is_deployed: true
+                fail_on_verification_timeout: false
+                profile_name: "<<parameters.profile_name>>"
             - test-deployment:
-                service-name: "<< parameters.aws-resource-name-prefix >>-service"
+                service_name: "<< parameters.aws-resource-name-prefix >>-service"
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
-  test-task-definition-update:
+  test-task_definition-update:
     docker:
       - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
         type: string
-      profile-name:
+      profile_name:
         type: string
         default: 'default'
       role-arn:
         type: string
-        default: ''    
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
+          profile_name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
-          aws-region: AWS_DEFAULT_REGION
+          aws_region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
-            aws ecs describe-task-definition --task-definition << parameters.family-name >> \
+            aws ecs describe-task_definition --task_definition << parameters.family-name >> \
               | jq '.taskDefinition' | jq '.memory = "3072"' \
               | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
-              > task-definition.json
-      - aws-ecs/update-task-definition-from-json:
-          task-definition-json: "task-definition.json"
+              > task_definition.json
+      - aws-ecs/update_task_definition_from_json:
+          task_definition-json: "task_definition.json"
       - run:
           name: Check if task definition was updated
           command: |
-            aws ecs describe-task-definition --task-definition << parameters.family-name >> --include TAGS | grep "3072"
-  set-up-run-task-test:
+            aws ecs describe-task_definition --task_definition << parameters.family-name >> --include TAGS | grep "3072"
+  set-up-run_task-test:
     docker:
       - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
         type: string
-      profile-name:
+      profile_name:
         description: "The profile name to use for AWS credentials"
         type: string
         default: "default"
       role-arn:
         type: string
-        default: ''        
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
           role-arn: << parameters.role-arn >>
-          profile-name: << parameters.profile-name >>
-          aws-region: AWS_DEFAULT_REGION
+          profile_name: << parameters.profile_name >>
+          aws_region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
-            aws ecs register-task-definition \
+            aws ecs register-task_definition \
               --family << parameters.family-name >> \
               --cpu 256 --memory 512 \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
-  tear-down-run-task-test:
+  tear-down-run_task-test:
     docker:
       - image: cimg/python:3.10.4
     parameters:
       family-name:
         description: "Family name"
         type: string
-      profile-name:
+      profile_name:
         type: string
         default: 'default'
       role-arn:
         type: string
-        default: ''            
+        default: ''
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
+          profile_name: << parameters.profile_name >>
           role-arn: << parameters.role-arn >>
-          aws-region: AWS_DEFAULT_REGION
+          aws_region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
-            TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-              --task-definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
-            aws ecs deregister-task-definition --task-definition ${TASK_DEFINITION_ARN}
+            TASK_DEFINITION_ARN=$(aws ecs describe-task_definition \
+              --task_definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
+            aws ecs deregister-task_definition --task_definition ${TASK_DEFINITION_ARN}
   tear-down-test-env:
     parameters:
       terraform-image:
@@ -363,7 +366,7 @@ jobs:
       aws-secret-access-key:
         type: env_var_name
         default: AWS_SECRET_ACCESS_KEY
-      profile-name:
+      profile_name:
         type: string
         default: 'default'
       role-arn:
@@ -380,12 +383,12 @@ jobs:
               circleci step halt
             fi
       - checkout
-      - when: 
+      - when:
           condition: << parameters.role-arn >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>   
+                profile_name: << parameters.profile_name >>
+                role-arn: << parameters.role-arn >>
       - run:
           name: terraform init
           command: |
@@ -420,21 +423,21 @@ jobs:
         description: Select a specific version of the AWS ECS CLI. By default the latest version will be used.
         default: latest
         type: string
-      install-dir:
+      install_dir:
         type: string
         default: "/usr/local/bin/ecs-cli"
         description: |
           Specify the installation directory
-      override-installed:
+      override_installed:
         type: boolean
         default: false
         description: Enable this to override the installed version and install your specified version.
     executor: <<parameters.executor>>
     steps:
-      - aws-ecs/install-ecs-cli:
+      - aws-ecs/install_ecs_cli:
           version: <<parameters.version>>
-          install-dir: <<parameters.install-dir>>
-          override-installed: <<parameters.override-installed>>
+          install_dir: <<parameters.install_dir>>
+          override_installed: <<parameters.override_installed>>
 workflows:
   test-deploy:
     jobs:
@@ -464,73 +467,72 @@ workflows:
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
-          name: fargate_test-update-service-command
+          name: fargate_test-update_service-command
           filters: *filters
           requires:
             - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-job
+      - aws-ecs/deploy_service_update:
+          name: fargate_test-update_service-job
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"
-          docker-image-for-job: cimg/python:3.10.4
+                profile_name: "ECS_TEST_PROFILE"
+          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
-            - fargate_test-update-service-command
-          profile-name: "ECS_TEST_PROFILE"
+            - fargate_test-update_service-command
+          profile_name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-          # test the force-new-deployment flag
-          force-new-deployment: true
-          verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
+          container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          # test the force_new_deployment flag
+          force_new_deployment: true
+          verify_revision_is_deployed: true
+          max_poll_attempts: 40
+          poll_interval: 10
           context: [CPE-OIDC]
           post-steps:
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+                service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
-      - aws-ecs/deploy-service-update:
-          name: fargate_test-update-service-skip-registration
+      - aws-ecs/deploy_service_update:
+          name: fargate_test-update_service-skip-registration
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"          
-          docker-image-for-job: cimg/python:3.10.4
+                profile_name: "ECS_TEST_PROFILE"
+          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
-            - fargate_test-update-service-job
-          profile-name: "ECS_TEST_PROFILE"
+            - fargate_test-update_service-job
+          profile_name: "ECS_TEST_PROFILE"
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           # test skipping registration of a new task definition
-          skip-task-definition-registration: true
-          # test the enable-circuit-breaker flag
-          enable-circuit-breaker: true
-          verify-revision-is-deployed: true
-          max-poll-attempts: 40
-          poll-interval: 10
+          skip-task_definition-registration: true
+          # test the enable_circuit_breaker flag
+          enable_circuit_breaker: true
+          verify_revision_is_deployed: true
+          max_poll_attempts: 40
+          poll_interval: 10
           context: [CPE-OIDC]
       - tear-down-test-env:
           name: fargate_tear-down-test-env
           filters: *filters
           requires:
-            - fargate_test-update-service-skip-registration
+            - fargate_test-update_service-skip-registration
             - test-fargatespot
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-
       #################
       # EC2
       #################
@@ -549,111 +551,108 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - set-up-run-task-test:
-          name: ec2_set-up-run-task-test
+      - set-up-run_task-test:
+          name: ec2_set-up-run_task-test
           filters: *filters
           requires:
             - ec2_set-up-test-env
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - aws-ecs/run-task:
-          name: ec2_run-task-test
+      - aws-ecs/run_task:
+          name: ec2_run_task-test
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
-            - ec2_set-up-run-task-test
+            - ec2_set-up-run_task-test
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          task-definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          launch-type: "EC2"
+          task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          launch_type: "EC2"
           awsvpc: false
-          run-task-output: "run-task-output.json"
+          run_task-output: "run_task-output.json"
           overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
           context: [CPE-OIDC]
-      - tear-down-run-task-test:
-          name: ec2_tear-down-run-task-test
+      - tear-down-run_task-test:
+          name: ec2_tear-down-run_task-test
           filters: *filters
           requires:
-            - ec2_run-task-test
+            - ec2_run_task-test
           family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
-          name: ec2_test-update-service-command
+          name: ec2_test-update_service-command
           filters: *filters
           requires:
             - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - test-task-definition-update:
-          name: ec2_test-task-definition-update
+      - test-task_definition-update:
+          name: ec2_test-task_definition-update
           family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
-            - ec2_test-update-service-command
-      - aws-ecs/deploy-service-update:
-          name: ec2_test-update-service-job
+            - ec2_test-update_service-command
+      - aws-ecs/deploy_service_update:
+          name: ec2_test-update_service-job
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"
-          profile-name: "ECS_TEST_PROFILE"
-          docker-image-for-job: cimg/python:3.10.4
+                profile_name: "ECS_TEST_PROFILE"
+          profile_name: "ECS_TEST_PROFILE"
+          docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
           requires:
-            - ec2_test-task-definition-update
+            - ec2_test-task_definition-update
           family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+          service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
-          verify-revision-is-deployed: true
-          fail-on-verification-timeout: false
+          container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
+          verify_revision_is_deployed: true
+          fail_on_verification_timeout: false
           post-steps:
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+                service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
                 test-asterisk-expansion: true
       - tear-down-test-env:
           name: ec2_tear-down-test-env
           filters: *filters
           requires:
-            - ec2_test-update-service-job
-            - ec2_tear-down-run-task-test
+            - ec2_test-update_service-job
+            - ec2_tear-down-run_task-test
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-
       # ################
       # FargateSpot
       # ################
-
       - test-fargatespot:
           context: [CPE-OIDC]
           filters: *filters
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           requires:
             - fargate_set-up-test-env
-
       #################
       # CodeDeploy
       #################
       - build-test-app:
-            name: codedeploy_fargate_build-test-app
-            docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-            docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-            context: [CPE-OIDC]
-            filters: *filters
+          name: codedeploy_fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE-OIDC]
+          filters: *filters
       - set-up-test-env:
           name: codedeploy_fargate_set-up-test-env
           filters: *filters
@@ -663,81 +662,81 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST" 
+          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
-          name: codedeploy_fargate_test-update-service-command
+          name: codedeploy_fargate_test-update_service-command
           filters: *filters
           requires:
             - codedeploy_fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           skip-service-update: true
           context: [CPE-OIDC]
-      - aws-ecs/deploy-service-update:
-          name: codedeploy_fargate_test-update-service-job
+      - aws-ecs/deploy_service_update:
+          name: codedeploy_fargate_test-update_service-job
           auth:
             - aws-cli/setup:
                 role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          docker-image-for-job: cimg/python:3.10.4
+          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
-            - codedeploy_fargate_test-update-service-command
-          aws-region: AWS_REGION
+            - codedeploy_fargate_test-update_service-command
+          aws_region: AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-          deployment-controller: "CODE_DEPLOY"
-          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy-load-balanced-container-port: 80
-          codedeploy-capacity-provider-name: "FARGATE"
-          codedeploy-capacity-provider-base: "1"
-          codedeploy-capacity-provider-weight: "2"
-          verify-revision-is-deployed: false
+          container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          deployment_controller: "CODE_DEPLOY"
+          codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy_load_balanced_container_port: 80
+          codedeploy_capacity_provider_name: "FARGATE"
+          codedeploy_capacity_provider_base: "1"
+          codedeploy_capacity_provider_weight: "2"
+          verify_revision_is_deployed: false
           context: [CPE-OIDC]
           post-steps:
             - wait-for-codedeploy-deployment:
                 application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
                 deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: false
-      - aws-ecs/deploy-service-update:
+      - aws-ecs/deploy_service_update:
           name: codedeploy_fargate_test-update-and-wait-service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"          
-          docker-image-for-job: cimg/python:3.10.4
+                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
           requires:
-            - codedeploy_fargate_test-update-service-job
-          aws-region: AWS_REGION
+            - codedeploy_fargate_test-update_service-job
+          aws_region: AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-          container-image-name-updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          container-env-var-updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-          deployment-controller: "CODE_DEPLOY"
-          codedeploy-application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-          codedeploy-deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-          codedeploy-load-balanced-container-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy-load-balanced-container-port: 80
-          verify-revision-is-deployed: true
-          verification-timeout: "12m"
+          container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
+          deployment_controller: "CODE_DEPLOY"
+          codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
+          codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
+          codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          codedeploy_load_balanced_container_port: 80
+          verify_revision_is_deployed: true
+          verification_timeout: "12m"
           post-steps:
             - test-deployment:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
                 delete-load-balancer: true
             - delete-service:
-                service-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+                service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
@@ -750,23 +749,15 @@ workflows:
           role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
       - orb-tools/pack:
-          filters: *filters
+          filters: *release-filters
       - orb-tools/publish:
-          orb-name: circleci/aws-ecs
-          vcs-type: << pipeline.project.type >>
-          pub-type: production
-          requires:
-            - orb-tools/pack
-            - ec2_tear-down-test-env
-            - fargate_tear-down-test-env  
-            - codedeploy_fargate_tear-down-test-env
-            - integration-test-ecs-cli-install
+          orb_name: circleci/aws-ecs
+          vcs_type: << pipeline.project.type >>
+          pub_type: production
+          enable_pr_comment: true
           context: orb-publisher
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
+          filters: *release-filters
 commands:
   wait-for-codedeploy-deployment:
     description: "Wait for the CodeDeploy deployment to be successful"
@@ -792,7 +783,7 @@ commands:
   delete-service:
     description: "Forcefully delete an ECS service"
     parameters:
-      service-name:
+      service_name:
         description: "Name of the ECS service"
         type: string
       cluster:
@@ -804,12 +795,12 @@ commands:
           command: |
             aws ecs delete-service \
               --cluster << parameters.cluster>> \
-              --service << parameters.service-name >> \
+              --service << parameters.service_name >> \
               --force
   test-deployment:
     description: "Test the deployment"
     parameters:
-      service-name:
+      service_name:
         description: "Name of the ECS service"
         type: string
       cluster:
@@ -828,7 +819,7 @@ commands:
           name: Test deployment (for orb testing and is not part of the orb)
           command: |-
             set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service-name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service_name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
             ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"

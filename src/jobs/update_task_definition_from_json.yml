@@ -1,30 +1,30 @@
 description: |
   Install AWS CLI and  a task definition from a json file.
 docker:
-  - image: << parameters.docker-image-for-job >>
+  - image: << parameters.docker_image_for_job >>
 parameters:
-  docker-image-for-job:
+  docker_image_for_job:
     description: The docker image to be used for running this job on CircleCI.
     type: string
     default: 'cimg/python:3.10.4'
-  aws-region:
+  aws_region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: env_var_name
     default: AWS_DEFAULT_REGION
-  profile-name:
+  profile_name:
     description: AWS profile name to be configured.
     type: string
     default: "default"
-  task-definition-json:
+  task_definition-json:
     description: |
       Location of your .json task definition file (relative or absolute).
     type: string
-  deploy-scheduled-task:
+  deploy_scheduled_task:
     description: >
       Set this parameter to true to deploy updated task definition to a scheduled task rule.
     type: boolean
     default: false
-  rule-name:
+  rule_name:
     description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
     type: string
   auth:
@@ -34,11 +34,11 @@ parameters:
     type: steps
 steps:
   - steps: << parameters.auth >>
-  - update-task-definition-from-json:
-      task-definition-json: << parameters.task-definition-json >>
-      profile-name: << parameters.profile-name >>
+  - update_task_definition_from_json:
+      task_definition-json: << parameters.task_definition-json >>
+      profile_name: << parameters.profile_name >>
   - when:
-      condition: <<parameters.deploy-scheduled-task>>
+      condition: <<parameters.deploy_scheduled_task>>
       steps:
-        - deploy-ecs-scheduled-task:
-            rule-name: <<parameters.rule-name>>
+        - deploy_ecs_scheduled_task:
+            rule_name: <<parameters.rule_name>>

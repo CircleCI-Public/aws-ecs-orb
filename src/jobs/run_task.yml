@@ -2,24 +2,24 @@ description: |
   Install AWS CLI and Start a new ECS task using the specified task definition and other parameters.
 
 docker:
-  - image: << parameters.docker-image-for-job >>
+  - image: << parameters.docker_image_for_job >>
 parameters:
-  docker-image-for-job:
+  docker_image_for_job:
     description: The docker image to be used for running this job on CircleCI.
     type: string
     default: 'cimg/python:3.10.4'
-  aws-region:
+  aws_region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: env_var_name
     default: AWS_DEFAULT_REGION
-  profile-name:
+  profile_name:
     description: AWS profile name to be configured.
     type: string
     default: "default"
   cluster:
     description: The name or ARN of the cluster on which to run the task.
     type: string
-  task-definition:
+  task_definition:
     description: |
       "The family and revision (family:revision) or full ARN of the task
       definition to run. If a revision is not specified, the latest ACTIVE
@@ -31,7 +31,7 @@ parameters:
       cluster. You can specify up to 10 tasks per call."
     type: integer
     default: 1
-  started-by:
+  started_by:
     description: |
       An optional tag specified when a task is started. For example, if
       you automatically trigger a task to run a batch process job, you
@@ -49,7 +49,7 @@ parameters:
       (for example, family:my-family-name).
     type: string
     default: ''
-  placement-constraints:
+  placement_constraints:
     description: |
       "An array of placement constraint objects to use for the task. You
       can specify up to 10 constraints per task (including constraints in
@@ -57,14 +57,14 @@ parameters:
       Expected format: type=string,field=string."
     type: string
     default: ''
-  placement-strategy:
+  placement_strategy:
     description: |
       "The placement strategy objects to use for the task. You can specify
       a maximum of five strategy rules per task.
       Expected format: type=string,field=string."
     type: string
     default: ''
-  launch-type:
+  launch_type:
     description: |
       The launch type on which to run your task.
       Possible values EC2, FARGATE, or an empty string.
@@ -73,7 +73,7 @@ parameters:
     type: enum
     enum: ["FARGATE", "EC2", ""]
     default: FARGATE
-  platform-version:
+  platform_version:
     description: |
       Use this to specify the platform version that the task should run on.
       A platform version should only be specified for tasks using the Fargate launch type.
@@ -82,23 +82,23 @@ parameters:
   awsvpc:
     description: |
       "Does your task definition use awsvpc mode or not. If so,
-      this should be true and you should also include subnet-ids
-      and optionally security-group-ids / assign-public-ips."
+      this should be true and you should also include subnet_ids
+      and optionally security_group_ids / assign_public_ips."
     type: boolean
     default: true
-  subnet-ids:
+  subnet_ids:
     description: |
       "List of subnet ids separated by commas.
       Expected Format: subnet-70faa93b,subnet-bcc54b93"
     type: string
     default: ''
-  security-group-ids:
+  security_group_ids:
     description: |
       "List of security group ids separated by commas.
       Expected Format: sg-010a460f7f442fa75,sg-010a420f7faa5fa75"
     type: string
     default: ''
-  assign-public-ip:
+  assign_public_ip:
     description: |
       "Assign a public IP or not"
     type: enum
@@ -120,12 +120,12 @@ parameters:
       both of which you define. Expected format: key=string,value=string."
     type: string
     default: ''
-  enable-ecs-managed-tags:
+  enable_ecs_managed_tags:
     description: |
       "Specifies whether to enable Amazon ECS managed tags for the task."
     type: boolean
     default: false
-  propagate-tags:
+  propagate_tags:
     description: |
       "Specifies whether to propagate the tags from the task definition to
       the task. If no value is specified, the tags are not propagated.
@@ -133,15 +133,15 @@ parameters:
       tags to a task after task creation, use the TagResource API action."
     type: boolean
     default: false
-  capacity-provider-strategy:
+  capacity_provider_strategy:
     description: |
       The capacity provider strategy to use for the task.
-      If a `capacity-provider-strategy` is specified, the `launch-type` parameter must be set to an empty string.
+      If a `capacity_provider_strategy` is specified, the `launch_type` parameter must be set to an empty string.
     type: string
     default: ""
-  run-task-output:
+  run_task-output:
     description: |
-          Specifies a local json file to save the output logs from the aws ecs run-task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
+          Specifies a local json file to save the output logs from the aws ecs run_task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
     type: string
     default: ''
   auth:
@@ -151,24 +151,24 @@ parameters:
     type: steps
 steps:
   - steps: << parameters.auth >>
-  - run-task:
+  - run_task:
       cluster: << parameters.cluster >>
-      task-definition: << parameters.task-definition >>
+      task_definition: << parameters.task_definition >>
       count: << parameters.count >>
-      started-by: << parameters.started-by >>
+      started_by: << parameters.started_by >>
       group: << parameters.group >>
-      placement-constraints: << parameters.placement-constraints >>
-      placement-strategy: << parameters.placement-strategy >>
-      launch-type: << parameters.launch-type >>
-      platform-version: << parameters.platform-version >>
+      placement_constraints: << parameters.placement_constraints >>
+      placement_strategy: << parameters.placement_strategy >>
+      launch_type: << parameters.launch_type >>
+      platform_version: << parameters.platform_version >>
       awsvpc: << parameters.awsvpc >>
-      subnet-ids: << parameters.subnet-ids >>
-      security-group-ids: << parameters.security-group-ids >>
-      assign-public-ip: << parameters.assign-public-ip >>
+      subnet_ids: << parameters.subnet_ids >>
+      security_group_ids: << parameters.security_group_ids >>
+      assign_public_ip: << parameters.assign_public_ip >>
       overrides: << parameters.overrides >>
       tags: << parameters.tags >>
-      enable-ecs-managed-tags: << parameters.enable-ecs-managed-tags >>
-      propagate-tags: << parameters.propagate-tags >>
-      capacity-provider-strategy: << parameters.capacity-provider-strategy >>
-      profile-name: << parameters.profile-name >>
-      run-task-output: <<parameters.run-task-output>>
+      enable_ecs_managed_tags: << parameters.enable_ecs_managed_tags >>
+      propagate_tags: << parameters.propagate_tags >>
+      capacity_provider_strategy: << parameters.capacity_provider_strategy >>
+      profile_name: << parameters.profile_name >>
+      run_task-output: <<parameters.run_task-output>>

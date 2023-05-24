@@ -5,19 +5,19 @@ usage:
     aws-ecs: circleci/aws-ecs@4.0
     aws-cli: circleci/aws-cli@3.1
   jobs:
-    run-task:
+    run_task:
       docker:
         - image: cimg/python:3.10
       steps:
         - aws-cli/setup:
             profile: "OIDC-USER"
             role-arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
-        - aws-ecs/run-task:
+        - aws-ecs/run_task:
             cluster: cluster1
-            task-definition: myapp
+            task_definition: myapp
             awsvpc: false
-            launch-type: EC2
+            launch_type: EC2
   workflows:
-    run-task:
+    run_task:
       jobs:
-        - run-task
+        - run_task
