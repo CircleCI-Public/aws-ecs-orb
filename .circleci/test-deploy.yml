@@ -315,7 +315,7 @@ jobs:
         default: ''
     steps:
       - checkout
-      - :
+      - aws-cli/setup:
           role-arn: << parameters.role-arn >>
           profile-name: << parameters.profile_name >>
           aws-region: AWS_DEFAULT_REGION
