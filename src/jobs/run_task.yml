@@ -139,7 +139,7 @@ parameters:
       If a `capacity_provider_strategy` is specified, the `launch_type` parameter must be set to an empty string.
     type: string
     default: ""
-  run_task-output:
+  run_task_output:
     description: |
           Specifies a local json file to save the output logs from the aws ecs run_task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
     type: string
@@ -171,4 +171,4 @@ steps:
       propagate_tags: << parameters.propagate_tags >>
       capacity_provider_strategy: << parameters.capacity_provider_strategy >>
       profile_name: << parameters.profile_name >>
-      run_task-output: <<parameters.run_task-output>>
+      run_task_output: <<parameters.run_task_output>>

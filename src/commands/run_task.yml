@@ -113,7 +113,7 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: ''
-  run_task-output:
+  run_task_output:
     description: |
           Specifies a local json file to save the output logs from the aws ecs run_task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
     type: string
@@ -142,4 +142,4 @@ steps:
         ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate_tags>>
         ECS_PARAM_CD_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity_provider_strategy>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
-        ECS_PARAM_RUN_TASK_OUTPUT: <<parameters.run_task-output>>
+        ECS_PARAM_RUN_TASK_OUTPUT: <<parameters.run_task_output>>

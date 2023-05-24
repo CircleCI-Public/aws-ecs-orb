@@ -226,7 +226,7 @@ steps:
       steps:
         - run:
             name: Update ECS Blue/Green service with registered task definition.
-            command: <<include(scripts/update-bluegreen-service-via-task-def.sh)>>
+            command: <<include(scripts/update_bluegreen_service_via_task_def.sh)>>
             no_output_timeout: << parameters.verification_timeout >>
             environment:
               DEPLOYMENT_CONTROLLER: <<parameters.deployment_controller>>
