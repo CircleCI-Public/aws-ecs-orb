@@ -19,7 +19,7 @@ usage:
             session-duration: 3600
             role-session-name: "example-session-name"
         - aws-ecs/update_task_definition_from_json:
-            task_definition-json: my-app-definition.json
+            task_definition_json: my-app-definition.json
         - aws-ecs/deploy_ecs_scheduled_task:
             rule_name: "example-rule"
   workflows:

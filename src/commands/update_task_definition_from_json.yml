@@ -1,6 +1,6 @@
 description: Registers a task definition based on a json file.
 parameters:
-  task_definition-json:
+  task_definition_json:
     description: |
       Location of your .json task definition file (relative or absolute).
     type: string
@@ -13,5 +13,5 @@ steps:
       name: Register new task definition
       command: <<include(scripts/update_task_definition_from_json.sh)>>
       environment:
-        ECS_PARAM_TASK_DEFINITION_JSON: <<parameters.task_definition-json>>
+        ECS_PARAM_TASK_DEFINITION_JSON: <<parameters.task_definition_json>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>

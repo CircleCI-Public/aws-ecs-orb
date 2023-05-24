@@ -15,7 +15,7 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: "default"
-  task_definition-json:
+  task_definition_json:
     description: |
       Location of your .json task definition file (relative or absolute).
     type: string
@@ -35,7 +35,7 @@ parameters:
 steps:
   - steps: << parameters.auth >>
   - update_task_definition_from_json:
-      task_definition-json: << parameters.task_definition-json >>
+      task_definition_json: << parameters.task_definition_json >>
       profile_name: << parameters.profile_name >>
   - when:
       condition: <<parameters.deploy_scheduled_task>>

@@ -80,7 +80,7 @@ steps:
         ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container_docker_label_updates >>
   - run:
       name: Register new task definition
-      command: <<include(scripts/register-new-task-def.sh)>>
+      command: <<include(scripts/register_new_task_def.sh)>>
       environment:
         ECS_PARAM_FAMILY: <<parameters.family>>
         ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>

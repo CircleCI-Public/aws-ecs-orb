@@ -294,7 +294,7 @@ jobs:
               | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
               > task_definition.json
       - aws-ecs/update_task_definition_from_json:
-          task_definition-json: "task_definition.json"
+          task_definition_json: "task_definition.json"
       - run:
           name: Check if task definition was updated
           command: |
