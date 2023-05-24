@@ -67,7 +67,7 @@ parameters:
 steps:
   - run:
       name: Retrieve previous task definition and prepare new task definition values
-      command: <<include(scripts/get-prev-task.sh)>>
+      command: <<include(scripts/get_prev_task.sh)>>
       environment:
         ECS_PARAM_FAMILY: <<parameters.family>>
         ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
