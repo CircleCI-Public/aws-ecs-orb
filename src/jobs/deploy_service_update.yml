@@ -178,7 +178,7 @@ parameters:
       Only in use when verify_revision_is_deployed is set to true.
     type: boolean
     default: true
-  skip-task_definition-registration:
+  skip-task_definition_registration:
     description: |
       Whether to skip registration of a new task definition.
     type: boolean
@@ -250,7 +250,7 @@ steps:
       max_poll_attempts: << parameters.max_poll_attempts >>
       poll_interval: << parameters.poll_interval >>
       fail_on_verification_timeout: << parameters.fail_on_verification_timeout >>
-      skip-task_definition-registration: << parameters.skip-task_definition-registration >>
+      skip-task_definition_registration: << parameters.skip-task_definition_registration >>
       task_definition-tags: << parameters.task_definition-tags >>
       verification_timeout: << parameters.verification_timeout >>
       profile_name: << parameters.profile_name >>
