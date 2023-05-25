@@ -46,7 +46,7 @@ parameters:
     description: |
       The name of the task group to associate with the task.
       The default value is the family name of the task definition
-      (for example, family:my-family-name).
+      (for example, family:my_family_name).
     type: string
     default: ''
   placement_constraints:

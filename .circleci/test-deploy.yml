@@ -44,13 +44,13 @@ jobs:
       profile_name:
         type: string
         default: 'default'
-      role-arn:
+      role_arn:
         type: string
         default: ''
     steps:
       - aws-cli/setup:
-          profile-name: << parameters.profile_name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
       - jq/install
       - run:
           name: Get cluster info
@@ -143,7 +143,7 @@ jobs:
       profile_name:
         type: string
         default: 'default'
-      role-arn:
+      role_arn:
         type: string
         default: ''
       aws-access-key-id:
@@ -164,8 +164,8 @@ jobs:
             fi
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile_name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
       - run:
           name: terraform init
           command: |
@@ -202,7 +202,7 @@ jobs:
       aws-resource-name-prefix:
         description: "Prefix that the AWS resources for this launch type share"
         type: string
-      family-name:
+      family_name:
         description: "Family name"
         type: string
       service_name:
@@ -222,7 +222,7 @@ jobs:
         description: "The profile name to use for AWS credentials"
         type: string
         default: "default"
-      role-arn:
+      role_arn:
         type: string
         default: ''
     steps:
@@ -231,8 +231,8 @@ jobs:
       - attach_workspace:
           at: workspace
       - aws-cli/setup:
-          profile-name: << parameters.profile_name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
       - run:
           name: Load image
           command: |
@@ -253,10 +253,10 @@ jobs:
           condition: << parameters.skip-service-update >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile_name >>
-                role-arn: << parameters.role-arn >>
+                profile_name: << parameters.profile_name >>
+                role_arn: << parameters.role_arn >>
             - aws-ecs/update_service:
-                family: "<< parameters.family-name >>"
+                family: "<< parameters.family_name >>"
                 service_name: "<< parameters.service_name >>"
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container_image_name_updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
@@ -271,25 +271,25 @@ jobs:
     docker:
       - image: cimg/python:3.10.4
     parameters:
-      family-name:
+      family_name:
         description: "Family name"
         type: string
       profile_name:
         type: string
         default: 'default'
-      role-arn:
+      role_arn:
         type: string
         default: ''
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile_name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
           aws-region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
-            aws ecs describe-task_definition --task_definition << parameters.family-name >> \
+            aws ecs describe-task_definition --task_definition << parameters.family_name >> \
               | jq '.taskDefinition' | jq '.memory = "3072"' \
               | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
               > task_definition.json
@@ -298,58 +298,58 @@ jobs:
       - run:
           name: Check if task definition was updated
           command: |
-            aws ecs describe-task_definition --task_definition << parameters.family-name >> --include TAGS | grep "3072"
+            aws ecs describe-task_definition --task_definition << parameters.family_name >> --include TAGS | grep "3072"
   set-up-run_task-test:
     docker:
       - image: cimg/python:3.10.4
     parameters:
-      family-name:
+      family_name:
         description: "Family name"
         type: string
       profile_name:
         description: "The profile name to use for AWS credentials"
         type: string
         default: "default"
-      role-arn:
+      role_arn:
         type: string
         default: ''
     steps:
       - checkout
       - aws-cli/setup:
-          role-arn: << parameters.role-arn >>
-          profile-name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
+          profile_name: << parameters.profile_name >>
           aws-region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
             aws ecs register-task_definition \
-              --family << parameters.family-name >> \
+              --family << parameters.family_name >> \
               --cpu 256 --memory 512 \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
   tear-down-run_task-test:
     docker:
       - image: cimg/python:3.10.4
     parameters:
-      family-name:
+      family_name:
         description: "Family name"
         type: string
       profile_name:
         type: string
         default: 'default'
-      role-arn:
+      role_arn:
         type: string
         default: ''
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile_name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
           aws-region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
             TASK_DEFINITION_ARN=$(aws ecs describe-task_definition \
-              --task_definition << parameters.family-name >> | jq -r '.taskDefinition.taskDefinitionArn')
+              --task_definition << parameters.family_name >> | jq -r '.taskDefinition.taskDefinitionArn')
             aws ecs deregister-task_definition --task_definition ${TASK_DEFINITION_ARN}
   tear-down-test-env:
     parameters:
@@ -369,7 +369,7 @@ jobs:
       profile_name:
         type: string
         default: 'default'
-      role-arn:
+      role_arn:
         type: string
         default: ''
     docker:
@@ -384,11 +384,11 @@ jobs:
             fi
       - checkout
       - when:
-          condition: << parameters.role-arn >>
+          condition: << parameters.role_arn >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile_name >>
-                role-arn: << parameters.role-arn >>
+                profile_name: << parameters.profile_name >>
+                role_arn: << parameters.role_arn >>
       - run:
           name: terraform init
           command: |
@@ -465,25 +465,25 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
           name: fargate_test-update_service-command
           filters: *filters
           requires:
             - fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
+          family_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy_service_update:
           name: fargate_test-update_service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile_name: "ECS_TEST_PROFILE"
           docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
@@ -506,8 +506,8 @@ workflows:
           name: fargate_test-update_service-skip-registration
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile_name: "ECS_TEST_PROFILE"
           docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
@@ -532,7 +532,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       #################
       # EC2
       #################
@@ -550,20 +550,20 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - set-up-run_task-test:
           name: ec2_set-up-run_task-test
           filters: *filters
           requires:
             - ec2_set-up-test-env
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/run_task:
           name: ec2_run_task-test
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
             - ec2_set-up-run_task-test
@@ -579,26 +579,26 @@ workflows:
           filters: *filters
           requires:
             - ec2_run_task-test
-          family-name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
+          family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
           name: ec2_test-update_service-command
           filters: *filters
           requires:
             - ec2_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-task_definition-update:
           name: ec2_test-task_definition-update
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
           requires:
             - ec2_test-update_service-command
@@ -606,8 +606,8 @@ workflows:
           name: ec2_test-update_service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile-name: "ECS_TEST_PROFILE"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                profile_name: "ECS_TEST_PROFILE"
           profile_name: "ECS_TEST_PROFILE"
           docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
@@ -634,14 +634,14 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       # ################
       # FargateSpot
       # ################
       - test-fargatespot:
           context: [CPE-OIDC]
           filters: *filters
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           requires:
             - fargate_set-up-test-env
       #################
@@ -662,25 +662,25 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - test-service-update:
           name: codedeploy_fargate_test-update_service-command
           filters: *filters
           requires:
             - codedeploy_fargate_set-up-test-env
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          family-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+          family_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           skip-service-update: true
           context: [CPE-OIDC]
       - aws-ecs/deploy_service_update:
           name: codedeploy_fargate_test-update_service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
@@ -712,7 +712,7 @@ workflows:
           name: codedeploy_fargate_test-update-and-wait-service-job
           auth:
             - aws-cli/setup:
-                role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
@@ -746,7 +746,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
-          role-arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           filters: *filters
       - orb-tools/pack:
           filters: *release-filters
