@@ -279,7 +279,6 @@ jobs:
       - aws-cli/setup:
           profile_name: << parameters.profile_name >>
           role_arn: << parameters.role_arn >>
-          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Get existing task definition
           command: |
@@ -312,7 +311,6 @@ jobs:
       - aws-cli/setup:
           role_arn: << parameters.role_arn >>
           profile_name: << parameters.profile_name >>
-          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Register task definition
           command: |
@@ -338,7 +336,6 @@ jobs:
       - aws-cli/setup:
           profile_name: << parameters.profile_name >>
           role_arn: << parameters.role_arn >>
-          aws-region: AWS_DEFAULT_REGION
       - run:
           name: Deregister task definition
           command: |
