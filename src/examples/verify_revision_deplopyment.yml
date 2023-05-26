@@ -19,7 +19,7 @@ usage:
         - run:
             name: Get last task definition
             command: >
-              TASK_DEFINITION_ARN=$(aws ecs describe-task_definition \
+              TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
                   --task_definition ${MY_APP_PREFIX}-service \
                   --output text \
                   --query 'taskDefinition.taskDefinitionArn' \
