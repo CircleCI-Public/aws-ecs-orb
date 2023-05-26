@@ -71,12 +71,12 @@ jobs:
             aws ecs put-cluster-capacity-providers \
               --cluster "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster" \
               --capacity-providers FARGATE FARGATE_SPOT  \
-              --default-capacity_provider_strategy capacityProvider=FARGATE,weight=1 \
+              --default-capacity-provider-strategy capacityProvider=FARGATE,weight=1 \
               --region ${AWS_DEFAULT_REGION}
       - run:
           name: Register task definition
           command: |
-            aws ecs register-task_definition \
+            aws ecs register-task-definition \
               --family ecs-orb-fgs-1-sleep360 \
               --cpu 256 --memory 512 \
               --requires-compatibilities FARGATE \
@@ -282,7 +282,7 @@ jobs:
       - run:
           name: Get existing task definition
           command: |
-            aws ecs describe-task-definition --task_definition << parameters.family_name >> \
+            aws ecs describe-task-definition --task-definition<< parameters.family_name >> \
               | jq '.taskDefinition' | jq '.memory = "3072"' \
               | jq 'del(.["taskDefinitionArn", "revision", "status", "requiresAttributes", "compatibilities", "registeredAt", "registeredBy"])' \
               > task_definition.json
@@ -291,7 +291,7 @@ jobs:
       - run:
           name: Check if task definition was updated
           command: |
-            aws ecs describe-task-definition --task_definition << parameters.family_name >> --include TAGS | grep "3072"
+            aws ecs describe-task-definition --task-definition<< parameters.family_name >> --include TAGS | grep "3072"
   set-up-run_task-test:
     docker:
       - image: cimg/python:3.10.4
@@ -314,7 +314,7 @@ jobs:
       - run:
           name: Register task definition
           command: |
-            aws ecs register-task_definition \
+            aws ecs register-task-definition \
               --family << parameters.family_name >> \
               --cpu 256 --memory 512 \
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
@@ -340,8 +340,8 @@ jobs:
           name: Deregister task definition
           command: |
             TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-              --task_definition << parameters.family_name >> | jq -r '.taskDefinition.taskDefinitionArn')
-            aws ecs deregister-task_definition --task_definition ${TASK_DEFINITION_ARN}
+              --task-definition<< parameters.family_name >> | jq -r '.taskDefinition.taskDefinitionArn')
+            aws ecs deregister-task-definition --task-definition${TASK_DEFINITION_ARN}
   tear-down-test-env:
     parameters:
       terraform-image:
