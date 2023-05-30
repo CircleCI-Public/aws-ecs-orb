@@ -203,7 +203,7 @@ steps:
             name: Retrieve previous task definition
             command: >
               TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-                --task-definition<< parameters.family >> \
+                --task-definition << parameters.family >> \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn' \
                 --profile=<< parameters.profile_name >>)
