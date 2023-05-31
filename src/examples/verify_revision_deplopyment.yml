@@ -12,24 +12,24 @@ usage:
         - aws-cli/setup:
             # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
             role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
-            aws-region: AWS_REGION
-            profile-name: "OIDC-PROFILE"
+            aws_region: AWS_REGION
+            profile_name: "OIDC-PROFILE"
             session-duration: 3600
             role-session-name: "example-session-name"
         - run:
             name: Get last task definition
             command: >
               TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
-                  --task-definition ${MY_APP_PREFIX}-service \
+                  --task_definition ${MY_APP_PREFIX}-service \
                   --output text \
                   --query 'taskDefinition.taskDefinitionArn' \
                   --profile default)
               echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
               $BASH_ENV
-        - aws-ecs/verify-revision-is-deployed:
+        - aws-ecs/verify_revision_is_deployed:
             family: '${MY_APP_PREFIX}-service'
             cluster: '${MY_APP_PREFIX}-cluster'
-            task-definition-arn: '${TASK_DEFINITION_ARN}'
+            task_definition_arn: '${TASK_DEFINITION_ARN}'
   workflows:
     test-workflow:
       jobs:

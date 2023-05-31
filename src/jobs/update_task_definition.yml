@@ -2,24 +2,24 @@ description: |
   Install AWS CLI and register a task definition.
 
 docker:
-  - image: << parameters.docker-image-for-job >>
+  - image: << parameters.docker_image_for_job >>
 parameters:
-  docker-image-for-job:
+  docker_image_for_job:
     description: The docker image to be used for running this job on CircleCI.
     type: string
     default: 'cimg/python:3.10.4'
-  aws-region:
+  aws_region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: env_var_name
     default: AWS_DEFAULT_REGION
-  profile-name:
+  profile_name:
     description: AWS profile name to be configured.
     type: string
     default: "default"
   family:
     description: Name of the task definition's family.
     type: string
-  container-image-name-updates:
+  container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing
 
@@ -41,7 +41,7 @@ parameters:
       definition will be used.
     type: string
     default: ''
-  container-env-var-updates:
+  container_env_var_updates:
     description: >
       Use this to update or set the values of environment variables that will be
       defined for the containers.
@@ -55,7 +55,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-secret-updates:
+  container_secret_updates:
     description: >
       Use this to update or set the values of secrets variables that will be
       defined for the containers.
@@ -68,7 +68,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-docker-label-updates:
+  container_docker_label_updates:
     description: >
       Use this to update or set the values of docker label variables that will be defined for the containers.
       (Existing secrets variables not included in this parameter will not be removed)
@@ -79,12 +79,12 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  deploy-scheduled-task:
+  deploy_scheduled_task:
     description: >
       Set this parameter to true to deploy updated task definition to a scheduled task rule.
     type: boolean
     default: false
-  rule-name:
+  rule_name:
     description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
     type: string
   auth:
@@ -94,15 +94,15 @@ parameters:
     type: steps
 steps:
   - steps: << parameters.auth >>
-  - update-task-definition:
+  - update_task_definition:
       family: << parameters.family >>
-      container-image-name-updates: << parameters.container-image-name-updates >>
-      container-env-var-updates: << parameters.container-env-var-updates >>
-      container-secret-updates: << parameters.container-secret-updates >>
-      container-docker-label-updates: << parameters.container-docker-label-updates >>
-      profile-name: << parameters.profile-name >>
+      container_image_name_updates: << parameters.container_image_name_updates >>
+      container_env_var_updates: << parameters.container_env_var_updates >>
+      container_secret_updates: << parameters.container_secret_updates >>
+      container_docker_label_updates: << parameters.container_docker_label_updates >>
+      profile_name: << parameters.profile_name >>
   - when:
-      condition: <<parameters.deploy-scheduled-task>>
+      condition: <<parameters.deploy_scheduled_task>>
       steps:
-        - deploy-ecs-scheduled-task:
-            rule-name: <<parameters.rule-name>>
+        - deploy_ecs_scheduled_task:
+            rule_name: <<parameters.rule_name>>

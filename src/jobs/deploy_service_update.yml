@@ -2,17 +2,17 @@ description: >
   Install AWS CLI and update the ECS service with the registered task definition.
 
 docker:
-  - image: << parameters.docker-image-for-job >>
+  - image: << parameters.docker_image_for_job >>
 parameters:
-  docker-image-for-job:
+  docker_image_for_job:
     description: The docker image to be used for running this job on CircleCI.
     type: string
     default: 'cimg/python:3.10.4'
-  aws-region:
+  aws_region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: env_var_name
     default: AWS_DEFAULT_REGION
-  profile-name:
+  profile_name:
     description: AWS profile name to be configured.
     type: string
     default: "default"
@@ -22,52 +22,52 @@ parameters:
   cluster:
     description: The short name or full ARN of the cluster that hosts the service.
     type: string
-  service-name:
+  service_name:
     description: >-
       The name of the service to update. If undefined, we assume `family` is the
       name of both the service and task definition.
     type: string
     default: ''
-  deployment-controller:
+  deployment_controller:
     description: The deployment controller to use for the service. Defaulted to ECS
     type: enum
     enum:
       - ECS
       - CODE_DEPLOY
     default: ECS
-  codedeploy-application-name:
+  codedeploy_application_name:
     description: >
       The name of the AWS CodeDeploy application used for the deployment.
 
-      Only effective when the deployment-controller parameter value is
+      Only effective when the deployment_controller parameter value is
       "CODE_DEPLOY".
     type: string
     default: ''
-  codedeploy-deployment-group-name:
+  codedeploy_deployment_group_name:
     description: >
       The name of the AWS CodeDeploy deployment group used for the deployment.
 
-      Only effective when the deployment-controller parameter value is
+      Only effective when the deployment_controller parameter value is
       "CODE_DEPLOY".
     type: string
     default: ''
-  codedeploy-load-balanced-container-name:
+  codedeploy_load_balanced_container_name:
     description: >
       The name of the container to be load-balanced via AWS CodeDeploy.
 
-      Only effective when the deployment-controller parameter value is
+      Only effective when the deployment_controller parameter value is
       "CODE_DEPLOY".
     type: string
     default: ''
-  codedeploy-load-balanced-container-port:
+  codedeploy_load_balanced_container_port:
     description: >
       The port of the container to be load-balanced via AWS CodeDeploy.
 
-      Only effective when the deployment-controller parameter value is
+      Only effective when the deployment_controller parameter value is
       "CODE_DEPLOY".
     type: integer
     default: 80
-  container-image-name-updates:
+  container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing
 
@@ -89,7 +89,7 @@ parameters:
       definition will be used.
     type: string
     default: ''
-  container-env-var-updates:
+  container_env_var_updates:
     description: >
       Use this to update or set the values of environment variables that will be
       defined for the containers.
@@ -103,7 +103,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-secret-updates:
+  container_secret_updates:
     description: >
       Use this to update or set the values of secrets variables that will be
       defined for the containers.
@@ -116,7 +116,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-docker-label-updates:
+  container_docker_label_updates:
     description: >
       Use this to update or set the values of docker label variables that will be defined for the containers.
       (Existing secrets variables not included in this parameter will not be removed)
@@ -127,28 +127,28 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  force-new-deployment:
+  force_new_deployment:
     description: |
       Whether to force a new deployment of the service.
       Not applicable to ECS services that are of the Blue/Green Deployment type.
     type: boolean
     default: false
-  enable-circuit-breaker:
+  enable_circuit_breaker:
     description: |
       Determines whether a service deployment will fail if the service can’t reach a steady state.
       The deployment circuit breaker can only be used for services using the rolling update (ECS ) deployment type.
     type: boolean
     default: false
-  verify-revision-is-deployed:
+  verify_revision_is_deployed:
     description: |
-      Runs the verify-revision-is-deployed Orb command to verify that
+      Runs the verify_revision_is_deployed Orb command to verify that
       the revision has been deployed and is the only deployed revision
       for the service. Note: enabling this may result in the build
       being marked as failed if tasks for older revisions fail to be stopped
       before the max number of polling attempts is reached.
     type: boolean
     default: false
-  verification-timeout:
+  verification_timeout:
     description: >
       The maximum amount of time to wait for a blue/green deployment to complete
       before timing out.
@@ -157,33 +157,33 @@ parameters:
       type.
     type: string
     default: 10m
-  max-poll-attempts:
+  max_poll_attempts:
     description: >
       The maximum number of attempts to poll the deployment status before giving
       up.
 
-      Only in use when verify-revision-is-deployed is set to true.
+      Only in use when verify_revision_is_deployed is set to true.
     type: integer
     default: 50
-  poll-interval:
+  poll_interval:
     description: |
       The polling interval, in seconds.
-      Only in use when verify-revision-is-deployed is set to true.
+      Only in use when verify_revision_is_deployed is set to true.
     type: integer
     default: 20
-  fail-on-verification-timeout:
+  fail_on_verification_timeout:
     description: |
       Whether to exit with an error if the verification of the deployment
       status does not complete within the number of polling attempts.
-      Only in use when verify-revision-is-deployed is set to true.
+      Only in use when verify_revision_is_deployed is set to true.
     type: boolean
     default: true
-  skip-task-definition-registration:
+  skip_task_definition_registration:
     description: |
       Whether to skip registration of a new task definition.
     type: boolean
     default: false
-  task-definition-tags:
+  task_definition_tags:
     description: >
       The metadata that you apply to the task definition to help you categorize and organize them.
       Each tag consists of a key and an optional value, both of which you define.
@@ -199,25 +199,25 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  codedeploy-capacity-provider-name:
+  codedeploy_capacity_provider_name:
     description: >
       The name of AWS Capacity Provider to be added to CodeDeploy deployment.
       Must be used with capacity-provider-base and capacity-provider-weight.
     type: string
     default: ''
-  codedeploy-capacity-provider-base:
+  codedeploy_capacity_provider_base:
     description: >
       The base of AWS Capacity Provider to be added to CodeDeploy deployment.
-      Must be used with codedeploy-capacity-provider-name and capacity-provider-weight.
+      Must be used with codedeploy_capacity_provider_name and capacity-provider-weight.
     type: string
     default: ''
-  codedeploy-capacity-provider-weight:
+  codedeploy_capacity_provider_weight:
     description: >
       The base of AWS Capacity Provider to be added to CodeDeploy deployment.
-      Must be used with codedeploy-capacity-provider-name and capacity-provider-base.
+      Must be used with codedeploy_capacity_provider_name and capacity-provider-base.
     type: string
     default: ''
-  deployment-config-name:
+  deployment_config_name:
     description: >
       The name of a CODE DEPLOY deployment configuration associated with the IAM user or AWS account.
       If not specified, the value configured in the deployment group is used as the default.
@@ -231,30 +231,30 @@ parameters:
 
 steps:
   - steps: << parameters.auth >>
-  - update-service:
+  - update_service:
       family: << parameters.family >>
       cluster: << parameters.cluster >>
-      service-name: << parameters.service-name >>
-      deployment-controller: << parameters.deployment-controller >>
-      enable-circuit-breaker: << parameters.enable-circuit-breaker >>
-      codedeploy-application-name: << parameters.codedeploy-application-name >>
-      codedeploy-deployment-group-name: << parameters.codedeploy-deployment-group-name >>
-      codedeploy-load-balanced-container-name: << parameters.codedeploy-load-balanced-container-name >>
-      codedeploy-load-balanced-container-port: << parameters.codedeploy-load-balanced-container-port >>
-      container-image-name-updates: << parameters.container-image-name-updates >>
-      container-env-var-updates: << parameters.container-env-var-updates >>
-      container-secret-updates: << parameters.container-secret-updates >>
-      container-docker-label-updates: << parameters.container-docker-label-updates >>
-      force-new-deployment: << parameters.force-new-deployment >>
-      verify-revision-is-deployed: << parameters.verify-revision-is-deployed >>
-      max-poll-attempts: << parameters.max-poll-attempts >>
-      poll-interval: << parameters.poll-interval >>
-      fail-on-verification-timeout: << parameters.fail-on-verification-timeout >>
-      skip-task-definition-registration: << parameters.skip-task-definition-registration >>
-      task-definition-tags: << parameters.task-definition-tags >>
-      verification-timeout: << parameters.verification-timeout >>
-      profile-name: << parameters.profile-name >>
-      codedeploy-capacity-provider-name: <<parameters.codedeploy-capacity-provider-name>>
-      codedeploy-capacity-provider-weight: <<parameters.codedeploy-capacity-provider-weight>>
-      codedeploy-capacity-provider-base: <<parameters.codedeploy-capacity-provider-base>>
-      deployment-config-name: <<parameters.deployment-config-name>>
+      service_name: << parameters.service_name >>
+      deployment_controller: << parameters.deployment_controller >>
+      enable_circuit_breaker: << parameters.enable_circuit_breaker >>
+      codedeploy_application_name: << parameters.codedeploy_application_name >>
+      codedeploy_deployment_group_name: << parameters.codedeploy_deployment_group_name >>
+      codedeploy_load_balanced_container_name: << parameters.codedeploy_load_balanced_container_name >>
+      codedeploy_load_balanced_container_port: << parameters.codedeploy_load_balanced_container_port >>
+      container_image_name_updates: << parameters.container_image_name_updates >>
+      container_env_var_updates: << parameters.container_env_var_updates >>
+      container_secret_updates: << parameters.container_secret_updates >>
+      container_docker_label_updates: << parameters.container_docker_label_updates >>
+      force_new_deployment: << parameters.force_new_deployment >>
+      verify_revision_is_deployed: << parameters.verify_revision_is_deployed >>
+      max_poll_attempts: << parameters.max_poll_attempts >>
+      poll_interval: << parameters.poll_interval >>
+      fail_on_verification_timeout: << parameters.fail_on_verification_timeout >>
+      skip_task_definition_registration: << parameters.skip_task_definition_registration >>
+      task_definition_tags: << parameters.task_definition_tags >>
+      verification_timeout: << parameters.verification_timeout >>
+      profile_name: << parameters.profile_name >>
+      codedeploy_capacity_provider_name: <<parameters.codedeploy_capacity_provider_name>>
+      codedeploy_capacity_provider_weight: <<parameters.codedeploy_capacity_provider_weight>>
+      codedeploy_capacity_provider_base: <<parameters.codedeploy_capacity_provider_base>>
+      deployment_config_name: <<parameters.deployment_config_name>>

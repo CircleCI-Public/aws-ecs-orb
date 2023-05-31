@@ -23,7 +23,7 @@ usage:
             repo: '${MY_APP_PREFIX}'
             region: AWS_REGION
             tag: '${CIRCLE_SHA1}'
-        - aws-ecs/deploy-service-update:
+        - aws-ecs/deploy_service_update:
             auth:
               # Add authentication step with OIDC using aws-cli/setup command
               - aws-cli/setup:
@@ -35,4 +35,4 @@ usage:
               - aws-ecr/build-and-push-image
             family: '${MY_APP_PREFIX}-service'
             cluster: '${MY_APP_PREFIX}-cluster'
-            container-image-name-updates: 'container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
+            container_image_name_updates: 'container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
