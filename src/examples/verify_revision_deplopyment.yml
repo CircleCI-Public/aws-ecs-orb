@@ -12,7 +12,7 @@ usage:
         - aws-cli/setup:
             # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
             role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
-            aws_region: AWS_REGION
+            region: AWS_REGION
             profile_name: "OIDC-PROFILE"
             session-duration: 3600
             role-session-name: "example-session-name"
