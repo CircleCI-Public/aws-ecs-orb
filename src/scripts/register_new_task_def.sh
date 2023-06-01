@@ -1,8 +1,8 @@
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-ORB_EVAL_FAMILY=$(eval echo "$ORB_EVAL_FAMILY")
-ORB_EVAL_PROFILE_NAME=$(eval echo "$ORB_EVAL_PROFILE_NAME")
+ORB_EVAL_FAMILY=$(circleci env subst "$ORB_EVAL_FAMILY")
+ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
     set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"

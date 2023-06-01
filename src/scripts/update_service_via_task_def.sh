@@ -1,10 +1,10 @@
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-ORB_EVAL_FAMILY=$(eval echo "$ORB_EVAL_FAMILY")
-ORB_EVAL_CLUSTER_NAME=$(eval echo "$ORB_EVAL_CLUSTER_NAME")
-ORB_EVAL_SERVICE_NAME=$(eval echo "$ORB_EVAL_SERVICE_NAME")
-ORB_EVAL_PROFILE_NAME=$(eval echo "$ORB_EVAL_PROFILE_NAME")
+ORB_EVAL_FAMILY=$(circleci env subst "$ORB_EVAL_FAMILY")
+ORB_EVAL_CLUSTER_NAME=$(circleci env subst "$ORB_EVAL_CLUSTER_NAME")
+ORB_EVAL_SERVICE_NAME=$(circleci env subst "$ORB_EVAL_SERVICE_NAME")
+ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
 
 if [ -z "${ORB_EVAL_SERVICE_NAME}" ]; then
     ORB_EVAL_SERVICE_NAME="$ORB_EVAL_FAMILY"
