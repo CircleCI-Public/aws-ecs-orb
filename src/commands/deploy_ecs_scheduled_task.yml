@@ -9,5 +9,5 @@ steps:
   - run:
       name: Deploy rule with updated task definition
       environment:
-        ECS_PARAM_RULE_NAME: <<parameters.rule_name>>
+        ORB_EVAL_RULE_NAME: <<parameters.rule_name>>
       command: <<include(scripts/deploy_ecs_scheduled_task.sh)>>

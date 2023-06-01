@@ -20,7 +20,7 @@ steps:
   - run:
       name: Install AWS ECS CLI
       environment:
-        ECS_PARAM_VERSION: <<parameters.version>>
-        ECS_PARAM_INSTALL_DIR: <<parameters.install_dir>>
-        ECS_PARAM_OVERRIDE_INSTALLED: <<parameters.override_installed>>
+        ORB_EVAL_VERSION: <<parameters.version>>
+        ORB_EVAL_INSTALL_DIR: <<parameters.install_dir>>
+        ORB_VAL_OVERRIDE_INSTALLED: <<parameters.override_installed>>
       command: <<include(scripts/install_ecs_cli.sh)>>

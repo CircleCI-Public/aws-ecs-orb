@@ -112,7 +112,7 @@ parameters:
   profile_name:
     description: AWS profile name to be configured.
     type: string
-    default: ''
+    default: "default"
   run_task_output:
     description: |
           Specifies a local json file to save the output logs from the aws ecs run_task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
@@ -123,23 +123,23 @@ steps:
       name: Run Task
       command: <<include(scripts/run_task.sh)>>
       environment:
-        ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
-        ECS_PARAM_TASK_DEF: <<parameters.task_definition>>
-        ECS_PARAM_COUNT: <<parameters.count>>
-        ECS_PARAM_STARTED_BY: <<parameters.started_by>>
-        ECS_PARAM_GROUP: <<parameters.group>>
-        ECS_PARAM_PLACEMENT_CONSTRAINTS: <<parameters.placement_constraints>>
-        ECS_PARAM_PLACEMENT_STRATEGY: <<parameters.placement_strategy>>
-        ECS_PARAM_LAUNCH_TYPE: <<parameters.launch_type>>
-        ECS_PARAM_PLATFORM_VERSION: <<parameters.platform_version>>
-        ECS_PARAM_AWSVPC: <<parameters.awsvpc>>
-        ECS_PARAM_SUBNET_ID: <<parameters.subnet_ids>>
-        ECS_PARAM_SEC_GROUP_ID: <<parameters.security_group_ids>>
-        ECS_PARAM_ASSIGN_PUB_IP: <<parameters.assign_public_ip>>
-        ECS_PARAM_OVERRIDES: <<parameters.overrides>>
-        ECS_PARAM_TAGS: <<parameters.tags>>
-        ECS_PARAM_ENABLE_ECS_MANAGED_TAGS: <<parameters.enable_ecs_managed_tags>>
-        ECS_PARAM_PROPAGATE_TAGS: <<parameters.propagate_tags>>
-        ECS_PARAM_CD_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity_provider_strategy>>
-        ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
-        ECS_PARAM_RUN_TASK_OUTPUT: <<parameters.run_task_output>>
+        ORB_EVAL_CLUSTER_NAME: <<parameters.cluster>>
+        ORB_EVAL_TASK_DEF: <<parameters.task_definition>>
+        ORB_VAL_COUNT: <<parameters.count>>
+        ORB_EVAL_STARTED_BY: <<parameters.started_by>>
+        ORB_EVAL_GROUP: <<parameters.group>>
+        ORB_EVAL_PLACEMENT_CONSTRAINTS: <<parameters.placement_constraints>>
+        ORB_EVAL_PLACEMENT_STRATEGY: <<parameters.placement_strategy>>
+        ORB_VAL_LAUNCH_TYPE: <<parameters.launch_type>>
+        ORB_EVAL_PLATFORM_VERSION: <<parameters.platform_version>>
+        ORB_VAL_AWSVPC: <<parameters.awsvpc>>
+        ORB_EVAL_SUBNET_ID: <<parameters.subnet_ids>>
+        ORB_EVAL_SEC_GROUP_ID: <<parameters.security_group_ids>>
+        ORB_VAL_ASSIGN_PUB_IP: <<parameters.assign_public_ip>>
+        ORB_EVAL_OVERRIDES: <<parameters.overrides>>
+        ORB_EVAL_TAGS: <<parameters.tags>>
+        ORB_VAL_ENABLE_ECS_MANAGED_TAGS: <<parameters.enable_ecs_managed_tags>>
+        ORB_VAL_PROPAGATE_TAGS: <<parameters.propagate_tags>>
+        ORB_EVAL_CD_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity_provider_strategy>>
+        ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_EVAL_RUN_TASK_OUTPUT: <<parameters.run_task_output>>

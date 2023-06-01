@@ -59,7 +59,7 @@ parameters:
   profile_name:
     description: AWS profile name to be configured.
     type: string
-    default: ''
+    default: "default"
   previous_revision_number:
     description: Optional previous task's revision number
     type: string
@@ -69,18 +69,18 @@ steps:
       name: Retrieve previous task definition and prepare new task definition values
       command: <<include(scripts/get_prev_task.sh)>>
       environment:
-        ECS_PARAM_FAMILY: <<parameters.family>>
-        ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
-        ECS_PARAM_CONTAINER_ENV_VAR_UPDATES: <<parameters.container_env_var_updates>>
+        ORB_EVAL_FAMILY: <<parameters.family>>
+        ORB_EVAL_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
+        ORB_EVAL_CONTAINER_ENV_VAR_UPDATE: <<parameters.container_env_var_updates>>
         ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
         ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
-        ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
-        ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous_revision_number>>
-        ECS_PARAM_CONTAINER_SECRET_UPDATES: <<parameters.container_secret_updates>>
-        ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container_docker_label_updates >>
+        ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_EVAL_PREVIOUS_REVISION_NUMBER: <<parameters.previous_revision_number>>
+        ORB_EVAL_CONTAINER_SECRET_UPDATES: <<parameters.container_secret_updates>>
+        ORB_EVAL_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container_docker_label_updates >>
   - run:
       name: Register new task definition
       command: <<include(scripts/register_new_task_def.sh)>>
       environment:
-        ECS_PARAM_FAMILY: <<parameters.family>>
-        ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_EVAL_FAMILY: <<parameters.family>>
+        ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
