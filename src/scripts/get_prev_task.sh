@@ -16,7 +16,7 @@ else
 fi
 
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_EVAL_PROFILE_NAME}" "$@")
+PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_EVAL_PROFILE_NAME}" "$@")"
 
 # Prepare script for updating container definitions
 
