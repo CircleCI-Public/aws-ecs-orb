@@ -5,7 +5,7 @@ if [ -z "$td_arn" ]; then
     exit 1
 fi
 
-ORB_EVAL_RULE_NAME=$(circleci env subst "${ORB_EVAL_RULE_NAME}")
+ORB_EVAL_RULE_NAME="$(circleci env subst "${ORB_EVAL_RULE_NAME}")"
 
 CLI_OUTPUT_FILE=$(mktemp cli-output.json.XXXX)
 CLI_INPUT_FILE=$(mktemp cli-input.json.XXXX)
