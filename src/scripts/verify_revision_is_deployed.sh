@@ -1,9 +1,9 @@
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-ORB_EVAL_FAMILY=$(circleci env subst "$ORB_EVAL_FAMILY")
-ORB_EVAL_SERVICE_NAME=$(circleci env subst "$ORB_EVAL_SERVICE_NAME")
-ORB_EVAL_CLUSTER_NAME=$(circleci env subst "$ORB_EVAL_CLUSTER_NAME")
-ORB_EVAL_TASK_DEF_ARN=$(circleci env subst "$ORB_EVAL_TASK_DEF_ARN")
-ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
+ORB_EVAL_FAMILY="$(circleci env subst "$ORB_EVAL_FAMILY")"
+ORB_EVAL_SERVICE_NAME="$(circleci env subst "$ORB_EVAL_SERVICE_NAME")"
+ORB_EVAL_CLUSTER_NAME="$(circleci env subst "$ORB_EVAL_CLUSTER_NAME")"
+ORB_EVAL_TASK_DEF_ARN="$(circleci env subst "$ORB_EVAL_TASK_DEF_ARN")"
+ORB_EVAL_PROFILE_NAME="$(circleci env subst "$ORB_EVAL_PROFILE_NAME")"
 
 if [ "$ORB_EVAL_TASK_DEF_ARN" = "" ]; then
     echo "Invalid task-definition-arn parameter value: $ORB_EVAL_TASK_DEF_ARN"
