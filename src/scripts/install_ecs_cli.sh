@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ $EUID == 0 ]; then export SUDO=""; else export SUDO="sudo"; fi
 
 ORB_EVAL_VERSION=$(circleci env subst "${ORB_EVAL_VERSION}")
