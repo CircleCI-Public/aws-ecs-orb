@@ -13,7 +13,7 @@ ORB_EVAL_RUN_TASK_OUTPUT=$(circleci env subst "$ORB_EVAL_RUN_TASK_OUTPUT")
 ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
 
 if [[ "$ORB_EVAL_OVERRIDES" == *"\${"* ]]; then
-    ORB_EVAL_OVERRIDES=$(echo "${ORB_EVAL_OVERRIDES}" | circleci env subst)
+    ORB_EVAL_OVERRIDES="$(echo "${ORB_EVAL_OVERRIDES}" | circleci env subst)"
 fi
 
 set -o noglob
