@@ -60,8 +60,8 @@ if [ "$ORB_VAL_AWSVPC" == "1" ]; then
         echo 'When "awsvpc" is enabled, "subnet-ids" must be provided.'
         exit 1
     fi
-    ORB_EVAL_SUBNET_ID=$(circleci env subst "$ORB_EVAL_SUBNET_ID")
-    ORB_EVAL_SEC_GROUP_ID=$(circleci env subst "$ORB_EVAL_SEC_GROUP_ID")
+    ORB_EVAL_SUBNET_ID="$(circleci env subst "$ORB_EVAL_SUBNET_ID")"
+    ORB_EVAL_SEC_GROUP_ID="$(circleci env subst "$ORB_EVAL_SEC_GROUP_ID")"
     set -- "$@" --network-configuration awsvpcConfiguration="{subnets=[$ORB_EVAL_SUBNET_ID],securityGroups=[$ORB_EVAL_SEC_GROUP_ID],assignPublicIp=$ORB_VAL_ASSIGN_PUB_IP}"
 fi
 if [ -n "$ORB_EVAL_CD_CAPACITY_PROVIDER_STRATEGY" ]; then
