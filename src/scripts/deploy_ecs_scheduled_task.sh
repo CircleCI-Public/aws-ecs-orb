@@ -1,3 +1,4 @@
+#!/bin/bash
 td_arn=$CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN
 
 if [ -z "$td_arn" ]; then

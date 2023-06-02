@@ -1,3 +1,4 @@
+#!/bin/bash
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.

@@ -1,3 +1,4 @@
+#!/bin/bash
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ORB_EVAL_FAMILY="$(circleci env subst "$ORB_EVAL_FAMILY")"
 ORB_EVAL_SERVICE_NAME="$(circleci env subst "$ORB_EVAL_SERVICE_NAME")"

@@ -1,3 +1,4 @@
+#!/bin/bash
 if [[ $EUID == 0 ]]; then export SUDO=""; else export SUDO="sudo"; fi
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ORB_EVAL_CLUSTER_NAME=$(circleci env subst "$ORB_EVAL_CLUSTER_NAME")

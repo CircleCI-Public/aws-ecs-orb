@@ -1,3 +1,4 @@
+#!/bin/bash
 ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
 ORB_EVAL_TASK_DEFINITION_JSON=$(circleci env subst "$ORB_EVAL_TASK_DEFINITION_JSON")
 

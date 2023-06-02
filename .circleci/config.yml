@@ -18,7 +18,6 @@ workflows:
       - orb-tools/review:
           filters: *filters
       - shellcheck/check:
-          exclude: SC2148,SC2038,SC2086,SC2002,SC2016
           filters: *filters
       - orb-tools/continue:
           orb_name: aws-ecs
