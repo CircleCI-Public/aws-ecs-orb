@@ -1,3 +1,4 @@
+#!/bin/sh
 BASEDIR=$(pwd)
 
 tearDownTF() {
@@ -5,6 +6,7 @@ tearDownTF() {
     terraform destroy -auto-approve \
         -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
         -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
+        -var "aws_session_token=${AWS_SESSION_TOKEN}" \
         -var "aws_region=${AWS_DEFAULT_REGION}" \
         -var "aws_account_id=${AWS_ACCOUNT_ID}" \
         -var "aws_resource_prefix=${AWS_RESOURCE_PREFIX}"

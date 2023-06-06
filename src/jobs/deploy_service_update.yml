@@ -8,10 +8,10 @@ parameters:
     description: The docker image to be used for running this job on CircleCI.
     type: string
     default: 'cimg/python:3.10.4'
-  aws_region:
+  region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
-    type: env_var_name
-    default: AWS_DEFAULT_REGION
+    type: string
+    default: ${AWS_DEFAULT_REGION}
   profile_name:
     description: AWS profile name to be configured.
     type: string

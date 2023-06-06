@@ -1,14 +1,14 @@
-ECS_PARAM_PROFILE_NAME=$(eval echo "$ECS_PARAM_PROFILE_NAME")
+#!/bin/bash
+ORB_EVAL_PROFILE_NAME=$(circleci env subst "$ORB_EVAL_PROFILE_NAME")
+ORB_EVAL_TASK_DEFINITION_JSON=$(circleci env subst "$ORB_EVAL_TASK_DEFINITION_JSON")
 
-if [ "${ECS_PARAM_TASK_DEFINITION_JSON:0:1}" != "/" ]; then
-    ECS_PARAM_TASK_DEFINITION_JSON="$(pwd)/${ECS_PARAM_TASK_DEFINITION_JSON}"
+if [ "${ORB_EVAL_TASK_DEFINITION_JSON:0:1}" != "/" ]; then
+    ORB_EVAL_TASK_DEFINITION_JSON="$(pwd)/${ORB_EVAL_TASK_DEFINITION_JSON}"
 fi
 
-if [ -n "${ECS_PARAM_PROFILE_NAME}" ]; then
-    set -- "$@" --profile "${ECS_PARAM_PROFILE_NAME}"   
-fi
 REVISION=$(aws ecs register-task-definition \
-    --cli-input-json file://"${ECS_PARAM_TASK_DEFINITION_JSON}" \
+    --profile "${ORB_EVAL_PROFILE_NAME}" \
+    --cli-input-json file://"${ORB_EVAL_TASK_DEFINITION_JSON}" \
     --output text \
     --query 'taskDefinition.taskDefinitionArn' \
     "$@")

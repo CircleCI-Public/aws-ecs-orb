@@ -159,7 +159,7 @@ parameters:
   profile_name:
     description: AWS profile name to be configured.
     type: string
-    default: ''
+    default: "default"
   codedeploy_capacity_provider_name:
     description: >
       The name of AWS Capacity Provider to be added to CodeDeploy deployment.
@@ -230,17 +230,17 @@ steps:
             no_output_timeout: << parameters.verification_timeout >>
             environment:
               DEPLOYMENT_CONTROLLER: <<parameters.deployment_controller>>
-              ECS_PARAM_CD_APP_NAME: <<parameters.codedeploy_application_name>>
-              ECS_PARAM_CD_DEPLOY_GROUP_NAME: <<parameters.codedeploy_deployment_group_name>>
-              ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_NAME: <<parameters.codedeploy_load_balanced_container_name>>
-              ECS_PARAM_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy_load_balanced_container_port>>
-              ECS_PARAM_VERIFY_REV_DEPLOY: <<parameters.verify_revision_is_deployed>>
-              ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
-              ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
-              ECS_PARAM_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy_capacity_provider_name>>
-              ECS_PARAM_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy_capacity_provider_weight>>
-              ECS_PARAM_CD_CAPACITY_PROVIDER_BASE: <<parameters.codedeploy_capacity_provider_base>>
-              ECS_PARAM_CD_DEPLOYMENT_CONFIG_NAME: <<parameters.deployment_config_name>>
+              ORB_EVAL_CD_APP_NAME: <<parameters.codedeploy_application_name>>
+              ORB_EVAL_CD_DEPLOY_GROUP_NAME: <<parameters.codedeploy_deployment_group_name>>
+              ORB_EVAL_CD_LOAD_BALANCED_CONTAINER_NAME: <<parameters.codedeploy_load_balanced_container_name>>
+              ORB_VAL_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy_load_balanced_container_port>>
+              ORB_VAL_VERIFY_REV_DEPLOY: <<parameters.verify_revision_is_deployed>>
+              ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+              ORB_VAL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
+              ORB_EVAL_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy_capacity_provider_name>>
+              ORB_EVAL_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy_capacity_provider_weight>>
+              ORB_EVAL_CD_CAPACITY_PROVIDER_BASE: <<parameters.codedeploy_capacity_provider_base>>
+              ORB_EVAL_CD_DEPLOYMENT_CONFIG_NAME: <<parameters.deployment_config_name>>
 
   - when:
       condition:
@@ -252,12 +252,12 @@ steps:
             name: Update service with registered task definition
             command: <<include(scripts/update_service_via_task_def.sh)>>
             environment:
-              ECS_PARAM_SERVICE_NAME: <<parameters.service_name>>
-              ECS_PARAM_FAMILY: <<parameters.family>>
-              ECS_PARAM_FORCE_NEW_DEPLOY: <<parameters.force_new_deployment>>
-              ECS_PARAM_CLUSTER_NAME: <<parameters.cluster>>
-              ECS_PARAM_PROFILE_NAME: <<parameters.profile_name>>
-              ECS_PARAM_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
+              ORB_EVAL_SERVICE_NAME: <<parameters.service_name>>
+              ORB_EVAL_FAMILY: <<parameters.family>>
+              ORB_VAL_FORCE_NEW_DEPLOY: <<parameters.force_new_deployment>>
+              ORB_EVAL_CLUSTER_NAME: <<parameters.cluster>>
+              ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+              ORB_VAL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
 
   - when:
       condition:
