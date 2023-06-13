@@ -13,5 +13,5 @@ steps:
       name: Register new task definition
       command: <<include(scripts/update_task_definition_from_json.sh)>>
       environment:
-        ORB_EVAL_TASK_DEFINITION_JSON: <<parameters.task_definition_json>>
-        ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_STR_TASK_DEFINITION_JSON: <<parameters.task_definition_json>>
+        ORB_STR_PROFILE_NAME: <<parameters.profile_name>>

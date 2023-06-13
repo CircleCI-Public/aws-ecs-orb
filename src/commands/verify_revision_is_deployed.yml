@@ -43,9 +43,9 @@ steps:
       environment:
         ORB_EVAL_SERVICE_NAME: <<parameters.service_name>>
         ORB_EVAL_FAMILY: <<parameters.family>>
-        ORB_EVAL_TASK_DEF_ARN: <<parameters.task_definition_arn>>
+        ORB_STR_TASK_DEF_ARN: <<parameters.task_definition_arn>>
         ORB_VAL_MAX_POLL_ATTEMPTS: <<parameters.max_poll_attempts>>
-        ORB_EVAL_CLUSTER_NAME: <<parameters.cluster>>
+        ORB_STR_CLUSTER_NAME: <<parameters.cluster>>
         ORB_VAL_POLL_INTERVAL: <<parameters.poll_interval>>
         ORB_VAL_FAIL_ON_VERIFY_TIMEOUT: <<parameters.fail_on_verification_timeout>>
-        ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_STR_PROFILE_NAME: <<parameters.profile_name>>

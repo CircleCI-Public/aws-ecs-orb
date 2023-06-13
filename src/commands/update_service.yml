@@ -230,17 +230,17 @@ steps:
             no_output_timeout: << parameters.verification_timeout >>
             environment:
               DEPLOYMENT_CONTROLLER: <<parameters.deployment_controller>>
-              ORB_EVAL_CD_APP_NAME: <<parameters.codedeploy_application_name>>
-              ORB_EVAL_CD_DEPLOY_GROUP_NAME: <<parameters.codedeploy_deployment_group_name>>
-              ORB_EVAL_CD_LOAD_BALANCED_CONTAINER_NAME: <<parameters.codedeploy_load_balanced_container_name>>
-              ORB_VAL_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy_load_balanced_container_port>>
-              ORB_VAL_VERIFY_REV_DEPLOY: <<parameters.verify_revision_is_deployed>>
-              ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
-              ORB_VAL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
-              ORB_EVAL_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy_capacity_provider_name>>
-              ORB_EVAL_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy_capacity_provider_weight>>
-              ORB_EVAL_CD_CAPACITY_PROVIDER_BASE: <<parameters.codedeploy_capacity_provider_base>>
-              ORB_EVAL_CD_DEPLOYMENT_CONFIG_NAME: <<parameters.deployment_config_name>>
+              ORB_STR_CD_APP_NAME: <<parameters.codedeploy_application_name>>
+              ORB_STR_CD_DEPLOY_GROUP_NAME: <<parameters.codedeploy_deployment_group_name>>
+              ORB_STR_CD_LOAD_BALANCED_CONTAINER_NAME: <<parameters.codedeploy_load_balanced_container_name>>
+              ORB_INT_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy_load_balanced_container_port>>
+              ORB_BOOL_VERIFY_REV_DEPLOY: <<parameters.verify_revision_is_deployed>>
+              ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+              ORB_BOOL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
+              ORB_STR_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy_capacity_provider_name>>
+              ORB_STR_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy_capacity_provider_weight>>
+              ORB_STR_CD_CAPACITY_PROVIDER_BASE: <<parameters.codedeploy_capacity_provider_base>>
+              ORB_STR_CD_DEPLOYMENT_CONFIG_NAME: <<parameters.deployment_config_name>>
 
   - when:
       condition:
@@ -255,9 +255,9 @@ steps:
               ORB_EVAL_SERVICE_NAME: <<parameters.service_name>>
               ORB_EVAL_FAMILY: <<parameters.family>>
               ORB_VAL_FORCE_NEW_DEPLOY: <<parameters.force_new_deployment>>
-              ORB_EVAL_CLUSTER_NAME: <<parameters.cluster>>
-              ORB_EVAL_PROFILE_NAME: <<parameters.profile_name>>
-              ORB_VAL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
+              ORB_STR_CLUSTER_NAME: <<parameters.cluster>>
+              ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+              ORB_BOOL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
 
   - when:
       condition:

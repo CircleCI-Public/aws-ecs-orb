@@ -13,7 +13,7 @@ usage:
       steps:
         - aws-cli/setup:
             profile: "OIDC-USER"
-            role-arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
+            role_arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
         - aws-ecs/run_task:
             cluster: $CLUSTER_NAME
             capacity_provider_strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1

@@ -5,7 +5,7 @@ set -o noglob
 ORB_EVAL_FAMILY="$(circleci env subst "$ORB_EVAL_FAMILY")"
 ORB_EVAL_CONTAINER_IMAGE_NAME_UPDATES="$(circleci env subst "$ORB_EVAL_CONTAINER_IMAGE_NAME_UPDATES")"
 ORB_EVAL_CONTAINER_ENV_VAR_UPDATE="$(circleci env subst "$ORB_EVAL_CONTAINER_ENV_VAR_UPDATE")"
-ORB_EVAL_PROFILE_NAME="$(circleci env subst "$ORB_EVAL_PROFILE_NAME")"
+ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 ORB_EVAL_CONTAINER_SECRET_UPDATES="$(circleci env subst "$ORB_EVAL_CONTAINER_SECRET_UPDATES")"
 ORB_EVAL_CONTAINER_DOCKER_LABEL_UPDATES="$(circleci env subst "$ORB_EVAL_CONTAINER_DOCKER_LABEL_UPDATES")"
 ORB_EVAL_PREVIOUS_REVISION_NUMBER="$(circleci env subst "$ORB_EVAL_PREVIOUS_REVISION_NUMBER")"
@@ -17,7 +17,7 @@ else
 fi
 
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_EVAL_PROFILE_NAME}" "$@")"
+PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_STR_PROFILE_NAME}" "$@")"
 
 # Prepare script for updating container definitions
 
