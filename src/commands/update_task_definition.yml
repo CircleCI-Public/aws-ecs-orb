@@ -69,7 +69,7 @@ steps:
       name: Retrieve previous task definition and prepare new task definition values
       command: <<include(scripts/get_prev_task.sh)>>
       environment:
-        ORB_EVAL_FAMILY: <<parameters.family>>
+        ORB_STR_FAMILY: <<parameters.family>>
         ORB_EVAL_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
         ORB_EVAL_CONTAINER_ENV_VAR_UPDATE: <<parameters.container_env_var_updates>>
         ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
@@ -82,5 +82,5 @@ steps:
       name: Register new task definition
       command: <<include(scripts/register_new_task_def.sh)>>
       environment:
-        ORB_EVAL_FAMILY: <<parameters.family>>
+        ORB_STR_FAMILY: <<parameters.family>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>

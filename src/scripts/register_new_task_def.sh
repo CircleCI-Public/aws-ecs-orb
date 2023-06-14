@@ -2,7 +2,7 @@
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-ORB_EVAL_FAMILY="$(circleci env subst "$ORB_EVAL_FAMILY")"
+ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
@@ -62,8 +62,9 @@ if [ -n "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}" ] && [ "${CCI_ORB_AWS_ECS_EPHEMER
     set -- "$@" --ephemeral-storage "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}"
 fi
 
+set -x
 REVISION=$(aws ecs register-task-definition \
-    --family "$ORB_EVAL_FAMILY" \
+    --family "$ORB_STR_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
     --profile "${ORB_STR_PROFILE_NAME}" \
     "$@" \
@@ -72,3 +73,4 @@ REVISION=$(aws ecs register-task-definition \
 echo "Registered task definition: ${REVISION}"
 
 echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${REVISION}'" >> "$BASH_ENV"
+set +x

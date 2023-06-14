@@ -41,8 +41,8 @@ steps:
         Poll the deployment status at intervals till the given task definition revision has reached its desired running task count and is the only one deployed for the service.
       command: <<include(scripts/verify_revision_is_deployed.sh)>>
       environment:
-        ORB_EVAL_SERVICE_NAME: <<parameters.service_name>>
-        ORB_EVAL_FAMILY: <<parameters.family>>
+        ORB_STR_SERVICE_NAME: <<parameters.service_name>>
+        ORB_STR_FAMILY: <<parameters.family>>
         ORB_STR_TASK_DEF_ARN: <<parameters.task_definition_arn>>
         ORB_VAL_MAX_POLL_ATTEMPTS: <<parameters.max_poll_attempts>>
         ORB_STR_CLUSTER_NAME: <<parameters.cluster>>

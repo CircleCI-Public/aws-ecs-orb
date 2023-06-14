@@ -2,16 +2,16 @@
 set -o noglob
 
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
-ORB_EVAL_FAMILY="$(circleci env subst "$ORB_EVAL_FAMILY")"
+ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_CLUSTER_NAME="$(circleci env subst "$ORB_STR_CLUSTER_NAME")"
-ORB_EVAL_SERVICE_NAME="$(circleci env subst "$ORB_EVAL_SERVICE_NAME")"
+ORB_STR_SERVICE_NAME="$(circleci env subst "$ORB_STR_SERVICE_NAME")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 
-if [ -z "${ORB_EVAL_SERVICE_NAME}" ]; then
-    ORB_EVAL_SERVICE_NAME="$ORB_EVAL_FAMILY"
+if [ -z "${ORB_STR_SERVICE_NAME}" ]; then
+    ORB_STR_SERVICE_NAME="$ORB_STR_FAMILY"
 fi
 
-if [ "$ORB_VAL_FORCE_NEW_DEPLOY" == "1" ]; then
+if [ "$ORB_BOOL_FORCE_NEW_DEPLOY" == "1" ]; then
     set -- "$@" --force-new-deployment
 fi
 
@@ -22,7 +22,7 @@ fi
 DEPLOYED_REVISION=$(aws ecs update-service \
     --profile "${ORB_STR_PROFILE_NAME}" \
     --cluster "$ORB_STR_CLUSTER_NAME" \
-    --service "${ORB_EVAL_SERVICE_NAME}" \
+    --service "${ORB_STR_SERVICE_NAME}" \
     --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
     --output text \
     --query service.taskDefinition \
