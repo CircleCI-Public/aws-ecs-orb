@@ -1,13 +1,7 @@
 description: |
   Install AWS CLI and register a task definition.
 
-docker:
-  - image: << parameters.docker_image_for_job >>
 parameters:
-  docker_image_for_job:
-    description: The docker image to be used for running this job on CircleCI.
-    type: string
-    default: 'cimg/python:3.10.4'
   region:
     description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
     type: string
@@ -92,6 +86,11 @@ parameters:
       The authentication method used to access your AWS account. Import the aws-cli orb in your config and
       provide the aws-cli/setup command to authenticate with your preferred method. View examples for more information.
     type: steps
+  executor:
+    description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
+    type: executor
+    default: default
+executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
   - update_task_definition:
