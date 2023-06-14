@@ -1,0 +1,17 @@
+description: |
+  A Python Docker image built to run on CircleCI that contains python installed with pyenv and packaging tools pip, pipenv, and poetry.
+parameters:
+  tag:
+    description: >
+      Select any of the available tags here: https://circleci.com/developer/images/image/cimg/python.
+    type: string
+    default: "3.10.4"
+  resource_class:
+    description: Configure the executor resource class
+    type: enum
+    enum: ["small", "medium", "medium+", "large", "xlarge", "2xlarge", "2xlarge+"]
+    default: "medium"
+
+docker:
+  - image: cimg/python:<<parameters.tag>>
+resource_class: <<parameters.resource_class>>
