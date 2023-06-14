@@ -475,7 +475,6 @@ workflows:
             - aws-cli/setup:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
                 profile_name: "ECS_TEST_PROFILE"
-          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update_service-command
@@ -499,7 +498,6 @@ workflows:
             - aws-cli/setup:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
                 profile_name: "ECS_TEST_PROFILE"
-          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
             - fargate_test-update_service-job
@@ -600,7 +598,6 @@ workflows:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
                 profile_name: "ECS_TEST_PROFILE"
           profile_name: "ECS_TEST_PROFILE"
-          docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
           requires:
@@ -672,7 +669,6 @@ workflows:
           auth:
             - aws-cli/setup:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          docker_image_for_job: cimg/python:3.10.4
           filters: *filters
           requires:
             - codedeploy_fargate_test-update_service-command
@@ -704,7 +700,6 @@ workflows:
           auth:
             - aws-cli/setup:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          docker_image_for_job: cimg/python:3.10.4
           context: [CPE-OIDC]
           filters: *filters
           requires:
