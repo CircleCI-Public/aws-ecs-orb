@@ -6,11 +6,11 @@ ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
-    set -- "$@" --task-role_arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
+    set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}" ]; then
-    set -- "$@" --execution-role_arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
+    set -- "$@" --execution-role-arn "${CCI_ORB_AWS_ECS_EXECUTION_ROLE}"
 fi
 
 if [ -n "${CCI_ORB_AWS_ECS_NETWORK_MODE}" ]; then
