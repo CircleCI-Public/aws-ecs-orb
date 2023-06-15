@@ -24,7 +24,7 @@ PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "
 UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp _update_container_defs.py.XXXXXX)
 chmod +x "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
-cat <<< "$ ORB_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
+cat <<< "$ORB_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
 
 # Prepare container definitions
@@ -39,7 +39,7 @@ CLEANED_CONTAINER_DEFS=$(echo "$CONTAINER_DEFS" | sed -E "s:':'\\\'':g")
 GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
 chmod +x "$GET_TASK_DFN_VAL_SCRIPT_FILE"
 
-cat <<< "$ ORB_SCRIPT_GET_TASK_DFN_VAL" > "$GET_TASK_DFN_VAL_SCRIPT_FILE"
+cat <<< "$ORB_SCRIPTGET_TASK_DFN_VAL" > "$GET_TASK_DFN_VAL_SCRIPT_FILE"
 
 
 
