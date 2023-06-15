@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o noglob
 
-# These variables are STRuated so the config file may contain and pass in environment variables to the parameters.
+# These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_CONTAINER_IMAGE_NAME_UPDATES="$(circleci env subst "$ORB_STR_CONTAINER_IMAGE_NAME_UPDATES")"
 ORB_STR_CONTAINER_ENV_VAR_UPDATE="$(circleci env subst "$ORB_STR_CONTAINER_ENV_VAR_UPDATE")"
@@ -24,7 +24,7 @@ PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "
 UPDATE_CONTAINER_DEFS_SCRIPT_FILE=$(mktemp _update_container_defs.py.XXXXXX)
 chmod +x "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
-cat <<< "$ECS_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
+cat <<< "$ ORB_SCRIPT_UPDATE_CONTAINER_DEFS" > "$UPDATE_CONTAINER_DEFS_SCRIPT_FILE"
 
 
 # Prepare container definitions
@@ -39,7 +39,7 @@ CLEANED_CONTAINER_DEFS=$(echo "$CONTAINER_DEFS" | sed -E "s:':'\\\'':g")
 GET_TASK_DFN_VAL_SCRIPT_FILE=$(mktemp _get_task_def_value.py.XXXXXX)
 chmod +x "$GET_TASK_DFN_VAL_SCRIPT_FILE"
 
-cat <<< "$ECS_SCRIPT_GET_TASK_DFN_VAL" > "$GET_TASK_DFN_VAL_SCRIPT_FILE"
+cat <<< "$ ORB_SCRIPT_GET_TASK_DFN_VAL" > "$GET_TASK_DFN_VAL_SCRIPT_FILE"
 
 
 

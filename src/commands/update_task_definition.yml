@@ -72,8 +72,8 @@ steps:
         ORB_STR_FAMILY: <<parameters.family>>
         ORB_STR_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
         ORB_STR_CONTAINER_ENV_VAR_UPDATE: <<parameters.container_env_var_updates>>
-        ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
-        ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
+         ORB_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
+         ORB_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
         ORB_STR_PREVIOUS_REVISION_NUMBER: <<parameters.previous_revision_number>>
         ORB_STR_CONTAINER_SECRET_UPDATES: <<parameters.container_secret_updates>>
