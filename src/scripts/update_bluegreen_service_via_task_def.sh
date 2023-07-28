@@ -8,6 +8,7 @@ ORB_STR_CD_LOAD_BALANCED_CONTAINER_NAME="$(circleci env subst "$ORB_STR_CD_LOAD_
 ORB_STR_CD_CAPACITY_PROVIDER_WEIGHT="$(circleci env subst "$ORB_STR_CD_CAPACITY_PROVIDER_WEIGHT")"
 ORB_STR_CD_CAPACITY_PROVIDER_BASE="$(circleci env subst "$ORB_STR_CD_CAPACITY_PROVIDER_BASE")"
 ORB_STR_CD_DEPLOYMENT_CONFIG_NAME="$(circleci env subst "$ORB_STR_CD_DEPLOYMENT_CONFIG_NAME")"
+ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 
 DEPLOYED_REVISION="${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}"
 
@@ -34,6 +35,7 @@ fi
 DEPLOYMENT_ID=$(aws deploy create-deployment \
     --application-name "$ORB_STR_CD_APP_NAME" \
     --deployment-group-name "$ORB_STR_CD_DEPLOY_GROUP_NAME" \
+    --profile "$ORB_STR_PROFILE_NAME" \
     --query deploymentId \
     --revision "${REVISION}" \
     "$@" \
@@ -43,11 +45,11 @@ echo "Created CodeDeploy deployment: $DEPLOYMENT_ID"
 
 if [ "$ORB_BOOL_VERIFY_REV_DEPLOY" == "1" ]; then
     echo "Waiting for deployment to succeed."
-    if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}"; then
+    if aws deploy wait deployment-successful --deployment-id "${DEPLOYMENT_ID}" --profile "${ORB_STR_PROFILE_NAME}"; then
         echo "Deployment succeeded."
     elif [ "$ORB_BOOL_ENABLE_CIRCUIT_BREAKER" == "1" ]; then
         echo "Deployment failed. Rolling back."
-        aws deploy stop-deployment --deployment-id "${DEPLOYMENT_ID}" --auto-rollback-enabled
+        aws deploy stop-deployment --deployment-id "${DEPLOYMENT_ID}" --auto-rollback-enabled --profile "${ORB_STR_PROFILE_NAME}"
     else
         echo "Deployment failed. Exiting."
         exit 1

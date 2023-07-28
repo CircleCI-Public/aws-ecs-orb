@@ -146,13 +146,18 @@ jobs:
       role_arn:
         type: string
         default: ''
+      skip-creation-env:
+        type: boolean
+        default: false
     docker:
       - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be set up
+          environment:
+            SKIP_TEST_ENV_CREATION: <<parameters.skip-creation-env>>
           command: |
-            if [ "${SKIP_TEST_ENV_CREATION}" = "1" ]
+            if [ "${SKIP_TEST_ENV_CREATION}" = "true" ]
             then
               circleci step halt
             fi
@@ -351,35 +356,31 @@ jobs:
         type: string
       terraform-config-dir:
         type: string
-      aws-access-key-id:
-        type: env_var_name
-        default: AWS_ACCESS_KEY_ID
-      aws-secret-access-key:
-        type: env_var_name
-        default: AWS_SECRET_ACCESS_KEY
       profile_name:
         type: string
         default: 'default'
       role_arn:
         type: string
         default: ''
+      skip-teardown-env:
+        type: boolean
+        default: false
     docker:
       - image: << parameters.terraform-image >>
     steps:
       - run:
           name: Check if test env should be destroyed
+          environment:
+            SKIP_TEST_ENV_TEARDOWN: <<parameters.skip-teardown-env>>
           command: |
-            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "1" ]
+            if [ "${SKIP_TEST_ENV_TEARDOWN}" = "true" ]
             then
               circleci step halt
             fi
       - checkout
-      - when:
-          condition: << parameters.role_arn >>
-          steps:
-            - aws-cli/setup:
-                profile_name: << parameters.profile_name >>
-                role_arn: << parameters.role_arn >>
+      - aws-cli/setup:
+          profile_name: << parameters.profile_name >>
+          role_arn: << parameters.role_arn >>
       - run:
           name: terraform init
           command: |
