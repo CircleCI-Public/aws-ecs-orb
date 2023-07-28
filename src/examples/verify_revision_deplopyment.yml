@@ -2,7 +2,7 @@ description: Verify the deployment of an ECS revision.
 usage:
   version: 2.1
   orbs:
-    aws-cli: circleci/aws-cli@3.1
+    aws-cli: circleci/aws-cli@4.0
     aws-ecs: circleci/aws-ecs@4.0
   jobs:
     verify-deployment:
@@ -11,7 +11,7 @@ usage:
       steps:
         - aws-cli/setup:
             # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
-            role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
+            role_arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
             region: AWS_REGION
             profile_name: "OIDC-PROFILE"
             session-duration: 3600

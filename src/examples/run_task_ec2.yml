@@ -3,7 +3,7 @@ usage:
   version: 2.1
   orbs:
     aws-ecs: circleci/aws-ecs@4.0
-    aws-cli: circleci/aws-cli@3.1
+    aws-cli: circleci/aws-cli@4.0
   jobs:
     run_task:
       docker:
@@ -11,7 +11,7 @@ usage:
       steps:
         - aws-cli/setup:
             profile: "OIDC-USER"
-            role-arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
+            role_arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
         - aws-ecs/run_task:
             cluster: cluster1
             task_definition: myapp
