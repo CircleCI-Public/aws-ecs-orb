@@ -16,8 +16,8 @@ usage:
             role_arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
             region: AWS_REGION
             profile_name: "OIDC-PROFILE"
-            session-duration: 3600
-            role-session-name: "example-session-name"
+            session_duration: "3600"
+            role_session_name: "example-session-name"
         - aws-ecs/update_service:
             family: '${MY_APP_PREFIX}-service'
             cluster: '${MY_APP_PREFIX}-cluster'
