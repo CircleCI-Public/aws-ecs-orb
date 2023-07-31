@@ -19,7 +19,7 @@ usage:
                   role_arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECR_ROLE"
             # Must use same profile configured in aws-cli/setup command
             profile: "OIDC-USER"
-            registry-id: AWS_ECR_REGISTRY_ID
+            registry_id: ${AWS_ECR_REGISTRY_ID}
             repo: '${MY_APP_PREFIX}'
             region: AWS_REGION
             tag: '${CIRCLE_SHA1}'
