@@ -263,7 +263,7 @@ jobs:
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container_image_name_updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
                 container_env_var_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
-                container_secret_updates: container=<< parameters.aws-resource-name-prefix >>-service,name=API_KEY,valueFrom="arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_one"
+                container_secret_updates: container=<< parameters.aws-resource-name-prefix >>-service,name=APP,valueFrom="arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_one"
                 verify_revision_is_deployed: true
                 fail_on_verification_timeout: false
                 profile_name: "<<parameters.profile_name>>"
@@ -487,7 +487,7 @@ workflows:
           family: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
           container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-          container_secret_updates: container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=API_KEY,valueFrom="arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_two"
+          container_secret_updates: container=${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service,name=APP,valueFrom="arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_two"
           # test the force_new_deployment flag
           force_new_deployment: true
           verify_revision_is_deployed: true
