@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o noglob
-
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
+set -x
 ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 
@@ -62,7 +62,7 @@ if [ -n "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}" ] && [ "${CCI_ORB_AWS_ECS_EPHEMER
     set -- "$@" --ephemeral-storage "${CCI_ORB_AWS_ECS_EPHEMERAL_STORAGE}"
 fi
 
-set -x
+
 REVISION=$(aws ecs register-task-definition \
     --family "$ORB_STR_FAMILY" \
     --container-definitions "${CCI_ORB_AWS_ECS_CONTAINER_DEFS}" \
