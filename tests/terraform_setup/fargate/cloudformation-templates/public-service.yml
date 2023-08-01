@@ -80,6 +80,9 @@ Resources:
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Image: !Ref 'ImageUrl'
+          Secrets:
+            - Name: FAKE_KEY
+              ValueFrom: arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_one
           Essential: true
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
