@@ -523,7 +523,7 @@ workflows:
           filters: *filters
           requires:
             - fargate_test-update_service-skip-registration
-            - test-fargatespot
+            # - test-fargatespot
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
