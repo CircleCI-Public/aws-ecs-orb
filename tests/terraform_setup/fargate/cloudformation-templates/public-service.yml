@@ -82,7 +82,7 @@ Resources:
           Image: !Ref 'ImageUrl'
           Secrets:
             - Name: FAKE_KEY
-              ValueFrom: "arn:aws:secretsmanager:us-west-2:122211685980:secret:test_secret_one"
+              ValueFrom: "arn:aws:secretsmanager:us-west-2:122211685980:secret:ORBS_ECS_TEST_SECRET-Tm4qkC"
           Essential: true
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
