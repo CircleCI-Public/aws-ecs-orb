@@ -51,6 +51,10 @@ if [ "$ORB_BOOL_ENABLE_ECS_MANAGED_TAGS" == "1" ]; then
     echo "Setting --enable-ecs-managed-tags"
     set -- "$@" --enable-ecs-managed-tags
 fi
+if [ "$ORB_BOOL_ENABLE_EXECUTE_COMMAND" == "1" ]; then
+    echo "Setting --enable-execute-command"
+    set -- "$@" --enable-execute-command
+fi
 if [ "$ORB_BOOL_PROPAGATE_TAGS" == "1" ]; then
     echo "Setting --propagate-tags"
     set -- "$@" --propagate-tags "TASK_DEFINITION"

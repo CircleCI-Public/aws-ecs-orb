@@ -119,6 +119,12 @@ parameters:
       "Specifies whether to enable Amazon ECS managed tags for the task."
     type: boolean
     default: false
+  enable_execute_command:
+    description: |
+      Determines whether to use the execute command functionality for the containers in this task. If true,
+      this enables execute command functionality on all containers in the task.
+    type: boolean
+    default: false
   propagate_tags:
     description: |
       "Specifies whether to propagate the tags from the task definition to
@@ -167,6 +173,7 @@ steps:
       overrides: << parameters.overrides >>
       tags: << parameters.tags >>
       enable_ecs_managed_tags: << parameters.enable_ecs_managed_tags >>
+      enable_execute_command: << parameters.enable_execute_command>>
       propagate_tags: << parameters.propagate_tags >>
       capacity_provider_strategy: << parameters.capacity_provider_strategy >>
       profile_name: << parameters.profile_name >>
