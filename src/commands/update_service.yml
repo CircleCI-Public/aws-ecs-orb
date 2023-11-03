@@ -206,7 +206,8 @@ steps:
                 --task-definition << parameters.family >> \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn' \
-                --profile=<< parameters.profile_name >>)
+                --profile << parameters.profile_name >>
+                --region ${AWS_DEFAULT_REGION})
               echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
   - when:
       condition: << parameters.task_definition_tags >>
