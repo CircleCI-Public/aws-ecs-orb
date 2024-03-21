@@ -42,7 +42,7 @@ parameters:
     description: >
       The port of the container to be load-balanced via AWS CodeDeploy.
       Only effective when the deployment_controller parameter value is "CODE_DEPLOY".
-    type: integer
+    type: string
     default: 80
   container_image_name_updates:
     description: >
