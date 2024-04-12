@@ -11,7 +11,7 @@ usage:
   workflows:
     build-and-deploy:
       jobs:
-        - aws-ecr/build-and-push-image:
+        - aws-ecr/build_and_push_image:
             auth:
               # Add authentication step with OIDC using aws-cli/setup command
               - aws-cli/setup:
