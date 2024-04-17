@@ -27,6 +27,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
+        --region "${AWS_DEFAULT_REGION}" \
         --output text \
         --query 'services[0].deployments[].[taskDefinition, status]' \
         "$@")
@@ -34,6 +35,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
+        --region "${AWS_DEFAULT_REGION}" \
         --output text \
         --query 'length(services[0].deployments)' \
         "$@")
@@ -41,6 +43,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
+        --region "${AWS_DEFAULT_REGION}" \
         --output text \
         --query "services[0].deployments[?taskDefinition==\`$ORB_STR_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]" \
         "$@")
