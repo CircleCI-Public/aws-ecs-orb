@@ -1,8 +1,8 @@
 version: 2.1
 orbs:
-  orb-tools: circleci/orb-tools@12.0
-  aws-cli: circleci/aws-cli@4.0
-  jq: circleci/jq@2.2
+  orb-tools: circleci/orb-tools@12.1
+  aws-cli: circleci/aws-cli@4.1
+  jq: circleci/jq@3.0
   aws-ecs: {}
 filters: &filters
   tags:
@@ -39,7 +39,7 @@ jobs:
             - ~/.cache
   test-fargatespot:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:current
     parameters:
       profile_name:
         type: string
@@ -837,7 +837,7 @@ commands:
 executors:
   mac:
     macos:
-      xcode: 13.3.1
+      xcode: 13.4.1
   linux:
     docker:
       - image: cimg/base:current
