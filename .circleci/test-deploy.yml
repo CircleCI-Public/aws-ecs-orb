@@ -39,7 +39,7 @@ jobs:
             - ~/.cache
   test-fargatespot:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/base:current
     parameters:
       profile_name:
         type: string
