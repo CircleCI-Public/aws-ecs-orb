@@ -56,4 +56,5 @@ if [ "$ORB_BOOL_VERIFY_REV_DEPLOY" == "1" ]; then
     fi
 fi
 
+echo "export CCI_ORB_AWS_ECS_DEPLOYMENT_ID='${DEPLOYMENT_ID}'" >> "$BASH_ENV"
 echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> "$BASH_ENV"
