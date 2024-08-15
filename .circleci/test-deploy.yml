@@ -706,7 +706,7 @@ workflows:
           context: [CPE-OIDC]
           filters: *filters
           requires:
-            - codedeploy_ec2_test-update_service-job
+            - codedeploy_fargate_test-update_service-job
           region: AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
