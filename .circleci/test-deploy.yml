@@ -491,6 +491,7 @@ workflows:
           context: [CPE-OIDC]
           post-steps:
             - test-deployment:
+                profile: "ECS_TEST_PROFILE"
                 service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-cluster"
       - aws-ecs/deploy_service_update:
@@ -801,14 +802,23 @@ commands:
         description: "Whether to delete the load balancer after the test"
         type: boolean
         default: false
+      profile:
+        description: "The profile used to authenticate when OIDC was used"
+        type: string
+        default: ""
     steps:
       - run:
           name: Test deployment (for orb testing and is not part of the orb)
           command: |-
+            if [ "<< parameters.profile >>" = "" ]; then
+              PROFILE=""
+            else
+              PROFILE="--profile << parameters.profile >>"
+            fi
             set -x
-            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service_name >> | jq -r '.services[0].loadBalancers[0].targetGroupArn')
-            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
-            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN | jq -r '.LoadBalancers[0].DNSName')
+            TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service_name >> $PROFILE | jq -r '.services[0].loadBalancers[0].targetGroupArn')
+            ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN $PROFILE | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
+            ELB_DNS_NAME=$(aws elbv2 describe-load-balancers --load-balancer-arns $ELB_ARN $PROFILE | jq -r '.LoadBalancers[0].DNSName')
             echo "ELB DNS NAME: $ELB_DNS_NAME"
             echo "Sleeping for one minute while waiting for AWS to come online."
             sleep 160s
@@ -832,7 +842,7 @@ commands:
             }
             run_with_retry
             if [ "<< parameters.delete-load-balancer >>" == "1" ]; then
-              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN
+              aws elbv2 delete-load-balancer --load-balancer-arn $ELB_ARN $PROFILE
             fi
 executors:
   mac:
