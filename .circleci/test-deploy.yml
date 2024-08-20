@@ -731,7 +731,7 @@ workflows:
       - tear-down-test-env:
           name: codedeploy_fargate_tear-down-test-env
           requires:
-            - codedeploy_fargate_test-update-and-wait-service-job
+            - codedeploy_fargate_set-up-test-env
           terraform-image: "hashicorp/terraform:1.4.0"
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
