@@ -824,7 +824,7 @@ commands:
             if [ "<< parameters.port >>" = "" ]; then
               PORT="80"
             else
-              PORT="<< parameters.profile >>"
+              PORT="<< parameters.port >>"
             fi
             
             set -x
