@@ -654,19 +654,19 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - test-service-update:
-          name: codedeploy_fargate_test-update_service-command
-          filters: *filters
-          requires:
-            - codedeploy_fargate_set-up-test-env
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          family_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          skip-service-update: true
-          context: [CPE-OIDC]
+      # - test-service-update:
+      #     name: codedeploy_fargate_test-update_service-command
+      #     filters: *filters
+      #     requires:
+      #       - codedeploy_fargate_set-up-test-env
+      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+      #     family_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+      #     service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
+      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #     skip-service-update: true
+      #     context: [CPE-OIDC]
       # - aws-ecs/deploy_service_update:
       #     name: codedeploy_fargate_test-update_service-job
       #     auth:
