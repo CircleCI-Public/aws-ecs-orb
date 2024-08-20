@@ -26,7 +26,7 @@ variable "host_port" {
 }
 
 variable "app_port" {
-  default = "80"
+  default = "8080"
 }
 
 variable "app_port_green" {
