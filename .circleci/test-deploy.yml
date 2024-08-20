@@ -697,6 +697,7 @@ workflows:
             - test-deployment:
                 service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
+                port: "8080"
                 delete-load-balancer: false
       - aws-ecs/deploy_service_update:
           name: codedeploy_fargate_test-update-and-wait-service-job
@@ -807,6 +808,10 @@ commands:
         description: "The profile used to authenticate when OIDC was used"
         type: string
         default: ""
+      port:
+        description: "Port to test against"
+        type: string
+        default: "80"
     steps:
       - run:
           name: Test deployment (for orb testing and is not part of the orb)
@@ -816,6 +821,12 @@ commands:
             else
               PROFILE="--profile << parameters.profile >>"
             fi
+            if [ "<< parameters.port >>" = "" ]; then
+              PORT="80"
+            else
+              PORT="<< parameters.profile >>"
+            fi
+            
             set -x
             TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service_name >> $PROFILE | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN $PROFILE | jq -r '.TargetGroups[0].LoadBalancerArns[0]')
@@ -824,14 +835,14 @@ commands:
             echo "Sleeping for one minute while waiting for AWS to come online."
             sleep 160s
             echo "Done sleeping"
-            curl --retry 10 http://$ELB_DNS_NAME:8080
+            curl --retry 10 http://$ELB_DNS_NAME:$PORT
             run_with_retry() {
               MAX_RETRY=6
               n=0
               until [ $n -ge $MAX_RETRY ]
               do
                 # retry many times in case it takes a while for the new task definition to take effect
-                curl -s --retry 10 http://$ELB_DNS_NAME:8080 \
+                curl -s --retry 10 http://$ELB_DNS_NAME:$PORT \
                   | grep -E "Hello World\!.*${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}" <<#parameters.test-asterisk-expansion>> | grep "Asterisk \* expansion test"<</parameters.test-asterisk-expansion>> && break
                 n=$[$n+1]
                 sleep 60s
