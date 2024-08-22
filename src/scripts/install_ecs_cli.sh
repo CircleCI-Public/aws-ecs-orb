@@ -24,8 +24,12 @@ else
 fi
 
 Install_ECS_CLI(){
-    $SUDO curl -Lo "${ORB_EVAL_INSTALL_DIR}" "https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-${SYS_ENV_PLATFORM}-amd64-$1"
-    $SUDO chmod +x "${ORB_EVAL_INSTALL_DIR}"
+    if [ "$SYS_ENV_PLATFORM" != "darwin" ]; then
+        $SUDO curl -Lo "${ORB_EVAL_INSTALL_DIR}" "https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-${SYS_ENV_PLATFORM}-amd64-$1"
+        $SUDO chmod +x "${ORB_EVAL_INSTALL_DIR}"
+    else
+        brew install amazon-ecs-cli
+    fi
 }
 
 Uninstall_ECS_CLI(){
