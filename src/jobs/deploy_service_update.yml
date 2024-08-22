@@ -59,8 +59,8 @@ parameters:
 
       Only effective when the deployment_controller parameter value is
       "CODE_DEPLOY".
-    type: integer
-    default: 80
+    type: string
+    default: "80"
   container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing

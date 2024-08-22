@@ -42,8 +42,8 @@ parameters:
     description: >
       The port of the container to be load-balanced via AWS CodeDeploy.
       Only effective when the deployment_controller parameter value is "CODE_DEPLOY".
-    type: integer
-    default: 80
+    type: string
+    default: "80"
   container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition.
@@ -206,7 +206,8 @@ steps:
                 --task-definition << parameters.family >> \
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn' \
-                --profile=<< parameters.profile_name >>)
+                --profile << parameters.profile_name >> \
+                --region ${AWS_DEFAULT_REGION})
               echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
   - when:
       condition: << parameters.task_definition_tags >>
