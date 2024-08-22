@@ -23,7 +23,8 @@ usage:
                   --task_definition ${MY_APP_PREFIX}-service \
                   --output text \
                   --query 'taskDefinition.taskDefinitionArn' \
-                  --profile default)
+                  --profile default \
+                  --region ${AWS_DEFAULT_REGION})
               echo "export TASK_DEFINITION_ARN='${TASK_DEFINITION_ARN}'" >>
               $BASH_ENV
         - aws-ecs/verify_revision_is_deployed:
