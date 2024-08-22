@@ -43,7 +43,7 @@ parameters:
       The port of the container to be load-balanced via AWS CodeDeploy.
       Only effective when the deployment_controller parameter value is "CODE_DEPLOY".
     type: string
-    default: 80
+    default: "80"
   container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition.
