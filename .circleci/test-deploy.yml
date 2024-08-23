@@ -472,7 +472,7 @@ workflows:
           service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          secret_arn: "arn:aws:ssm:${AWS_ACCOUNT_ID}:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_FARGATE}"
+          secret_arn: "arn:aws:ssm:122211685980:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_FARGATE}"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy_service_update:
@@ -587,7 +587,7 @@ workflows:
           family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          secret_arn: "arn:aws:ssm:${AWS_ACCOUNT_ID}:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_EC2}"
+          secret_arn: "arn:aws:ssm:122211685980:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_EC2}"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
