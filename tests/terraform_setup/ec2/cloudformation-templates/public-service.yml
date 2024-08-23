@@ -52,6 +52,9 @@ Parameters:
     Default: ""
     Description: (Optional) An IAM role to give the service's containers if the code within needs to
                  access other AWS resources like S3 buckets, DynamoDB tables, etc
+  SecretArn:
+    Type: String
+    Description: Secret to set as a test
 
 Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
@@ -97,7 +100,10 @@ Resources:
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
-          Image: nginx:latest    
+          Image: nginx:latest
+          Secrets:
+            - Name: test
+              ValueFrom: !Ref 'SecretArn'
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'

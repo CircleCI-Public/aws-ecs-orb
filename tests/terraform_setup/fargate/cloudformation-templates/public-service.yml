@@ -48,6 +48,9 @@ Parameters:
     Default: ""
     Description: (Optional) An IAM role to give the service's containers if the code within needs to
                  access other AWS resources like S3 buckets, DynamoDB tables, etc
+  SecretArn:
+    Type: String
+    Description: Secret to set as a test
 
 Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
@@ -83,6 +86,9 @@ Resources:
           Essential: true
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
+          Secrets:
+            - Name: test
+              ValueFrom: !Ref 'SecretArn'  
           Environment:
             - Name: VERSION_INFO
               Value: "v0's release's testing of many '' single quotes '''"
