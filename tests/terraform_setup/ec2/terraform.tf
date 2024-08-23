@@ -80,7 +80,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
 }
 
 resource "aws_ssm_parameter" "test_container_secret" {
-  name  = "test_value"
+  name  = var.aws_resource_prefix
   type  = "String"
   value = "test_value"
 }

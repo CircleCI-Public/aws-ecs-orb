@@ -73,3 +73,9 @@ resource "aws_cloudformation_stack" "ecs_service" {
     # will be deployed with the nginx image when created
   }
 }
+
+resource "aws_ssm_parameter" "test_container_secret" {
+  name  = var.aws_resource_prefix
+  type  = "String"
+  value = "test_value"
+}

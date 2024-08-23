@@ -224,6 +224,9 @@ jobs:
       role_arn:
         type: string
         default: ''
+      secret_arn:
+        type: string
+        default: ''
     steps:
       - checkout
       - setup_remote_docker
@@ -260,7 +263,7 @@ jobs:
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container_image_name_updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
                 container_env_var_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
-                container_secret_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=test,valueFrom="arn:aws:ssm:${AWS_ACCOUNT_ID}:${AWS_DEFAULT_REGION}:parameter/test_value"'
+                container_secret_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=test,valueFrom=<<parameters.secret_arn>>'
                 verify_revision_is_deployed: true
                 fail_on_verification_timeout: false
                 profile_name: "<<parameters.profile_name>>"
@@ -469,6 +472,7 @@ workflows:
           service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          secret_arn: "arn:aws:ssm:${AWS_ACCOUNT_ID}:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_FARGATE}"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy_service_update:
@@ -583,6 +587,7 @@ workflows:
           family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          secret_arn: "arn:aws:ssm:${AWS_ACCOUNT_ID}:${AWS_DEFAULT_REGION}:parameter/${AWS_RESOURCE_NAME_PREFIX_FARGATE}"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
