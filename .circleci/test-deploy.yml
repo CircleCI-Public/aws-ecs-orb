@@ -254,6 +254,7 @@ jobs:
       - unless:
           condition: << parameters.skip-service-update >>
           steps:
+            - aws-cli/setup:
                 profile_name: << parameters.profile_name >>
                 role_arn: << parameters.role_arn >>
             - aws-ecs/update_service:
@@ -457,7 +458,6 @@ workflows:
           filters: *filters
           requires:
             - fargate_build-test-app
-            - fargate_tear-down-test-env-initial
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
@@ -529,16 +529,6 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - tear-down-test-env:
-          name: fargate_tear-down-test-env-initial
-          filters: *filters
-          requires:
-            - fargate_test-update_service-skip-registration
-            - test-fargatespot
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"          
       #################
       # EC2
       #################
@@ -548,8 +538,6 @@ workflows:
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
-          requires:
-            - ec2_tear-down-test-env-initial
       - set-up-test-env:
           name: ec2_set-up-test-env
           filters: *filters
@@ -644,16 +632,6 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - tear-down-test-env:
-          name: ec2_tear-down-test-env-initial
-          filters: *filters
-          requires:
-            - ec2_test-update_service-job
-            - ec2_tear-down-run_task-test
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"          
       # ################
       # FargateSpot
       # ################
@@ -666,22 +644,22 @@ workflows:
       #################
       # CodeDeploy
       #################
-      # - build-test-app:
-      #     name: codedeploy_fargate_build-test-app
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     context: [CPE-OIDC]
-      #     filters: *filters
-      # - set-up-test-env:
-      #     name: codedeploy_fargate_set-up-test-env
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_build-test-app
-      #     terraform-image: "hashicorp/terraform:1.4.0"
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-      #     context: [CPE-OIDC]
-      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - build-test-app:
+          name: codedeploy_fargate_build-test-app
+          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
+          context: [CPE-OIDC]
+          filters: *filters
+      - set-up-test-env:
+          name: codedeploy_fargate_set-up-test-env
+          filters: *filters
+          requires:
+            - codedeploy_fargate_build-test-app
+          terraform-image: "hashicorp/terraform:1.4.0"
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
+          context: [CPE-OIDC]
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       # - test-service-update:
       #     name: codedeploy_fargate_test-update_service-command
       #     filters: *filters
