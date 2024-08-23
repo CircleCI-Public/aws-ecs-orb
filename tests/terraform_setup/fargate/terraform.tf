@@ -79,3 +79,7 @@ resource "aws_ssm_parameter" "test_container_secret" {
   type  = "String"
   value = "test_value"
 }
+
+output "arn_secret" {
+  value = aws_ssm_parameter.test_container_secret.arn
+}
