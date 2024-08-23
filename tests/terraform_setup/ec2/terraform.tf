@@ -96,7 +96,7 @@ resource "aws_ssm_parameter" "test_container_secret_toupdate" {
 resource "aws_iam_role" "parameter_store_read_role" {
   name = "parameter-store-read-role"
 
-  assume_role_policy = jsondecode({
+  assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
@@ -113,7 +113,7 @@ resource "aws_iam_role" "parameter_store_read_role" {
 resource "aws_iam_policy" "parameter_store_read_policy" {
   name         = "ParametersStoreReadPolicy"
   description  = "Allows to read from parameter store"
-  policy       = jsondecode({
+  policy       = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
