@@ -106,7 +106,7 @@ resource "aws_iam_role" "parameter_store_read_role" {
 }
 
 resource "aws_iam_policy" "parameter_store_read_policy" {
-  name         = "ParametersStoreReadPolicy"
+  name         = "secret-read-policy"
   description  = "Allows to read from parameter store"
   policy       = jsonencode({
     Version = "2012-10-17"
