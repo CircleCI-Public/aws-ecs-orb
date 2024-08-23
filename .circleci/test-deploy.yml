@@ -667,7 +667,7 @@ workflows:
           pub_type: production
           enable_pr_comment: true
           context: orb-publisher
-          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
+          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, integration-test-ecs-cli-install]
           filters: *release-filters
 commands:
   test-deployment:
