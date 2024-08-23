@@ -447,11 +447,20 @@ workflows:
       #################
       # Fargate
       #################
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env-initial
+          filters: *filters
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE-OIDC]
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"      
       - build-test-app:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
+          requires:
+            - fargate_tear-down-test-env-initial
           filters: *filters
       - set-up-test-env:
           name: fargate_set-up-test-env
@@ -532,12 +541,21 @@ workflows:
       #################
       # EC2
       #################
+      - tear-down-test-env:
+          name: ec2_tear-down-test-env-initial
+          filters: *filters
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
+          context: [CPE-OIDC]
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"      
       - build-test-app:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
+          requires:
+            - ec2_tear-down-test-env-initial
       - set-up-test-env:
           name: ec2_set-up-test-env
           filters: *filters
@@ -652,44 +670,6 @@ workflows:
           requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
           filters: *release-filters
 commands:
-  wait-for-codedeploy-deployment:
-    description: "Wait for the CodeDeploy deployment to be successful"
-    parameters:
-      application-name:
-        description: "CodeDeploy application name"
-        type: string
-      deployment-group-name:
-        description: "CodeDeploy application name"
-        type: string
-    steps:
-      - run:
-          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
-          command: |
-            DEPLOYMENT_ID=$(aws deploy list-deployments \
-              --application-name << parameters.application-name >> \
-              --deployment-group-name << parameters.deployment-group-name >> \
-              --query "deployments" \
-              --max-items 1 \
-              --output text \
-              | head -n 1)
-            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
-  delete-service:
-    description: "Forcefully delete an ECS service"
-    parameters:
-      service_name:
-        description: "Name of the ECS service"
-        type: string
-      cluster:
-        description: "Name of the cluster"
-        type: string
-    steps:
-      - run:
-          name: Delete ECS service
-          command: |
-            aws ecs delete-service \
-              --cluster << parameters.cluster>> \
-              --service << parameters.service_name >> \
-              --force
   test-deployment:
     description: "Test the deployment"
     parameters:
