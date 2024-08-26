@@ -238,6 +238,9 @@ Resources:
               - 'ecr:GetAuthorizationToken'
               - 'ecr:BatchGetImage'
               - 'ecr:GetDownloadUrlForLayer'
+              - 'ssm:Describe*',
+              - 'ssm:Get*',
+              - 'ssm:List*',
             Resource: '*'
 
   # Load balancers for getting traffic to containers.

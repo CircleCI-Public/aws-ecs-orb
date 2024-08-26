@@ -52,6 +52,7 @@ Parameters:
     Type: String
     Description: Secret to set as a test
 
+
 Conditions:
   HasCustomRole: !Not [ !Equals [!Ref 'Role', ''] ]
 
@@ -73,9 +74,8 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
       TaskRoleArn: !Ref 'Role'
-        # Just for testing the passing of --task-role-arn argument
-        # Fn::ImportValue:
-        #   !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
+        Fn::ImportValue:
+          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
         #Fn::If:
         #  - 'HasCustomRole'
         #  - !Ref 'Role'
