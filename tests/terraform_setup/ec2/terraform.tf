@@ -19,13 +19,13 @@ provider "aws" {
 
 locals {
   # The name of the CloudFormation stack to be created for the VPC and related resources
-  aws_vpc_stack_name = "${var.aws_resource_prefix}-vpc-stack"
+  aws_vpc_stack_name = "${var.aws_resource_prefix}-vpc-stack-new"
 
   # The name of the CloudFormation stack to be created for the ECS service and related resources
-  aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack"
+  aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack-new"
 
   # The name of the ECR repository to be created
-  aws_ecr_repository_name = var.aws_resource_prefix
+  aws_ecr_repository_name = "${var.aws_resource_prefix}-new"
 
   # The name of the ECS cluster to be created
   aws_ecs_cluster_name = "${var.aws_resource_prefix}-cluster"
@@ -71,63 +71,8 @@ resource "aws_cloudformation_stack" "ecs_service" {
     StackName     = local.aws_vpc_stack_name
     ServiceName   = local.aws_ecs_service_name
     FamilyName    = local.aws_ecs_family_name
-    # Role          = aws_iam_role.parameter_store_read_role.arn
-    # SecretArn     = aws_ssm_parameter.test_container_secret.arn
     # Note: Since ImageUrl parameter is not specified, the Service
     # will be deployed with the 1st container using the
     # nginx image when created
   }
 }
-
-# resource "aws_ssm_parameter" "test_container_secret" {
-#   name  = var.aws_resource_prefix
-#   type  = "String"
-#   value = "test_value"
-# }
-
-# resource "aws_ssm_parameter" "test_container_secret_toupdate" {
-#   name  = "${var.aws_resource_prefix}-update"
-#   type  = "String"
-#   value = "test_value_updated"
-# }
-
-# resource "aws_iam_role" "parameter_store_read_role" {
-#   name = "parameter-store-read-role-${var.aws_resource_prefix}"
-
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole",
-#         Effect = "Allow"
-#         Principal = {
-#           Service = "ec2.amazonaws.com"
-#         }
-#       }
-#     ]
-#   })
-# }
-
-# resource "aws_iam_policy" "parameter_store_read_policy" {
-#   name         = "secret-read-policy-${var.aws_resource_prefix}"
-#   description  = "Allows to read from parameter store"
-#   policy       = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = [
-#           "ssm:Describe*",
-#           "ssm:Get*",
-#           "ssm:List*",
-#         ],
-#         Effect = "Allow"
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
-
-# resource "aws_iam_role_policy_attachment" "attach_policy" {
-#   role       = aws_iam_role.parameter_store_read_role.name
-#   policy_arn = aws_iam_policy.parameter_store_read_policy.arn
-# }
