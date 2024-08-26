@@ -358,7 +358,12 @@ Outputs:
     Description: The ARN of the ECS role
     Value: !GetAtt 'ECSRole.Arn'
     Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSRole' ] ]
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSRole' ] ]}
+  EC2Role:
+    Description: The ARN of the ECS role
+    Value: !GetAtt 'EC2Role.Arn'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'EC2Role' ] ]      
   PublicListener:
     Description: The ARN of the public load balancer's Listener
     Value: !Ref PublicLoadBalancerListener

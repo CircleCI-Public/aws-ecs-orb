@@ -73,7 +73,7 @@ Resources:
       ExecutionRoleArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
-      TaskRoleArn: !Ref 'Role'
+      TaskRoleArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
         #Fn::If:
