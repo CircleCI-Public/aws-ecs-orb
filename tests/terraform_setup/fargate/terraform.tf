@@ -71,6 +71,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
     StackName       = local.aws_vpc_stack_name
     ServiceName     = local.aws_ecs_service_name
     Role            = aws_iam_role.parameter_store_read_role.arn
+    SecretArn       = aws_ssm_parameter.test_container_secret.arn
     # Note: Since ImageUrl parameter is not specified, the Service
     # will be deployed with the nginx image when created
   }
@@ -89,7 +90,7 @@ resource "aws_ssm_parameter" "test_container_secret_toupdate" {
 }
 
 resource "aws_iam_role" "parameter_store_read_role" {
-  name = "parameter-store-read-role"
+  name = "parameter-store-read-role-${var.aws_resource_prefix}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -106,7 +107,7 @@ resource "aws_iam_role" "parameter_store_read_role" {
 }
 
 resource "aws_iam_policy" "parameter_store_read_policy" {
-  name         = "secret-read-policy"
+  name         = "secret-read-policy-${var.aws_resource_prefix}"
   description  = "Allows to read from parameter store"
   policy       = jsonencode({
     Version = "2012-10-17"
