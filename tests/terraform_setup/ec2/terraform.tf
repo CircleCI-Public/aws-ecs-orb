@@ -19,13 +19,13 @@ provider "aws" {
 
 locals {
   # The name of the CloudFormation stack to be created for the VPC and related resources
-  aws_vpc_stack_name = "${var.aws_resource_prefix}-vpc-stack-new"
+  aws_vpc_stack_name = "${var.aws_resource_prefix}-vpc-stack"
 
   # The name of the CloudFormation stack to be created for the ECS service and related resources
-  aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack-new"
+  aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack"
 
   # The name of the ECR repository to be created
-  aws_ecr_repository_name = "${var.aws_resource_prefix}-new"
+  aws_ecr_repository_name = "${var.aws_resource_prefix}"
 
   # The name of the ECS cluster to be created
   aws_ecs_cluster_name = "${var.aws_resource_prefix}-cluster"
