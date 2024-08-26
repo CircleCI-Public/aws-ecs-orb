@@ -72,10 +72,10 @@ Resources:
       ExecutionRoleArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
-      TaskRoleArn:
+      TaskRoleArn: !Ref 'Role'
         # Just for testing the passing of --task-role-arn argument
-        Fn::ImportValue:
-          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
+        # Fn::ImportValue:
+        #   !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
         #Fn::If:
         #  - 'HasCustomRole'
         #  - !Ref 'Role'

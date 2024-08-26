@@ -72,11 +72,14 @@ Resources:
       Family: !Ref 'FamilyName'
       Cpu: !Ref 'TaskCpu'
       Memory: !Ref 'TaskMemory'
-      TaskRoleArn:
-        Fn::If:
-          - 'HasCustomRole'
-          - !Ref 'Role'
-          - !Ref "AWS::NoValue"
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
+      TaskRoleArn: !Ref 'Role'
+      #   Fn::If:
+      #     - 'HasCustomRole'
+      #     - !Ref 'Role'
+      #     - !Ref "AWS::NoValue"
       PlacementConstraints:
         - Type: memberOf
           Expression:
