@@ -253,9 +253,9 @@ Resources:
                 # Allow the ECS tasks to upload logs to CloudWatch
                 - 'logs:CreateLogStream'
                 - 'logs:PutLogEvents'
-                - 'ssm:Describe*',
-                - 'ssm:Get*',
-                - 'ssm:List*',
+                - 'ssm:Describe*'
+                - 'ssm:Get*'
+                - 'ssm:List*'
               Resource: '*'
       RoleName: !Ref 'ExecutionRoleName'
 
