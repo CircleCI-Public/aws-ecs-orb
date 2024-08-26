@@ -392,17 +392,11 @@ jobs:
           no_output_timeout: "20m"
           command: |-
             cd << parameters.terraform-config-dir >>
-            if [ "$(terraform destroy -input=false -auto-approve \
+            echo "Destroying terraform"
+            terraform destroy -input=false -auto-approve \
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" > /dev/null; echo $?)" -ne 0 ]; then
-
-                echo "Retrying terraform destroy"
-                terraform destroy -input=false -auto-approve \
-                  -var "aws_region=${AWS_DEFAULT_REGION}" \
-                  -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                  -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
-            fi
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
   integration-test-ecs-cli-install:
     parameters:
       executor:
