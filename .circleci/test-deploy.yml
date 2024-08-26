@@ -467,7 +467,7 @@ workflows:
           service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
-          secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterUpdate"
+          secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterFargateUpdate"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy_service_update:

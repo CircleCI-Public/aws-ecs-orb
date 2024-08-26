@@ -258,17 +258,17 @@ Resources:
                 - 'ssm:List*'
               Resource: '*'
       RoleName: !Ref 'ExecutionRoleName'
-      
+
   SSMParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: TestParameter
+      Name: TestParameterFargate
       Type: String
       Value: test-value
   SSMParameterUpdate:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: TestParameterUpdate
+      Name: TestParameterFargateUpdate
       Type: String
       Value: test-value    
 # These are the values output by the CloudFormation template. Be careful
