@@ -217,7 +217,7 @@ Resources:
         Statement:
         - Effect: Allow
           Principal:
-            Service: [ec2.amazonaws.com]
+            Service: [ec2.amazonaws.com, ecs.amazonaws.com, ecs-tasks.amazonaws.com]
           Action: ['sts:AssumeRole']
       Path: /
       Policies:
@@ -312,7 +312,7 @@ Resources:
         Statement:
         - Effect: Allow
           Principal:
-            Service: [ecs.amazonaws.com]
+            Service: [ecs.amazonaws.com, ec2.amazonaws.com, ecs-tasks.amazonaws.com]
           Action: ['sts:AssumeRole']
       Path: /
       Policies:
@@ -339,7 +339,7 @@ Resources:
               - 'elasticloadbalancing:RegisterInstancesWithLoadBalancer'
               - 'elasticloadbalancing:RegisterTargets'
             Resource: '*'
-            
+
   SSMParameter:
     Type: AWS::SSM::Parameter
     Properties:
