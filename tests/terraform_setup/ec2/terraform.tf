@@ -64,7 +64,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
   depends_on = [
     aws_cloudformation_stack.vpc,
     aws_ecr_repository.demo-app-repository,
-    aws_iam_role.parameter_store_read_role
+    # aws_iam_role.parameter_store_read_role
   ]
 
   parameters = {
