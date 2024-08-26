@@ -339,11 +339,33 @@ Resources:
               - 'elasticloadbalancing:RegisterInstancesWithLoadBalancer'
               - 'elasticloadbalancing:RegisterTargets'
             Resource: '*'
-
+            
+  SSMParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: TestParameter
+      Type: String
+      Value: test-value
+  SSMParameterUpdate:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: TestParameterUpdate
+      Type: String
+      Value: test-value      
 # These are the values output by the CloudFormation template. Be careful
 # about changing any of them, because of them are exported with specific
 # names so that the other task related CF templates can use them.
 Outputs:
+  SSMParameter:
+    Description: The original parameter to use as secret
+    Value: !Ref 'SSMParameter'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'SSMParameter' ] ]
+  SSMParameterUpdate:
+    Description: The original parameter to use as secret
+    Value: !Ref 'SSMParameterUpdate'
+    Export:
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'SSMParameterUpdate' ] ]
   ClusterName:
     Description: The name of the ECS cluster
     Value: !Ref 'ECSCluster'
@@ -358,9 +380,9 @@ Outputs:
     Description: The ARN of the ECS role
     Value: !GetAtt 'ECSRole.Arn'
     Export:
-      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSRole' ] ]}
+      Name: !Join [ ':', [ !Ref 'AWS::StackName', 'ECSRole' ] ]
   EC2Role:
-    Description: The ARN of the ECS role
+    Description: The ARN of the EC2 role
     Value: !GetAtt 'EC2Role.Arn'
     Export:
       Name: !Join [ ':', [ !Ref 'AWS::StackName', 'EC2Role' ] ]      
