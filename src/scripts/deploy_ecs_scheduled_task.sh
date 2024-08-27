@@ -9,7 +9,7 @@ fi
 ORB_STR_RULE_NAME="$(circleci env subst "${ORB_STR_RULE_NAME}")"
 
 if [[ -n $ORB_STR_RULE_NAME ]]; then
-    echo "To deploy with an shceduled task, you must provide a rule name"
+    echo "To deploy with an scheduled task, you must provide a rule name"
     exit 1
 fi
 
