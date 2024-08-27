@@ -75,10 +75,6 @@ Resources:
       TaskRoleArn:
         Fn::ImportValue:
             !Join [':', [!Ref 'StackName', 'EC2Role']]
-      #   Fn::If:
-      #     - 'HasCustomRole'
-      #     - !Ref 'Role'
-      #     - !Ref "AWS::NoValue"
       PlacementConstraints:
         - Type: memberOf
           Expression:

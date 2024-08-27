@@ -72,10 +72,6 @@ Resources:
       TaskRoleArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
-        #Fn::If:
-        #  - 'HasCustomRole'
-        #  - !Ref 'Role'
-        #  - !Ref "AWS::NoValue"
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Image: !Ref 'ImageUrl'
