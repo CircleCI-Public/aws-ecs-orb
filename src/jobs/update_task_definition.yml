@@ -80,6 +80,7 @@ parameters:
     default: false
   rule_name:
     description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
+    default: ""
     type: string
   auth:
     description: |
