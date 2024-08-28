@@ -69,11 +69,12 @@ Resources:
       Family: !Ref 'FamilyName'
       Cpu: !Ref 'TaskCpu'
       Memory: !Ref 'TaskMemory'
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'StackName', 'EC2Role']]
       TaskRoleArn:
-        Fn::If:
-          - 'HasCustomRole'
-          - !Ref 'Role'
-          - !Ref "AWS::NoValue"
+        Fn::ImportValue:
+            !Join [':', [!Ref 'StackName', 'EC2Role']]
       PlacementConstraints:
         - Type: memberOf
           Expression:
@@ -97,7 +98,12 @@ Resources:
         - Name: DummyContainer
           Cpu: 512
           Memory: 1024
-          Image: nginx:latest    
+          Image: nginx:latest
+          Secrets:
+            - Name: test
+              ValueFrom:
+                Fn::ImportValue:
+                  !Join [':', [!Ref 'StackName', 'SSMParameter']]
           Environment:
             - Name: DUMMY_VAR_1
               Value: 'a'

@@ -14,9 +14,6 @@ terraform {
 }
 
 provider "aws" {
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
-  token = var.aws_session_token  
   region     = var.aws_region
 }
 
@@ -28,7 +25,7 @@ locals {
   aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack"
 
   # The name of the ECR repository to be created
-  aws_ecr_repository_name = var.aws_resource_prefix
+  aws_ecr_repository_name = "${var.aws_resource_prefix}"
 
   # The name of the ECS cluster to be created
   aws_ecs_cluster_name = "${var.aws_resource_prefix}-cluster"

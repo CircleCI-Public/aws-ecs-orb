@@ -179,9 +179,6 @@ jobs:
             set -x
             terraform plan \
                 -input=false \
-                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
-                -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                -var "aws_session_token=${AWS_SESSION_TOKEN}" \
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
                 -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" \
@@ -224,6 +221,9 @@ jobs:
       role_arn:
         type: string
         default: ''
+      secret_arn:
+        type: string
+        default: ''
     steps:
       - checkout
       - setup_remote_docker
@@ -260,6 +260,7 @@ jobs:
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
                 container_image_name_updates: "container=<< parameters.aws-resource-name-prefix >>-service,image-and-tag=$FULL_IMAGE_NAME"
                 container_env_var_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=<< parameters.aws-resource-name-prefix >>-service,name=BUILD_DATE,value=$(date)'
+                container_secret_updates: 'container=<< parameters.aws-resource-name-prefix >>-service,name=test,valueFrom=<<parameters.secret_arn>>'
                 verify_revision_is_deployed: true
                 fail_on_verification_timeout: false
                 profile_name: "<<parameters.profile_name>>"
@@ -391,22 +392,11 @@ jobs:
           no_output_timeout: "20m"
           command: |-
             cd << parameters.terraform-config-dir >>
-            if [ "$(terraform destroy -input=false -auto-approve \
-                -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
-                -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                -var "aws_session_token=${AWS_SESSION_TOKEN}" \
+            echo "Destroying terraform"
+            terraform destroy -input=false -auto-approve \
                 -var "aws_region=${AWS_DEFAULT_REGION}" \
                 -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>" > /dev/null; echo $?)" -ne 0 ]; then
-
-                echo "Retrying terraform destroy"
-                terraform destroy -input=false -auto-approve \
-                  -var "aws_access_key=${AWS_ACCESS_KEY_ID}" \
-                  -var "aws_secret_key=${AWS_SECRET_ACCESS_KEY}" \
-                  -var "aws_region=${AWS_DEFAULT_REGION}" \
-                  -var "aws_account_id=${AWS_ACCOUNT_ID}" \
-                  -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
-            fi
+                -var "aws_resource_prefix=<< parameters.aws-resource-name-prefix >>"
   integration-test-ecs-cli-install:
     parameters:
       executor:
@@ -443,11 +433,20 @@ workflows:
       #################
       # Fargate
       #################
+      - tear-down-test-env:
+          name: fargate_tear-down-test-env-initial
+          filters: *filters
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
+          terraform-config-dir: "tests/terraform_setup/fargate"
+          context: [CPE-OIDC]
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"      
       - build-test-app:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
+          requires:
+            - fargate_tear-down-test-env-initial
           filters: *filters
       - set-up-test-env:
           name: fargate_set-up-test-env
@@ -468,6 +467,7 @@ workflows:
           service_name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_FARGATE}:${CIRCLE_SHA1}"
+          secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterFargateUpdate"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - aws-ecs/deploy_service_update:
@@ -527,12 +527,21 @@ workflows:
       #################
       # EC2
       #################
+      - tear-down-test-env:
+          name: ec2_tear-down-test-env-initial
+          filters: *filters
+          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+          terraform-config-dir: "tests/terraform_setup/ec2"
+          context: [CPE-OIDC]
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"      
       - build-test-app:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
+          requires:
+            - ec2_tear-down-test-env-initial
       - set-up-test-env:
           name: ec2_set-up-test-env
           filters: *filters
@@ -582,6 +591,7 @@ workflows:
           family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
           service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterUpdate"
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
@@ -635,109 +645,6 @@ workflows:
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           requires:
             - fargate_set-up-test-env
-      #################
-      # CodeDeploy
-      #################
-      - build-test-app:
-          name: codedeploy_fargate_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-          context: [CPE-OIDC]
-          filters: *filters
-      - set-up-test-env:
-          name: codedeploy_fargate_set-up-test-env
-          filters: *filters
-          requires:
-            - codedeploy_fargate_build-test-app
-          terraform-image: "hashicorp/terraform:1.4.0"
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      # - test-service-update:
-      #     name: codedeploy_fargate_test-update_service-command
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_set-up-test-env
-      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-      #     family_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      #     skip-service-update: true
-      #     context: [CPE-OIDC]
-      # - aws-ecs/deploy_service_update:
-      #     name: codedeploy_fargate_test-update_service-job
-      #     auth:
-      #       - aws-cli/setup:
-      #           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_test-update_service-command
-      #     region: AWS_REGION
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #     container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     deployment_controller: "ECS"
-      #     codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #     codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #     codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     codedeploy_load_balanced_container_port: 80
-      #     codedeploy_capacity_provider_name: "FARGATE"
-      #     codedeploy_capacity_provider_base: "1"
-      #     codedeploy_capacity_provider_weight: "2"
-      #     verify_revision_is_deployed: false
-      #     context: [CPE-OIDC]
-      #     post-steps:
-      #       - wait-for-codedeploy-deployment:
-      #           application-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #           deployment-group-name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #       - test-deployment:
-      #           service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #           port: "8080"
-      #           delete-load-balancer: false
-      # - aws-ecs/deploy_service_update:
-      #     name: codedeploy_fargate_test-update-and-wait-service-job
-      #     auth:
-      #       - aws-cli/setup:
-      #           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      #     context: [CPE-OIDC]
-      #     filters: *filters
-      #     requires:
-      #       - codedeploy_fargate_test-update_service-job
-      #     region: AWS_REGION
-      #     family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #     container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
-      #     container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=VERSION_INFO,value="${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,name=BUILD_DATE,value=$(date)'
-      #     deployment_controller: "CODE_DEPLOY"
-      #     codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
-      #     codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
-      #     codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #     codedeploy_load_balanced_container_port: 80
-      #     verify_revision_is_deployed: true
-      #     verification_timeout: "12m"
-      #     post-steps:
-      #       - test-deployment:
-      #           service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      #           delete-load-balancer: true
-      #       - delete-service:
-      #           service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-      #           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
-      - tear-down-test-env:
-          name: codedeploy_fargate_tear-down-test-env
-          requires:
-            - codedeploy_fargate_set-up-test-env
-          terraform-image: "hashicorp/terraform:1.4.0"
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}
-          terraform-config-dir: "tests/terraform_setup/fargate_codedeploy"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          filters: *filters
       - orb-tools/pack:
           filters: *release-filters
       - orb-tools/publish:
@@ -746,47 +653,9 @@ workflows:
           pub_type: production
           enable_pr_comment: true
           context: orb-publisher
-          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
+          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, integration-test-ecs-cli-install]
           filters: *release-filters
 commands:
-  wait-for-codedeploy-deployment:
-    description: "Wait for the CodeDeploy deployment to be successful"
-    parameters:
-      application-name:
-        description: "CodeDeploy application name"
-        type: string
-      deployment-group-name:
-        description: "CodeDeploy application name"
-        type: string
-    steps:
-      - run:
-          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
-          command: |
-            DEPLOYMENT_ID=$(aws deploy list-deployments \
-              --application-name << parameters.application-name >> \
-              --deployment-group-name << parameters.deployment-group-name >> \
-              --query "deployments" \
-              --max-items 1 \
-              --output text \
-              | head -n 1)
-            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
-  delete-service:
-    description: "Forcefully delete an ECS service"
-    parameters:
-      service_name:
-        description: "Name of the ECS service"
-        type: string
-      cluster:
-        description: "Name of the cluster"
-        type: string
-    steps:
-      - run:
-          name: Delete ECS service
-          command: |
-            aws ecs delete-service \
-              --cluster << parameters.cluster>> \
-              --service << parameters.service_name >> \
-              --force
   test-deployment:
     description: "Test the deployment"
     parameters:

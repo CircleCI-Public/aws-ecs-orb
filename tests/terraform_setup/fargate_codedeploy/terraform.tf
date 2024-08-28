@@ -29,3 +29,13 @@ resource "aws_ecr_repository" "demo-app-repository" {
   name = local.aws_ecr_repository_name
   force_delete = true
 }
+
+resource "aws_ssm_parameter" "test_container_secret" {
+  name  = var.aws_resource_prefix
+  type  = "String"
+  value = "test_value"
+}
+
+output "arn_secret" {
+  value = aws_ssm_parameter.test_container_secret.arn
+}
