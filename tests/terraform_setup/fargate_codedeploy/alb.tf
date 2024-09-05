@@ -53,7 +53,7 @@ resource "aws_alb_listener" "front_end_green" {
     type             = "forward"
   }
   lifecycle {
-    ignore_changes = [action] 
+    ignore_changes = [default_action] 
   }
 }
 
@@ -67,6 +67,6 @@ resource "aws_alb_listener" "front_end_blue" {
     type             = "forward"
   }
   lifecycle {
-    ignore_changes = [action] 
+    ignore_changes = [default_action] 
   }
 }
