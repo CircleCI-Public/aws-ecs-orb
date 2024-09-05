@@ -758,6 +758,44 @@ workflows:
           requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, integration-test-ecs-cli-install]
           filters: *release-filters
 commands:
+  wait-for-codedeploy-deployment:
+    description: "Wait for the CodeDeploy deployment to be successful"
+    parameters:
+      application-name:
+        description: "CodeDeploy application name"
+        type: string
+      deployment-group-name:
+        description: "CodeDeploy application name"
+        type: string
+    steps:
+      - run:
+          name: Wait for CodeDeploy deployment to be successful (for orb testing and is not part of the orb)
+          command: |
+            DEPLOYMENT_ID=$(aws deploy list-deployments \
+              --application-name << parameters.application-name >> \
+              --deployment-group-name << parameters.deployment-group-name >> \
+              --query "deployments" \
+              --max-items 1 \
+              --output text \
+              | head -n 1)
+            aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+  delete-service:
+    description: "Forcefully delete an ECS service"
+    parameters:
+      service_name:
+        description: "Name of the ECS service"
+        type: string
+      cluster:
+        description: "Name of the cluster"
+        type: string
+    steps:
+      - run:
+          name: Delete ECS service
+          command: |
+            aws ecs delete-service \
+              --cluster << parameters.cluster>> \
+              --service << parameters.service_name >> \
+              --force
   test-deployment:
     description: "Test the deployment"
     parameters:
