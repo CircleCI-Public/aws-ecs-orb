@@ -694,7 +694,7 @@ workflows:
           codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy_load_balanced_container_port: 80
+          codedeploy_load_balanced_container_port: "80"
           codedeploy_capacity_provider_name: "FARGATE"
           codedeploy_capacity_provider_base: "1"
           codedeploy_capacity_provider_weight: "2"
@@ -726,7 +726,7 @@ workflows:
           codedeploy_application_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeployapp"
           codedeploy_deployment_group_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-codedeploygroup"
           codedeploy_load_balanced_container_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
-          codedeploy_load_balanced_container_port: 80
+          codedeploy_load_balanced_container_port: "80"
           verify_revision_is_deployed: true
           verification_timeout: "12m"
           post-steps:
