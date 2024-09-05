@@ -4,7 +4,7 @@ variable "aws_region" {
 variable "aws_resource_prefix" {
   description = "Prefix to be used in the naming of the created AWS resources e.g. ecs-fargate"
 }
-
+variable "aws_account_id" {}
 variable "az_count" {
   default = "2"
 }
