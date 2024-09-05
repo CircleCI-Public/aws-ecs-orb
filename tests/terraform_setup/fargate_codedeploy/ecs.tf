@@ -56,7 +56,9 @@ resource "aws_ecs_service" "ecs_service" {
   }
 
   depends_on = [aws_alb_listener.front_end_blue, aws_iam_role_policy_attachment.ecs_task_execution_role]
-
+  lifecycle {
+    ignore_changes = [load_balancer, task_definition]
+  }
 }
 
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/codedeploy_IAM_role.html
