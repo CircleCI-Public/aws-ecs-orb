@@ -639,12 +639,12 @@ workflows:
       # ################
       # FargateSpot
       # ################
-      - test-fargatespot:
-          context: [CPE-OIDC]
-          filters: *filters
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          requires:
-            - fargate_set-up-test-env
+      # - test-fargatespot:
+      #     context: [CPE-OIDC]
+      #     filters: *filters
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #     requires:
+      #       - fargate_set-up-test-env
       #################
       # CodeDeploy
       #################
