@@ -1,6 +1,10 @@
 description: >
   Registers a task definition for the given ECS service and updates the service to use it. Optionally polls the status of the deployment until the created task definition revision has reached its desired running task count and is the only revision deployed for the service.
 parameters:
+  region:
+    description: AWS region to use for looking up task definitions.
+    type: string
+    default: $AWS_DEFAULT_REGION
   family:
     description: Name of the task definition's family.
     type: string
@@ -207,7 +211,7 @@ steps:
                 --output text \
                 --query 'taskDefinition.taskDefinitionArn' \
                 --profile << parameters.profile_name >> \
-                --region ${AWS_DEFAULT_REGION})
+                --region << parameters.region >>
               echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
   - when:
       condition: << parameters.task_definition_tags >>
