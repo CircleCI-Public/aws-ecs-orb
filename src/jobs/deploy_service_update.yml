@@ -247,6 +247,7 @@ steps:
       verify_revision_is_deployed: << parameters.verify_revision_is_deployed >>
       max_poll_attempts: << parameters.max_poll_attempts >>
       poll_interval: << parameters.poll_interval >>
+      region: << parameters.region >>
       fail_on_verification_timeout: << parameters.fail_on_verification_timeout >>
       skip_task_definition_registration: << parameters.skip_task_definition_registration >>
       task_definition_tags: << parameters.task_definition_tags >>
