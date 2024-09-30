@@ -880,6 +880,8 @@ executors:
   mac:
     macos:
       xcode: 13.4.1
+      shell: bash -eox pipefail
   linux:
     docker:
       - image: cimg/base:current
+        shell: bash -eox pipefail
