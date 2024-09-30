@@ -30,10 +30,6 @@ parameters:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
     default: default
-  region:
-    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
-    type: string
-    default: $AWS_DEFAULT_REGION
 executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
