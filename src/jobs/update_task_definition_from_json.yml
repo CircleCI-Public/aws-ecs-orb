@@ -2,7 +2,7 @@ description: |
   Install AWS CLI and  a task definition from a json file.
 parameters:
   region:
-    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: ${AWS_DEFAULT_REGION}
   profile_name:
