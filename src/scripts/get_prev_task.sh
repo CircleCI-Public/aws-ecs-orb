@@ -9,6 +9,7 @@ ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 ORB_STR_CONTAINER_SECRET_UPDATES="$(circleci env subst "$ORB_STR_CONTAINER_SECRET_UPDATES")"
 ORB_STR_CONTAINER_DOCKER_LABEL_UPDATES="$(circleci env subst "$ORB_STR_CONTAINER_DOCKER_LABEL_UPDATES")"
 ORB_STR_PREVIOUS_REVISION_NUMBER="$(circleci env subst "$ORB_STR_PREVIOUS_REVISION_NUMBER")"
+ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
 
 if [ -z "${ECS_PARAM_PREVIOUS_REVISION}" ]; then
   ECS_TASK_DEFINITION_NAME="$ORB_STR_FAMILY"
@@ -17,7 +18,7 @@ else
 fi
 
 # shellcheck disable=SC2034
-PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_STR_PROFILE_NAME}" --region "${AWS_DEFAULT_REGION}" "$@")"
+PREVIOUS_TASK_DEFINITION="$(aws ecs describe-task-definition --task-definition "${ECS_TASK_DEFINITION_NAME}" --include TAGS --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@")"
 
 # Prepare script for updating container definitions
 

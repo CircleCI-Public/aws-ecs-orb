@@ -30,14 +30,20 @@ parameters:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
     default: default
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
 executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
   - update_task_definition_from_json:
       task_definition_json: << parameters.task_definition_json >>
       profile_name: << parameters.profile_name >>
+      region: << parameters.region >>
   - when:
       condition: <<parameters.deploy_scheduled_task>>
       steps:
         - deploy_ecs_scheduled_task:
             rule_name: <<parameters.rule_name>>
+            region: << parameters.region >>

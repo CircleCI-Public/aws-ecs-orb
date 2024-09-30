@@ -64,6 +64,10 @@ parameters:
     description: Optional previous task's revision number
     type: string
     default: ''
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
 steps:
   - run:
       name: Retrieve previous task definition and prepare new task definition values
@@ -76,6 +80,7 @@ steps:
         ORB_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
         ORB_STR_PREVIOUS_REVISION_NUMBER: <<parameters.previous_revision_number>>
+        ORB_AWS_REGION: << parameters.region >>
         ORB_STR_CONTAINER_SECRET_UPDATES: <<parameters.container_secret_updates>>
         ORB_STR_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container_docker_label_updates >>
   - run:

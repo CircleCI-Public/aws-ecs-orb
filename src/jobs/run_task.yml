@@ -153,6 +153,10 @@ parameters:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
     default: default
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
 executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
@@ -167,6 +171,7 @@ steps:
       launch_type: << parameters.launch_type >>
       platform_version: << parameters.platform_version >>
       awsvpc: << parameters.awsvpc >>
+      region: << parameters.region >>
       subnet_ids: << parameters.subnet_ids >>
       security_group_ids: << parameters.security_group_ids >>
       assign_public_ip: << parameters.assign_public_ip >>

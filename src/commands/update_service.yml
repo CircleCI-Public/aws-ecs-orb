@@ -200,6 +200,7 @@ steps:
             container_secret_updates: << parameters.container_secret_updates >>
             container_docker_label_updates: << parameters.container_docker_label_updates >>
             profile_name: << parameters.profile_name >>
+            region: << parameters.region >>
   - when:
       condition: << parameters.skip_task_definition_registration >>
       steps:
@@ -222,7 +223,8 @@ steps:
               aws ecs tag-resource \
                 --resource-arn ${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN} \
                 --tags <<parameters.task_definition_tags>> \
-                --profile=<< parameters.profile_name >>
+                --profile=<< parameters.profile_name >> \
+                --region << parameters.region >>
   - when:
       condition:
         equal:
@@ -241,6 +243,7 @@ steps:
               ORB_INT_CD_LOAD_BALANCED_CONTAINER_PORT: <<parameters.codedeploy_load_balanced_container_port>>
               ORB_BOOL_VERIFY_REV_DEPLOY: <<parameters.verify_revision_is_deployed>>
               ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+              ORB_AWS_REGION: << parameters.region >>
               ORB_BOOL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
               ORB_STR_CD_CAPACITY_PROVIDER_NAME: <<parameters.codedeploy_capacity_provider_name>>
               ORB_STR_CD_CAPACITY_PROVIDER_WEIGHT: <<parameters.codedeploy_capacity_provider_weight>>
@@ -261,6 +264,7 @@ steps:
               ORB_STR_FAMILY: <<parameters.family>>
               ORB_BOOL_FORCE_NEW_DEPLOY: <<parameters.force_new_deployment>>
               ORB_STR_CLUSTER_NAME: <<parameters.cluster>>
+              ORB_AWS_REGION: << parameters.region >>
               ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
               ORB_BOOL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
 
@@ -279,5 +283,6 @@ steps:
             task_definition_arn: $CCI_ORB_AWS_ECS_DEPLOYED_REVISION
             max_poll_attempts: << parameters.max_poll_attempts >>
             poll_interval: << parameters.poll_interval >>
+            region: << parameters.region >>
             fail_on_verification_timeout: << parameters.fail_on_verification_timeout >>
             profile_name: << parameters.profile_name >>

@@ -5,6 +5,7 @@ ORB_STR_SERVICE_NAME="$(circleci env subst "$ORB_STR_SERVICE_NAME")"
 ORB_STR_CLUSTER_NAME="$(circleci env subst "$ORB_STR_CLUSTER_NAME")"
 ORB_STR_TASK_DEF_ARN="$(circleci env subst "$ORB_STR_TASK_DEF_ARN")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
+ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
 
 if [ "$ORB_STR_TASK_DEF_ARN" = "" ]; then
     echo "Invalid task-definition-arn parameter value: $ORB_STR_TASK_DEF_ARN"
@@ -27,7 +28,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
-        --region "${AWS_DEFAULT_REGION}" \
+        --region "${ORB_AWS_REGION}" \
         --output text \
         --query 'services[0].deployments[].[taskDefinition, status]' \
         "$@")
@@ -35,7 +36,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
-        --region "${AWS_DEFAULT_REGION}" \
+        --region "${ORB_AWS_REGION}" \
         --output text \
         --query 'length(services[0].deployments)' \
         "$@")
@@ -43,7 +44,7 @@ do
         --profile "${ORB_STR_PROFILE_NAME}" \
         --cluster "$ORB_STR_CLUSTER_NAME" \
         --services "${ORB_STR_SERVICE_NAME}" \
-        --region "${AWS_DEFAULT_REGION}" \
+        --region "${ORB_AWS_REGION}" \
         --output text \
         --query "services[0].deployments[?taskDefinition==\`$ORB_STR_TASK_DEF_ARN\` && runningCount == desiredCount && (status == \`PRIMARY\` || status == \`ACTIVE\`)][taskDefinition]" \
         "$@")

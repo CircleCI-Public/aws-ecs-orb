@@ -124,6 +124,10 @@ parameters:
           Specifies a local json file to save the output logs from the aws ecs run_task command. Use tools like JQ to read and parse this information such as "task-arns" and "task-ids"
     type: string
     default: ''
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
 steps:
   - run:
       name: Run Task
@@ -140,6 +144,7 @@ steps:
         ORB_STR_PLATFORM_VERSION: <<parameters.platform_version>>
         ORB_BOOL_AWSVPC: <<parameters.awsvpc>>
         ORB_STR_SUBNET_ID: <<parameters.subnet_ids>>
+        ORB_AWS_REGION: << parameters.region >>
         ORB_STR_SEC_GROUP_ID: <<parameters.security_group_ids>>
         ORB_STR_ASSIGN_PUB_IP: <<parameters.assign_public_ip>>
         ORB_STR_OVERRIDES: <<parameters.overrides>>
