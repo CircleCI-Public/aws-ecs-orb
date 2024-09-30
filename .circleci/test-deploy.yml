@@ -884,4 +884,4 @@ executors:
   linux:
     docker:
       - image: cimg/base:current
-        shell: bash -eox pipefail
+      shell: bash -eox pipefail
