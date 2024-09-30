@@ -89,3 +89,4 @@ steps:
       environment:
         ORB_STR_FAMILY: <<parameters.family>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_AWS_REGION: << parameters.region >>
