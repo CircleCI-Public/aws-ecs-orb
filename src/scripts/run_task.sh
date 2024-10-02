@@ -13,6 +13,7 @@ ORB_STR_CD_CAPACITY_PROVIDER_STRATEGY="$(circleci env subst "$ORB_STR_CD_CAPACIT
 ORB_STR_RUN_TASK_OUTPUT="$(circleci env subst "$ORB_STR_RUN_TASK_OUTPUT")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 ORB_STR_ASSIGN_PUB_IP="$(circleci env subst "$ORB_STR_ASSIGN_PUB_IP")"
+ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
 
 if [[ "$ORB_STR_OVERRIDES" == *"\${"* ]]; then
     ORB_STR_OVERRIDES="$(echo "${ORB_STR_OVERRIDES}" | circleci env subst)"
@@ -99,10 +100,10 @@ set -- "$@" --cluster "$ORB_STR_CLUSTER_NAME"
 
 if [ -n "${ORB_STR_RUN_TASK_OUTPUT}" ]; then
     set -x
-    aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" "$@" | tee "${ORB_STR_RUN_TASK_OUTPUT}"
+    aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@" | tee "${ORB_STR_RUN_TASK_OUTPUT}"
     set +x
 else
     set -x    
-    aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" "$@"
+    aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@"
     set +x
 fi

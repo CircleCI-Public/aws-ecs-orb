@@ -2,8 +2,8 @@ description: Verify the deployment of an ECS revision.
 usage:
   version: 2.1
   orbs:
-    aws-cli: circleci/aws-cli@4.0
-    aws-ecs: circleci/aws-ecs@4.0
+    aws-cli: circleci/aws-cli@5.1.0
+    aws-ecs: circleci/aws-ecs@6.0.0
   jobs:
     verify-deployment:
       docker:
@@ -30,6 +30,7 @@ usage:
         - aws-ecs/verify_revision_is_deployed:
             family: '${MY_APP_PREFIX}-service'
             cluster: '${MY_APP_PREFIX}-cluster'
+            region: us-east-1
             task_definition_arn: '${TASK_DEFINITION_ARN}'
   workflows:
     test-workflow:

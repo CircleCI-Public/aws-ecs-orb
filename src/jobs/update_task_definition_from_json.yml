@@ -2,7 +2,7 @@ description: |
   Install AWS CLI and  a task definition from a json file.
 parameters:
   region:
-    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: ${AWS_DEFAULT_REGION}
   profile_name:
@@ -36,8 +36,10 @@ steps:
   - update_task_definition_from_json:
       task_definition_json: << parameters.task_definition_json >>
       profile_name: << parameters.profile_name >>
+      region: << parameters.region >>
   - when:
       condition: <<parameters.deploy_scheduled_task>>
       steps:
         - deploy_ecs_scheduled_task:
             rule_name: <<parameters.rule_name>>
+            region: << parameters.region >>

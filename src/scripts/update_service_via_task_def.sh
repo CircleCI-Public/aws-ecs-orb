@@ -6,6 +6,7 @@ ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_CLUSTER_NAME="$(circleci env subst "$ORB_STR_CLUSTER_NAME")"
 ORB_STR_SERVICE_NAME="$(circleci env subst "$ORB_STR_SERVICE_NAME")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
+ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
 
 if [ -z "${ORB_STR_SERVICE_NAME}" ]; then
     ORB_STR_SERVICE_NAME="$ORB_STR_FAMILY"
@@ -25,6 +26,7 @@ DEPLOYED_REVISION=$(aws ecs update-service \
     --service "${ORB_STR_SERVICE_NAME}" \
     --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
     --output text \
+    --region "${ORB_AWS_REGION}" \
     --query service.taskDefinition \
     "$@")
 echo "export CCI_ORB_AWS_ECS_DEPLOYED_REVISION='${DEPLOYED_REVISION}'" >> "$BASH_ENV"

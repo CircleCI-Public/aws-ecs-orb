@@ -695,7 +695,7 @@ workflows:
           filters: *filters
           requires:
             - codedeploy_fargate_test-update_service-command
-          region: AWS_REGION
+          region: $AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
@@ -727,7 +727,7 @@ workflows:
           filters: *filters
           requires:
             - codedeploy_fargate_test-update_service-job
-          region: AWS_REGION
+          region: $AWS_REGION
           family: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
           cluster: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-cluster"
           container_image_name_updates: "container=${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service,image-and-tag=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}:${CIRCLE_SHA1}"
@@ -880,6 +880,8 @@ executors:
   mac:
     macos:
       xcode: 13.4.1
+    shell: bash -eox pipefail
   linux:
     docker:
       - image: cimg/base:current
+    shell: bash -eox pipefail

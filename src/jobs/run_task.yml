@@ -3,7 +3,7 @@ description: |
 
 parameters:
   region:
-    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: ${AWS_DEFAULT_REGION}
   profile_name:
@@ -167,6 +167,7 @@ steps:
       launch_type: << parameters.launch_type >>
       platform_version: << parameters.platform_version >>
       awsvpc: << parameters.awsvpc >>
+      region: << parameters.region >>
       subnet_ids: << parameters.subnet_ids >>
       security_group_ids: << parameters.security_group_ids >>
       assign_public_ip: << parameters.assign_public_ip >>

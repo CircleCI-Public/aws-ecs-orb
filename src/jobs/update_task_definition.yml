@@ -3,7 +3,7 @@ description: |
 
 parameters:
   region:
-    description: AWS region to operate in. Set this to the name of the environment variable you will use to hold this value, i.e. AWS_DEFAULT_REGION.
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: ${AWS_DEFAULT_REGION}
   profile_name:
@@ -98,6 +98,7 @@ steps:
       family: << parameters.family >>
       container_image_name_updates: << parameters.container_image_name_updates >>
       container_env_var_updates: << parameters.container_env_var_updates >>
+      region: << parameters.region >>
       container_secret_updates: << parameters.container_secret_updates >>
       container_docker_label_updates: << parameters.container_docker_label_updates >>
       profile_name: << parameters.profile_name >>
@@ -106,3 +107,4 @@ steps:
       steps:
         - deploy_ecs_scheduled_task:
             rule_name: <<parameters.rule_name>>
+            region: << parameters.region >>

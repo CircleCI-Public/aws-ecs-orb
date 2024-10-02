@@ -4,6 +4,7 @@ set -o noglob
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
+ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
 
 if [ -n "${CCI_ORB_AWS_ECS_TASK_ROLE}" ]; then
     set -- "$@" --task-role-arn "${CCI_ORB_AWS_ECS_TASK_ROLE}"
@@ -69,6 +70,7 @@ REVISION=$(aws ecs register-task-definition \
     --profile "${ORB_STR_PROFILE_NAME}" \
     "$@" \
     --output text \
+    --region "${ORB_AWS_REGION}" \
     --query 'taskDefinition.taskDefinitionArn')
 echo "Registered task definition: ${REVISION}"
 
