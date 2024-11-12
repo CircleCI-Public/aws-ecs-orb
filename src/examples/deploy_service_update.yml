@@ -18,8 +18,7 @@ usage:
                   profile: "OIDC-USER"
                   role_arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECR_ROLE"
             # Must use same profile configured in aws-cli/setup command
-            profile: "OIDC-USER"
-            registry_id: ${AWS_ECR_REGISTRY_ID}
+            profile_name: "OIDC-USER"
             repo: '${MY_APP_PREFIX}'
             region: AWS_REGION
             tag: '${CIRCLE_SHA1}'
@@ -30,7 +29,7 @@ usage:
                   profile: "OIDC-USER"
                   role_arn: "arn:aws:iam::123456789012:role/VALID_OIDC_ECS_ROLE"
             # Must use same profile configured in aws-cli/setup command
-            profile: "OIDC-USER"
+            profile_name: "OIDC-USER"
             region: us-east-1
             requires:
               - aws-ecr/build-and-push-image
