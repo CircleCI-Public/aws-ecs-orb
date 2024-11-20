@@ -32,7 +32,7 @@ usage:
             profile_name: "OIDC-USER"
             region: us-east-1
             requires:
-              - aws-ecr/build-and-push-image
+              - aws-ecr/build_and_push_image
             family: '${MY_APP_PREFIX}-service'
             cluster: '${MY_APP_PREFIX}-cluster'
             container_image_name_updates: 'container=${MY_APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
