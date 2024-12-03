@@ -531,7 +531,8 @@ workflows:
           filters: *filters
           auth:
             - aws-cli/setup:
-                  profile_name: profile-create
+                profile_name: profile-create
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           family: ecs-orb-ec2-1-family
           cluster: ecs-orb-ec2-1-cluster
           skip_task_definition_registration: true
