@@ -537,7 +537,7 @@ workflows:
           service_name: test-create
           subnets: subnet-0ac33b77a1409cab5,subnet-06ab605c9f6211389
           security_groups: sg-01476d3bddd6779e7
-          desired_count: 2
+          desired_count: "2"
           target_group: arn:aws:elasticloadbalancing:us-west-2:122211685980:targetgroup/ecs-orb-ec2-1-service/5cfc7471d907d25d
           container_name: ecs-orb-ec2-1-service
           container_port: "80"
