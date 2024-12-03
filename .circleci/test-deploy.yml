@@ -527,6 +527,21 @@ workflows:
       # #################
       # # EC2
       # #################
+      - aws-ecs/deploy_service_update:
+          filters: *filters
+          auth:
+            - aws-cli/setup:
+                  profile_name: profile-create
+          cluster: ecs-orb-ec2-1-cluster
+          task_definition: "ecs-orb-ec2-1-family"
+          service_name: test-create
+          subnets: subnet-0ac33b77a1409cab5,subnet-06ab605c9f6211389
+          security_groups: sg-01476d3bddd6779e7
+          desired_count: 2
+          target_group: arn:aws:elasticloadbalancing:us-west-2:122211685980:targetgroup/ecs-orb-ec2-1-service/5cfc7471d907d25d
+          container_name: ecs-orb-ec2-1-service
+          container_port: 80
+          profile: profile-create
       # - tear-down-test-env:
       #     name: ec2_tear-down-test-env-initial
       #     filters: *filters
@@ -534,98 +549,98 @@ workflows:
       #     terraform-config-dir: "tests/terraform_setup/ec2"
       #     context: [CPE-OIDC]
       #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - build-test-app:
-          name: ec2_build-test-app
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          context: [CPE-OIDC]
-          filters: *filters
-          # requires:
-          #   - ec2_tear-down-test-env-initial
-      - set-up-test-env:
-          name: ec2_set-up-test-env
-          filters: *filters
-          requires:
-            - ec2_build-test-app
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - set-up-run_task-test:
-          name: ec2_set-up-run_task-test
-          filters: *filters
-          requires:
-            - ec2_set-up-test-env
-          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - aws-ecs/run_task:
-          name: ec2_run_task-test
-          auth:
-            - aws-cli/setup:
-                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          filters: *filters
-          requires:
-            - ec2_set-up-run_task-test
-          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          launch_type: "EC2"
-          awsvpc: false
-          run_task_output: "run_task_output.json"
-          overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
-          context: [CPE-OIDC]
-      - tear-down-run_task-test:
-          name: ec2_tear-down-run_task-test
-          filters: *filters
-          requires:
-            - ec2_run_task-test
-          family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - test-service-update:
-          name: ec2_test-update_service-command
-          filters: *filters
-          requires:
-            - ec2_set-up-test-env
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-          secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterUpdate"
-          docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-      - test-task_definition-update:
-          name: ec2_test-task_definition-update
-          family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          filters: *filters
-          requires:
-            - ec2_test-update_service-command
-      - aws-ecs/deploy_service_update:
-          name: ec2_test-update_service-job
-          auth:
-            - aws-cli/setup:
-                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-                profile_name: "ECS_TEST_PROFILE"
-          profile_name: "ECS_TEST_PROFILE"
-          context: [CPE-OIDC]
-          filters: *filters
-          requires:
-            - ec2_test-task_definition-update
-          family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
-          service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
-          verify_revision_is_deployed: true
-          fail_on_verification_timeout: false
-          post-steps:
-            - test-deployment:
-                service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
-                cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-                profile: "ECS_TEST_PROFILE"
-                test-asterisk-expansion: true
+      # - build-test-app:
+      #     name: ec2_build-test-app
+      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+      #     context: [CPE-OIDC]
+      #     filters: *filters
+      #     # requires:
+      #     #   - ec2_tear-down-test-env-initial
+      # - set-up-test-env:
+      #     name: ec2_set-up-test-env
+      #     filters: *filters
+      #     requires:
+      #       - ec2_build-test-app
+      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+      #     terraform-config-dir: "tests/terraform_setup/ec2"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - set-up-run_task-test:
+      #     name: ec2_set-up-run_task-test
+      #     filters: *filters
+      #     requires:
+      #       - ec2_set-up-test-env
+      #     family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - aws-ecs/run_task:
+      #     name: ec2_run_task-test
+      #     auth:
+      #       - aws-cli/setup:
+      #           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #     filters: *filters
+      #     requires:
+      #       - ec2_set-up-run_task-test
+      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+      #     task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+      #     launch_type: "EC2"
+      #     awsvpc: false
+      #     run_task_output: "run_task_output.json"
+      #     overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
+      #     context: [CPE-OIDC]
+      # - tear-down-run_task-test:
+      #     name: ec2_tear-down-run_task-test
+      #     filters: *filters
+      #     requires:
+      #       - ec2_run_task-test
+      #     family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - test-service-update:
+      #     name: ec2_test-update_service-command
+      #     filters: *filters
+      #     requires:
+      #       - ec2_set-up-test-env
+      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+      #     family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+      #     service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+      #     docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      #     secret_arn: "arn:aws:ssm:${AWS_DEFAULT_REGION}:${AWS_ACCOUNT_ID}:parameter/TestParameterUpdate"
+      #     docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - test-task_definition-update:
+      #     name: ec2_test-task_definition-update
+      #     family_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #     filters: *filters
+      #     requires:
+      #       - ec2_test-update_service-command
+      # - aws-ecs/deploy_service_update:
+      #     name: ec2_test-update_service-job
+      #     auth:
+      #       - aws-cli/setup:
+      #           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      #           profile_name: "ECS_TEST_PROFILE"
+      #     profile_name: "ECS_TEST_PROFILE"
+      #     context: [CPE-OIDC]
+      #     filters: *filters
+      #     requires:
+      #       - ec2_test-task_definition-update
+      #     family: "${AWS_RESOURCE_NAME_PREFIX_EC2}-family"
+      #     service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+      #     cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+      #     container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
+      #     verify_revision_is_deployed: true
+      #     fail_on_verification_timeout: false
+      #     post-steps:
+      #       - test-deployment:
+      #           service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
+      #           cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+      #           profile: "ECS_TEST_PROFILE"
+      #           test-asterisk-expansion: true
       # - tear-down-test-env:
       #     name: ec2_tear-down-test-env
       #     filters: *filters
