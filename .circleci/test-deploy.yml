@@ -535,6 +535,7 @@ workflows:
                 role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           family: ecs-orb-ec2-1-family
           cluster: ecs-orb-ec2-1-cluster
+          create_service: true
           skip_task_definition_registration: true
           service_name: test-create
           subnets: subnet-0ac33b77a1409cab5,subnet-06ab605c9f6211389
