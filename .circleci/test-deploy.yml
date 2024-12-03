@@ -532,8 +532,9 @@ workflows:
           auth:
             - aws-cli/setup:
                   profile_name: profile-create
+          family: ecs-orb-ec2-1-family
           cluster: ecs-orb-ec2-1-cluster
-          task_definition: "ecs-orb-ec2-1-family"
+          skip_task_definition_registration: true
           service_name: test-create
           subnets: subnet-0ac33b77a1409cab5,subnet-06ab605c9f6211389
           security_groups: sg-01476d3bddd6779e7
