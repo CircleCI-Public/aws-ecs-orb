@@ -540,8 +540,8 @@ workflows:
           docker-image-name: "${AWS_RESOURCE_NAME_PREFIX_EC2}:${CIRCLE_SHA1}"
           context: [CPE-OIDC]
           filters: *filters
-          requires:
-            - ec2_tear-down-test-env-initial
+          # requires:
+          #   - ec2_tear-down-test-env-initial
       - set-up-test-env:
           name: ec2_set-up-test-env
           filters: *filters
@@ -766,7 +766,7 @@ workflows:
           pub_type: production
           enable_pr_comment: true
           context: orb-publisher
-          requires: [orb-tools/pack, ec2_tear-down-test-env, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
+          requires: [orb-tools/pack, fargate_tear-down-test-env, codedeploy_fargate_tear-down-test-env, integration-test-ecs-cli-install]
           filters: *release-filters
 commands:
   wait-for-codedeploy-deployment:
