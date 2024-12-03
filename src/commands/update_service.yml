@@ -188,6 +188,66 @@ parameters:
       If not specified, the value configured in the deployment group is used as the default.
     type: string
     default: ''
+  create_service:
+    type: boolean
+    description: |
+      Create the service if it does not exist already.
+      Only works with ECS deployment controller.
+      Default false.
+    default: false
+  desired_count:
+    description: |
+      The desired number of tasks to run. If empty it would keep the existing count.
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
+  subnets:
+    description: |
+      Comma separated list of subnet ids for the service when it needs to be created, e.g. "subnet-00000000,subnet-1111111"
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
+  security_groups:
+    description: |
+      Comma separated list of security group ids for the service when it needs to be created, e.g. "sg-00000000,sg-1111111"
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
+  public_ip:
+    description: |
+      Whether the task's elastic network interface receives a public IP address when the service needs to be created.
+      Only works with ECS deployment controller.
+      The default value is DISABLED.
+    default: DISABLED
+    type: 
+    enum:
+      - ENABLED
+      - DISABLED
+  target_group:
+    description: |
+      The full ARN of the Elastic Load Balancing target group or groups associated with a service when it needs to be created.
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
+  container_name:
+    description: |
+      The name of the container to associate with the load balancer when the service needs to be created.
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
+  container_port:
+    description: |
+      The port on the container to associate with the load balancer when the service needs to be created. 
+      This port must correspond to a containerPort in the task definition the tasks in the service are using.
+      Only works with ECS deployment controller.
+      Default to empty.
+    default: ""
+    type: string
 
 steps:
   - unless:
@@ -267,6 +327,14 @@ steps:
               ORB_AWS_REGION: << parameters.region >>
               ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
               ORB_BOOL_ENABLE_CIRCUIT_BREAKER: <<parameters.enable_circuit_breaker>>
+              ORB_AWS_DESIRED_COUNT: <<parameters.desired_count>>
+              ORB_AWS_CREATE_SERVICE: <<parameters.create_service>>
+              ORB_STR_SUBNETS: <<parameters.subnets>>
+              ORB_STR_SECURITY_GROUPS: <<parameters.security_groups>>
+              ORB_PUBLIC_IP: <<parameters.public_ip>>
+              ORB_STR_TARGET_GROUP: <<parameters.target_group>>
+              ORB_STR_CONTAINER_NAME: <<parameters.container_name>>
+              ORB_CONTAINER_PORT: <<parameters.container_port>>
 
   - when:
       condition:

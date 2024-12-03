@@ -527,13 +527,13 @@ workflows:
       # #################
       # # EC2
       # #################
-      - tear-down-test-env:
-          name: ec2_tear-down-test-env-initial
-          filters: *filters
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - tear-down-test-env:
+      #     name: ec2_tear-down-test-env-initial
+      #     filters: *filters
+      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+      #     terraform-config-dir: "tests/terraform_setup/ec2"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - build-test-app:
           name: ec2_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
@@ -626,16 +626,16 @@ workflows:
                 cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
                 profile: "ECS_TEST_PROFILE"
                 test-asterisk-expansion: true
-      - tear-down-test-env:
-          name: ec2_tear-down-test-env
-          filters: *filters
-          requires:
-            - ec2_test-update_service-job
-            - ec2_tear-down-run_task-test
-          aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
-          terraform-config-dir: "tests/terraform_setup/ec2"
-          context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      # - tear-down-test-env:
+      #     name: ec2_tear-down-test-env
+      #     filters: *filters
+      #     requires:
+      #       - ec2_test-update_service-job
+      #       - ec2_tear-down-run_task-test
+      #     aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_EC2}
+      #     terraform-config-dir: "tests/terraform_setup/ec2"
+      #     context: [CPE-OIDC]
+      #     role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       # ################
       # FargateSpot
       # ################
