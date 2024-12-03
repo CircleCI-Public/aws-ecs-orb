@@ -42,10 +42,10 @@ if [ -z "$SERVICE_EXISTS" ]; then
             --profile "${ORB_STR_PROFILE_NAME}" \
             --service-name "${ORB_STR_SERVICE_NAME}" \
             --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
-            --network-configuration "awsvpcConfiguration={subnets=[$ORB_STR_SUBNETS],securityGroups=[$ORB_STR_SECURITY_GROUPS],assignPublicIp=$ORB_PUBLIC_IP}" \
             --load-balancers "targetGroupArn=$ORB_STR_TARGET_GROUP,containerName=$ORB_STR_CONTAINER_NAME,containerPort=$ORB_CONTAINER_PORT" \
             "$@")
         echo "$NEW_SERVICE"
+            # --network-configuration "awsvpcConfiguration={subnets=[$ORB_STR_SUBNETS],securityGroups=[$ORB_STR_SECURITY_GROUPS],assignPublicIp=$ORB_PUBLIC_IP}" \
     fi
 else
     DEPLOYED_REVISION=$(aws ecs update-service \
