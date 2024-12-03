@@ -540,7 +540,7 @@ workflows:
           desired_count: 2
           target_group: arn:aws:elasticloadbalancing:us-west-2:122211685980:targetgroup/ecs-orb-ec2-1-service/5cfc7471d907d25d
           container_name: ecs-orb-ec2-1-service
-          container_port: 80
+          container_port: "80"
           profile: profile-create
       # - tear-down-test-env:
       #     name: ec2_tear-down-test-env-initial
