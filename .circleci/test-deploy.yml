@@ -580,6 +580,11 @@ workflows:
           container_port: "80"
           region: us-west-2
           profile_name: profile-create
+          post-steps:
+            - run:
+                command: |
+                   aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
+                   aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
       - set-up-run_task-test:
           name: ec2_set-up-run_task-test
           filters: *filters
