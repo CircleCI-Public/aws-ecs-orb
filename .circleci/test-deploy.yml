@@ -194,6 +194,7 @@ jobs:
   test-service-create:
     docker:
       - image: hashicorp/terraform:1.4.0
+    shell: bash -eox pipefail
     steps:
       - checkout
       - aws-cli/setup:
