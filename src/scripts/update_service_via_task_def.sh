@@ -7,6 +7,9 @@ ORB_STR_CLUSTER_NAME="$(circleci env subst "$ORB_STR_CLUSTER_NAME")"
 ORB_STR_SERVICE_NAME="$(circleci env subst "$ORB_STR_SERVICE_NAME")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
+ORB_STR_SUBNETS="$(circleci env subst "$ORB_STR_SUBNETS")"
+ORB_STR_SECURITY_GROUPS="$(circleci env subst "$ORB_STR_SECURITY_GROUPS")"
+ORB_STR_TARGET_GROUP="$(circleci env subst "$ORB_STR_TARGET_GROUP")"
 
 SERVICE_EXISTS=$(aws ecs describe-services \
     --profile "${ORB_STR_PROFILE_NAME}" \
@@ -16,7 +19,7 @@ SERVICE_EXISTS=$(aws ecs describe-services \
     --region "${ORB_AWS_REGION}" \
     --output text
 )
-echo "$SERVICE_EXISTS"
+
 if [ -z "${ORB_STR_SERVICE_NAME}" ]; then
     ORB_STR_SERVICE_NAME="$ORB_STR_FAMILY"
 fi
@@ -33,6 +36,10 @@ if [ -n "$ORB_AWS_DESIRED_COUNT" ]; then
     set -- "$@" --desired-count "$ORB_AWS_DESIRED_COUNT"
 fi
 
+if [ -n "$ORB_STR_SUBNETS" ] && [ -n "$ORB_STR_SECURITY_GROUPS" ] && [ -z "$SERVICE_EXISTS" ]; then
+    set -- "$@" --network-configuration "awsvpcConfiguration={subnets=[$ORB_STR_SUBNETS],securityGroups=[$ORB_STR_SECURITY_GROUPS],assignPublicIp=$ORB_PUBLIC_IP}"
+fi
+
 if [ -z "$SERVICE_EXISTS" ]; then
     echo "The service doesn't exist"
     if [ "$ORB_AWS_CREATE_SERVICE" = 1 ]; then
@@ -45,7 +52,6 @@ if [ -z "$SERVICE_EXISTS" ]; then
             --load-balancers "targetGroupArn=$ORB_STR_TARGET_GROUP,containerName=$ORB_STR_CONTAINER_NAME,containerPort=$ORB_CONTAINER_PORT" \
             "$@")
         echo "$NEW_SERVICE"
-            # --network-configuration "awsvpcConfiguration={subnets=[$ORB_STR_SUBNETS],securityGroups=[$ORB_STR_SECURITY_GROUPS],assignPublicIp=$ORB_PUBLIC_IP}" \
     fi
 else
     DEPLOYED_REVISION=$(aws ecs update-service \
