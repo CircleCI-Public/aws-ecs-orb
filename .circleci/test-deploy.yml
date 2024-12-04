@@ -211,7 +211,7 @@ jobs:
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - run: |
           cd tests/terraform_setup/ec2
-          terraform init
+          terraform init -backend-config="profile=profile-create"
           echo 'export TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)' >> $BASH_ENV
       - aws-ecs/update_service:
           family: ecs-orb-ec2-1-family
