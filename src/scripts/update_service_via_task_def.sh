@@ -11,6 +11,10 @@ ORB_STR_SUBNETS="$(circleci env subst "$ORB_STR_SUBNETS")"
 ORB_STR_SECURITY_GROUPS="$(circleci env subst "$ORB_STR_SECURITY_GROUPS")"
 ORB_STR_TARGET_GROUP="$(circleci env subst "$ORB_STR_TARGET_GROUP")"
 
+if [ -z "${ORB_STR_SERVICE_NAME}" ]; then
+    ORB_STR_SERVICE_NAME="$ORB_STR_FAMILY"
+fi
+
 SERVICE_EXISTS=$(aws ecs describe-services \
     --profile "${ORB_STR_PROFILE_NAME}" \
     --cluster "$ORB_STR_CLUSTER_NAME" \
@@ -19,10 +23,6 @@ SERVICE_EXISTS=$(aws ecs describe-services \
     --region "${ORB_AWS_REGION}" \
     --output text
 )
-
-if [ -z "${ORB_STR_SERVICE_NAME}" ]; then
-    ORB_STR_SERVICE_NAME="$ORB_STR_FAMILY"
-fi
 
 if [ "$ORB_BOOL_FORCE_NEW_DEPLOY" == "1" ] && [ -n "$SERVICE_EXISTS" ]; then
     set -- "$@" --force-new-deployment

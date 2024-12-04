@@ -199,6 +199,35 @@ jobs:
           steps:
             run: |
               echo 'export TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)' >> $BASH_ENV
+              source $BASH_ENV
+              echo $TARGET_GROUP_ARN
+  test-service-create:
+    docker:
+      - image: hashicorp/terraform:1.4.0
+    steps:
+      - checkout
+      - aws-cli/setup:
+          profile_name: profile-create
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - run: |
+          cd tests/terraform_setup/ec2
+          terraform init
+          echo 'export TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)' >> $BASH_ENV
+      - aws-ecs/update_service:
+          family: ecs-orb-ec2-1-family
+          cluster: ecs-orb-ec2-1-cluster
+          create_service: true
+          skip_task_definition_registration: true
+          service_name: test-create
+          desired_count: "2"
+          target_group: $TARGET_GROUP_ARN
+          container_name: ecs-orb-ec2-1-service
+          container_port: "80"
+          region: us-west-2
+          profile_name: profile-create
+      - run: |
+          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
+          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
   test-service-update:
     docker:
       - image: cimg/python:3.10.4
@@ -560,31 +589,11 @@ workflows:
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
           export_arn: true
-      - aws-ecs/deploy_service_update:
+      - test-service-create:
           name: ec2_create_service
           filters: *filters
           requires:
             - ec2_set-up-test-env
-          auth:
-            - aws-cli/setup:
-                profile_name: profile-create
-                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          family: ecs-orb-ec2-1-family
-          cluster: ecs-orb-ec2-1-cluster
-          create_service: true
-          skip_task_definition_registration: true
-          service_name: test-create
-          desired_count: "2"
-          target_group: $TARGET_GROUP_ARN
-          container_name: ecs-orb-ec2-1-service
-          container_port: "80"
-          region: us-west-2
-          profile_name: profile-create
-          post-steps:
-            - run:
-                command: |
-                   aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
-                   aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
       - set-up-run_task-test:
           name: ec2_set-up-run_task-test
           filters: *filters
