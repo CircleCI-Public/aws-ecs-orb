@@ -41,8 +41,10 @@ if [ -n "$ORB_STR_SUBNETS" ] && [ -n "$ORB_STR_SECURITY_GROUPS" ] && [ -z "$SERV
 fi
 
 if [ -z "$SERVICE_EXISTS" ]; then
-    echo "The service doesn't exist"
+    echo "The service doesn't exist."
     if [ "$ORB_AWS_CREATE_SERVICE" = 1 ]; then
+        echo "Creating it."
+        set -x
         NEW_SERVICE=$(aws ecs create-service \
             --cluster "$ORB_STR_CLUSTER_NAME" \
             --region "${ORB_AWS_REGION}" \
@@ -51,6 +53,7 @@ if [ -z "$SERVICE_EXISTS" ]; then
             --task-definition "${CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN}" \
             --load-balancers "targetGroupArn=$ORB_STR_TARGET_GROUP,containerName=$ORB_STR_CONTAINER_NAME,containerPort=$ORB_CONTAINER_PORT" \
             "$@")
+        set +x
         echo "$NEW_SERVICE"
     fi
 else

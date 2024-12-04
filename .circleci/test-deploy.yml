@@ -212,7 +212,8 @@ jobs:
       - run: |
           cd tests/terraform_setup/ec2
           terraform init -backend-config="profile=profile-create"
-          echo 'export TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)' >> $BASH_ENV
+          TG_ARN=$(terraform output -raw target_group_arn)
+          echo "export TARGET_GROUP_ARN=$TG_ARN" >> $BASH_ENV
       - aws-ecs/update_service:
           family: ecs-orb-ec2-1-family
           cluster: ecs-orb-ec2-1-cluster
