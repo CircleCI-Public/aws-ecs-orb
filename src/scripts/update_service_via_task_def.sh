@@ -1,5 +1,6 @@
 #!/bin/bash
 set -o noglob
+# shellcheck source=/dev/null
 source "$BASH_ENV"
 # These variables are evaluated so the config file may contain and pass in environment variables to the parameters.
 ORB_STR_FAMILY="$(circleci env subst "$ORB_STR_FAMILY")"
