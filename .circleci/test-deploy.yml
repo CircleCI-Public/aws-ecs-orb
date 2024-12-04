@@ -133,9 +133,6 @@ jobs:
             - docker-images
   set-up-test-env:
     parameters:
-      export_arn:
-        type: boolean
-        default: false
       terraform-image:
         type: string
         default: "hashicorp/terraform:1.4.0"
@@ -194,13 +191,6 @@ jobs:
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
             set +x
-      - when:
-          condition: <<parameters.export_arn>>
-          steps:
-            run: |
-              echo 'export TARGET_GROUP_ARN=$(terraform output -raw target_group_arn)' >> $BASH_ENV
-              source $BASH_ENV
-              echo $TARGET_GROUP_ARN
   test-service-create:
     docker:
       - image: hashicorp/terraform:1.4.0
@@ -213,6 +203,7 @@ jobs:
           cd tests/terraform_setup/ec2
           terraform init -backend-config="profile=profile-create"
           TG_ARN=$(terraform output -raw target_group_arn)
+          echo $TG_ARN
           echo "export TARGET_GROUP_ARN=$TG_ARN" >> $BASH_ENV
       - aws-ecs/update_service:
           family: ecs-orb-ec2-1-family
@@ -589,7 +580,6 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          export_arn: true
       - test-service-create:
           name: ec2_create_service
           filters: *filters
