@@ -4,6 +4,7 @@ orbs:
   aws-cli: circleci/aws-cli@4.1
   jq: circleci/jq@3.0
   aws-ecs: {}
+  terraform: circleci/terraform-orb@3.5.0
 filters: &filters
   tags:
     only: /.*/
@@ -193,10 +194,11 @@ jobs:
             set +x
   test-service-create:
     docker:
-      - image: hashicorp/terraform:1.4.0
-    shell: sh -eox pipefail
+      - image: cimg/python:3.10.4
+    shell: bash -eox pipefail
     steps:
       - checkout
+      - terraform/install
       - aws-cli/setup:
           profile_name: profile-create
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
