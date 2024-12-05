@@ -266,7 +266,7 @@ steps:
       steps:
         - run:
             name: Retrieve previous task definition
-            command: >
+            command: |
               TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
                 --task-definition << parameters.family >> \
                 --output text \
@@ -274,7 +274,7 @@ steps:
                 --profile << parameters.profile_name >> \
                 --region << parameters.region >>)
               echo "$TASK_DEFINITION_ARN"
-              echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN='${TASK_DEFINITION_ARN}'" >> $BASH_ENV
+              echo "export CCI_ORB_AWS_ECS_REGISTERED_TASK_DFN=$TASK_DEFINITION_ARN" >> $BASH_ENV
   - when:
       condition: << parameters.task_definition_tags >>
       steps:
