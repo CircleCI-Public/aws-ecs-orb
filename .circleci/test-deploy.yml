@@ -4,7 +4,7 @@ orbs:
   aws-cli: circleci/aws-cli@4.1
   jq: circleci/jq@3.0
   aws-ecs: {}
-  terraform: circleci/terraform-orb@3.5.0
+  terraform: circleci/terraform@3.5.0
 filters: &filters
   tags:
     only: /.*/
