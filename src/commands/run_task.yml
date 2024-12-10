@@ -128,6 +128,14 @@ parameters:
     description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: $AWS_DEFAULT_REGION
+  wait_task_stopped:
+    description: Wait until the task execution ends. Doesn't work with `run_task_output`.
+    type: boolean
+    default: false
+  exit_code_from:
+    description: Name of the container which exit code will be returned if wait_task_stopped is true. Defaults to the first container.
+    type: string
+    default: ''
 steps:
   - run:
       name: Run Task
@@ -155,3 +163,5 @@ steps:
         ORB_STR_CD_CAPACITY_PROVIDER_STRATEGY: <<parameters.capacity_provider_strategy>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
         ORB_STR_RUN_TASK_OUTPUT: <<parameters.run_task_output>>
+        ORB_BOOL_WAIT_TASK_STOPPED: <<parameters.wait_task_stopped>>
+        ORB_STR_EXIT_CODE_FROM: <<parameters.exit_code_from>>

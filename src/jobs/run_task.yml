@@ -153,6 +153,14 @@ parameters:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
     default: default
+  wait_task_stopped:
+    description: Wait until the task execution ends. Doesn't work with `run_task_output`.
+    type: boolean
+    default: false
+  exit_code_from:
+    description: Name of the container which exit code will be returned if wait_task_stopped is true. Defaults to the first container.
+    type: string
+    default: ''
 executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
@@ -179,3 +187,5 @@ steps:
       capacity_provider_strategy: << parameters.capacity_provider_strategy >>
       profile_name: << parameters.profile_name >>
       run_task_output: <<parameters.run_task_output>>
+      wait_task_stopped: <<parameters.wait_task_stopped>>
+      exit_code_from: <<parameters.exit_code_from>>
