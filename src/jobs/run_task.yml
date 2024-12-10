@@ -187,5 +187,5 @@ steps:
       capacity_provider_strategy: << parameters.capacity_provider_strategy >>
       profile_name: << parameters.profile_name >>
       run_task_output: <<parameters.run_task_output>>
-      wait_task_stopped: <<parameter.wait_task_stopped>>
-      exit_code_from: <<parameter.exit_code_from>>
+      wait_task_stopped: <<parameters.wait_task_stopped>>
+      exit_code_from: <<parameters.exit_code_from>>
