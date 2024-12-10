@@ -1,8 +1,8 @@
 version: 2.1
 setup: true
 orbs:
-  orb-tools: circleci/orb-tools@12.0
-  shellcheck: circleci/shellcheck@3.1
+  orb-tools: circleci/orb-tools@12.2
+  shellcheck: circleci/shellcheck@3.2
 
 filters: &filters
   tags:
@@ -18,6 +18,13 @@ workflows:
       - orb-tools/review:
           filters: *filters
       - shellcheck/check:
+          filters: *filters
+      - orb-tools/publish:
+          orb_name: circleci/aws-ecs
+          vcs_type: << pipeline.project.type >>
+          pub_type: dev
+          context: orb-publisher
+          requires: [orb-tools/lint, orb-tools/review, orb-tools/pack, shellcheck/check]
           filters: *filters
       - orb-tools/continue:
           orb_name: aws-ecs
