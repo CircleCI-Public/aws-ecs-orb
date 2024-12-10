@@ -123,7 +123,7 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
         --profile "${ORB_STR_PROFILE_NAME}" \
         --region "${ORB_AWS_REGION}" \
         --cluster "${ORB_STR_CLUSTER_NAME}" \
-        --tasks $ORB_STR_TASK_ARN
+        --tasks "${ORB_STR_TASK_ARN}"
     )
 
     if [ "$ORB_STR_WAIT_EXIT_CODE" != "0" ]; then
@@ -131,12 +131,12 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
     fi
 
     # Get exit code
-    if [ -n "$ORB_STR_EXIT_CODE_FROM" ]
+    if [ -n "$ORB_STR_EXIT_CODE_FROM" ]; then
         ORB_STR_TASK_EXIT_CODE=$(aws ecs describe-tasks \
             --profile "${ORB_STR_PROFILE_NAME}" \
             --region "${ORB_AWS_REGION}" \
             --cluster "${ORB_STR_CLUSTER_NAME}" \
-            --tasks $TASK_ARN \
+            --tasks "${ORB_STR_TASK_ARN}" \
             --query "tasks[0].containers[?name=='$ORB_STR_EXIT_CODE_FROM'].exitCode" \
             --output text)
     else
@@ -145,9 +145,9 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
             --profile "${ORB_STR_PROFILE_NAME}" \
             --region "${ORB_AWS_REGION}" \
             --cluster "${ORB_STR_CLUSTER_NAME}" \
-            --tasks $TASK_ARN \
+            --tasks "${ORB_STR_TASK_ARN}" \
             --query "tasks[0].containers[0].exitCode" \
             --output text)
     fi
-    exit $ORB_STR_TASK_EXIT_CODE
+    exit "${ORB_STR_TASK_EXIT_CODE}"
 fi
