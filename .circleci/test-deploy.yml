@@ -439,7 +439,7 @@ workflows:
           aws-resource-name-prefix: ${AWS_RESOURCE_NAME_PREFIX_FARGATE}
           terraform-config-dir: "tests/terraform_setup/fargate"
           context: [CPE-OIDC]
-          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"      
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
       - build-test-app:
           name: fargate_build-test-app
           docker-image-namespace: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
@@ -574,11 +574,28 @@ workflows:
           run_task_output: "run_task_output.json"
           overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
           context: [CPE-OIDC]
+      - aws-ecs/run_task:
+          name: ec2_run_task_and_wait-test
+          auth:
+            - aws-cli/setup:
+                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+          filters: *filters
+          requires:
+            - ec2_set-up-run_task-test
+          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
+          task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
+          launch_type: "EC2"
+          awsvpc: false
+          overrides: '{"containerOverrides":[{"name": "${INTERPOLATION_TEST}", "memory": 512}]}'
+          context: [CPE-OIDC]
+          wait_task_stopped: true
+          exit_code_from: sleep
       - tear-down-run_task-test:
           name: ec2_tear-down-run_task-test
           filters: *filters
           requires:
             - ec2_run_task-test
+            - ec2_run_task_and_wait-test
           family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
@@ -846,7 +863,7 @@ commands:
             else
               PORT="<< parameters.port >>"
             fi
-            
+
             set -x
             TARGET_GROUP_ARN=$(aws ecs describe-services --cluster << parameters.cluster >> --services << parameters.service_name >> $PROFILE | jq -r '.services[0].loadBalancers[0].targetGroupArn')
             ELB_ARN=$(aws elbv2 describe-target-groups --target-group-arns $TARGET_GROUP_ARN $PROFILE | jq -r '.TargetGroups[0].LoadBalancerArns[0]')

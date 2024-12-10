@@ -14,6 +14,7 @@ ORB_STR_RUN_TASK_OUTPUT="$(circleci env subst "$ORB_STR_RUN_TASK_OUTPUT")"
 ORB_STR_PROFILE_NAME="$(circleci env subst "$ORB_STR_PROFILE_NAME")"
 ORB_STR_ASSIGN_PUB_IP="$(circleci env subst "$ORB_STR_ASSIGN_PUB_IP")"
 ORB_AWS_REGION="$(circleci env subst "$ORB_AWS_REGION")"
+ORB_STR_EXIT_CODE_FROM="$(circleci env subst "$ORB_STR_EXIT_CODE_FROM")"
 
 if [[ "$ORB_STR_OVERRIDES" == *"\${"* ]]; then
     ORB_STR_OVERRIDES="$(echo "${ORB_STR_OVERRIDES}" | circleci env subst)"
@@ -77,7 +78,6 @@ if [ -n "$ORB_STR_CD_CAPACITY_PROVIDER_STRATEGY" ]; then
     # shellcheck disable=SC2086
     set -- "$@" --capacity-provider-strategy $ORB_STR_CD_CAPACITY_PROVIDER_STRATEGY
 fi
-
 if [ -n "$ORB_VAL_LAUNCH_TYPE" ]; then
     if [ -n "$ORB_STR_CD_CAPACITY_PROVIDER_STRATEGY" ]; then
         echo "Error: "
@@ -88,7 +88,10 @@ if [ -n "$ORB_VAL_LAUNCH_TYPE" ]; then
         set -- "$@" --launch-type "$ORB_VAL_LAUNCH_TYPE"
     fi
 fi
-
+if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
+    echo "Setting query to export taskArn"
+    set -- "$@" --query 'tasks[].taskArn' --output text
+fi
 
 echo "Setting --count"
 set -- "$@" --count "$ORB_INT_COUNT"
@@ -99,11 +102,52 @@ set -- "$@" --cluster "$ORB_STR_CLUSTER_NAME"
 
 
 if [ -n "${ORB_STR_RUN_TASK_OUTPUT}" ]; then
+    if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
+        echo "Exporting the run_task_output parameter is not compatible with wait_task_stopped parameter."
+        exit 1
+    fi
+
     set -x
     aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@" | tee "${ORB_STR_RUN_TASK_OUTPUT}"
     set +x
 else
-    set -x    
-    aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@"
+    set -x
+    ORB_STR_TASK_ARN=$(aws ecs run-task --profile "${ORB_STR_PROFILE_NAME}" --region "${ORB_AWS_REGION}" "$@")
     set +x
+fi
+
+if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
+    echo "Wait for ECS task $ORB_STR_TASK_ARN to stop..."
+
+    ORB_STR_WAIT_EXIT_CODE=$(aws ecs wait tasks-stopped \
+        --profile "${ORB_STR_PROFILE_NAME}" \
+        --region "${ORB_AWS_REGION}" \
+        --cluster "${ORB_STR_CLUSTER_NAME}" \
+        --tasks $ORB_STR_TASK_ARN
+    )
+
+    if [ "$ORB_STR_WAIT_EXIT_CODE" != "0" ]; then
+        echo "Stopped waiting for the task execution to end - please check the status of $ORB_STR_TASK_ARN on the AWS ECS console."
+    fi
+
+    # Get exit code
+    if [ -n "$ORB_STR_EXIT_CODE_FROM" ]
+        ORB_STR_TASK_EXIT_CODE=$(aws ecs describe-tasks \
+            --profile "${ORB_STR_PROFILE_NAME}" \
+            --region "${ORB_AWS_REGION}" \
+            --cluster "${ORB_STR_CLUSTER_NAME}" \
+            --tasks $TASK_ARN \
+            --query "tasks[0].containers[?name=='$ORB_STR_EXIT_CODE_FROM'].exitCode" \
+            --output text)
+    else
+        # Assume the first container
+        ORB_STR_TASK_EXIT_CODE=$(aws ecs describe-tasks \
+            --profile "${ORB_STR_PROFILE_NAME}" \
+            --region "${ORB_AWS_REGION}" \
+            --cluster "${ORB_STR_CLUSTER_NAME}" \
+            --tasks $TASK_ARN \
+            --query "tasks[0].containers[0].exitCode" \
+            --output text)
+    fi
+    exit $ORB_STR_TASK_EXIT_CODE
 fi
