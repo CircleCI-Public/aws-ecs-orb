@@ -176,3 +176,9 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'PublicListener']]
       Priority: !Ref 'Priority'
+
+Outputs:
+  TargetGroupArn:
+    Value: !Ref TargetGroup
+    Export:
+      Name: TargetGroupArnExport
