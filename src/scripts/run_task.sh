@@ -89,7 +89,7 @@ if [ -n "$ORB_VAL_LAUNCH_TYPE" ]; then
     fi
 fi
 if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
-    echo "Setting query to export taskArn"
+    echo "Setting --query to export taskArn"
     set -- "$@" --query 'tasks[].taskArn' --output text
 fi
 
@@ -116,6 +116,10 @@ else
 fi
 
 if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
+    if [ -z "${ORB_STR_TASK_ARN}" ]; then
+        exit 1
+    fi
+
     echo "Waiting for ECS task $ORB_STR_TASK_ARN to stop..."
 
     ORB_STR_WAIT_EXIT_CODE=$(aws ecs wait tasks-stopped \
@@ -151,7 +155,7 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
             --output text)
     fi
 
-    if [ "${ORB_STR_TASK_EXIT_CODE:-1}" -eq 0 ]; then
+    if [ "${ORB_STR_TASK_EXIT_CODE:-1}" != "None" ] || [ "${ORB_STR_TASK_EXIT_CODE:-1}" -eq 0 ]; then
         echo "The task execution ended successfully."
     else
         echo "The task execution ended with an error, please check the status and logs of $ORB_STR_TASK_ARN on the AWS ECS console."
