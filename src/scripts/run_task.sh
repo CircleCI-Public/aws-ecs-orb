@@ -100,7 +100,6 @@ set -- "$@" --task-definition "$ORB_STR_TASK_DEF"
 echo "Setting --cluster"
 set -- "$@" --cluster "$ORB_STR_CLUSTER_NAME"
 
-
 if [ -n "${ORB_STR_RUN_TASK_OUTPUT}" ]; then
     if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
         echo "Exporting the run_task_output parameter is not compatible with wait_task_stopped parameter."
@@ -117,17 +116,19 @@ else
 fi
 
 if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
-    echo "Wait for ECS task $ORB_STR_TASK_ARN to stop..."
+    echo "Waiting for ECS task $ORB_STR_TASK_ARN to stop..."
 
     ORB_STR_WAIT_EXIT_CODE=$(aws ecs wait tasks-stopped \
         --profile "${ORB_STR_PROFILE_NAME}" \
         --region "${ORB_AWS_REGION}" \
         --cluster "${ORB_STR_CLUSTER_NAME}" \
-        --tasks "${ORB_STR_TASK_ARN}"
+        --tasks "${ORB_STR_TASK_ARN}"; \
+        echo $?
     )
 
-    if [ "$ORB_STR_WAIT_EXIT_CODE" != "0" ]; then
-        echo "Stopped waiting for the task execution to end - please check the status of $ORB_STR_TASK_ARN on the AWS ECS console."
+    if [[ "${ORB_STR_WAIT_EXIT_CODE}" -ne 0 ]]; then
+        echo "Stopped waiting for the task execution to end. Please check the status of $ORB_STR_TASK_ARN on the AWS ECS console."
+        exit "${ORB_STR_WAIT_EXIT_CODE}"
     fi
 
     # Get exit code
@@ -149,5 +150,12 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
             --query "tasks[0].containers[0].exitCode" \
             --output text)
     fi
-    exit "${ORB_STR_TASK_EXIT_CODE}"
+
+    if [ "${ORB_STR_TASK_EXIT_CODE:-1}" -eq 0 ]; then
+        echo "The task execution ended successfully."
+    else
+        echo "The task execution ended with an error, please check the status and logs of $ORB_STR_TASK_ARN on the AWS ECS console."
+    fi
+
+    exit "${ORB_STR_TASK_EXIT_CODE:-1}"
 fi
