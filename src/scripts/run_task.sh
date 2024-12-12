@@ -155,7 +155,7 @@ if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
             --output text)
     fi
 
-    if [ "${ORB_STR_TASK_EXIT_CODE:-1}" != "None" ] || [ "${ORB_STR_TASK_EXIT_CODE:-1}" -eq 0 ]; then
+    if [ "${ORB_STR_TASK_EXIT_CODE:-1}" == "0" ]; then
         echo "The task execution ended successfully."
     else
         echo "The task execution ended with an error, please check the status and logs of $ORB_STR_TASK_ARN on the AWS ECS console."
