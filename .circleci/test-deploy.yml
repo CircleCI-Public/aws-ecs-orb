@@ -626,8 +626,8 @@ workflows:
           requires:
             - ec2_run_task-test
             - ec2_run_task_and_wait-test
-            - ec2_run_task_and_wait_too_long_task-test: failure
-            - ec2_run_task_and_wait_failure-test: failure
+            - ec2_run_task_and_wait_too_long_task-test: failed
+            - ec2_run_task_and_wait_failure-test: failed
           family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
