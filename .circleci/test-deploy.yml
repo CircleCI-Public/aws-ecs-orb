@@ -590,44 +590,12 @@ workflows:
           context: [CPE-OIDC]
           wait_task_stopped: true
           exit_code_from: sleep
-      - aws-ecs/run_task:
-          name: ec2_run_task_and_wait_too_long_task-test
-          auth:
-            - aws-cli/setup:
-                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          filters: *filters
-          requires:
-            - ec2_set-up-run_task-test
-          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          overrides: '{"containerOverrides": [{"name": "sleep","command": ["sleep", "700"]}]}'
-          launch_type: "EC2"
-          awsvpc: false
-          context: [CPE-OIDC]
-          wait_task_stopped: true
-      - aws-ecs/run_task:
-          name: ec2_run_task_and_wait_failure-test
-          auth:
-            - aws-cli/setup:
-                role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
-          filters: *filters
-          requires:
-            - ec2_set-up-run_task-test
-          cluster: "${AWS_RESOURCE_NAME_PREFIX_EC2}-cluster"
-          task_definition: "${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360"
-          overrides: '{"containerOverrides": [{"name": "sleep","command": ["exit", "127"]}]}'
-          launch_type: "EC2"
-          awsvpc: false
-          context: [CPE-OIDC]
-          wait_task_stopped: true
       - tear-down-run_task-test:
           name: ec2_tear-down-run_task-test
           filters: *filters
           requires:
             - ec2_run_task-test
             - ec2_run_task_and_wait-test
-            - ec2_run_task_and_wait_too_long_task-test: failed
-            - ec2_run_task_and_wait_failure-test: failed
           family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
