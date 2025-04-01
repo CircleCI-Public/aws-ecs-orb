@@ -1,9 +1,10 @@
 version: 2.1
 orbs:
-  orb-tools: circleci/orb-tools@12.1
-  aws-cli: circleci/aws-cli@4.1
+  orb-tools: circleci/orb-tools@12.2
+  aws-cli: circleci/aws-cli@5.1.1
   jq: circleci/jq@3.0
   aws-ecs: {}
+  terraform: circleci/terraform@3.5.0
 filters: &filters
   tags:
     only: /.*/
@@ -191,6 +192,37 @@ jobs:
             cd << parameters.terraform-config-dir >>
             terraform apply -input=false -auto-approve tfplan
             set +x
+  test-service-create:
+    docker:
+      - image: cimg/python:3.10.4
+    shell: bash -eox pipefail
+    steps:
+      - checkout
+      - terraform/install
+      - aws-cli/setup:
+          profile_name: profile-create
+          role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - run: |
+          cd tests/terraform_setup/ec2
+          terraform init -backend-config="profile=profile-create"
+          TG_ARN=$(terraform output -raw target_group_arn)
+          echo $TG_ARN
+          echo "export TARGET_GROUP_ARN=$TG_ARN" >> $BASH_ENV
+      - aws-ecs/update_service:
+          family: ecs-orb-ec2-1-family
+          cluster: ecs-orb-ec2-1-cluster
+          create_service: true
+          skip_task_definition_registration: true
+          service_name: test-create
+          desired_count: "2"
+          target_group: $TARGET_GROUP_ARN
+          container_name: ecs-orb-ec2-1-service
+          container_port: "80"
+          region: us-west-2
+          profile_name: profile-create
+      - run: |
+          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
+          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
   test-service-update:
     docker:
       - image: cimg/python:3.10.4
@@ -551,6 +583,11 @@ workflows:
           terraform-config-dir: "tests/terraform_setup/ec2"
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
+      - test-service-create:
+          name: ec2_create_service
+          filters: *filters
+          requires:
+            - ec2_set-up-test-env
       - set-up-run_task-test:
           name: ec2_set-up-run_task-test
           filters: *filters
@@ -596,6 +633,7 @@ workflows:
           requires:
             - ec2_run_task-test
             - ec2_run_task_and_wait-test
+            - ec2_create_service
           family_name: ${AWS_RESOURCE_NAME_PREFIX_EC2}-sleep360
           context: [CPE-OIDC]
           role_arn: "arn:aws:iam::122211685980:role/CPE_ECS_OIDC_TEST"
