@@ -75,3 +75,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
     # nginx image when created
   }
 }
+
+output "target_group_arn" {
+  value = aws_cloudformation_stack.ecs_service.outputs["TargetGroupArn"]
+}
