@@ -70,19 +70,19 @@ Resources:
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
       TaskRoleArn:
-        # Just for testing the passing of --task-role-arn argument
         Fn::ImportValue:
           !Join [':', [!Ref 'StackName', 'ECSTaskExecutionRole']]
-        #Fn::If:
-        #  - 'HasCustomRole'
-        #  - !Ref 'Role'
-        #  - !Ref "AWS::NoValue"
       ContainerDefinitions:
         - Name: !Ref 'ServiceName'
           Image: !Ref 'ImageUrl'
           Essential: true
           PortMappings:
             - ContainerPort: !Ref 'ContainerPort'
+          Secrets:
+            - Name: test
+              ValueFrom:
+                Fn::ImportValue:
+                  !Join [':', [!Ref 'StackName', 'SSMParameter']]
           Environment:
             - Name: VERSION_INFO
               Value: "v0's release's testing of many '' single quotes '''"

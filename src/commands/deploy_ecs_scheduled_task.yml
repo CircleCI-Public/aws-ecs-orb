@@ -1,0 +1,18 @@
+description: |
+  Deploy an ECS Scheduled Task Rule after updating a task definition. The update_task_definition command must be run first.
+
+parameters:
+  rule_name:
+    description: The name of the scheduled task's rule to update.
+    type: string
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
+steps:
+  - run:
+      name: Deploy rule with updated task definition
+      environment:
+        ORB_STR_RULE_NAME: <<parameters.rule_name>>
+        ORB_AWS_REGION: << parameters.region >>
+      command: <<include(scripts/deploy_ecs_scheduled_task.sh)>>

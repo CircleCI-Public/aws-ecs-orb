@@ -6,7 +6,7 @@ parameters:
   family:
     description: Name of the task definition's family.
     type: string
-  container-image-name-updates:
+  container_image_name_updates:
     description: >
       Use this to update the Docker image names and/or tag names of existing containers that had been defined in the previous task definition.
 
@@ -20,7 +20,7 @@ parameters:
       If "tag" is specified, the image name defined in the previous task definition will be used.
     type: string
     default: ''
-  container-env-var-updates:
+  container_env_var_updates:
     description: >
       Use this to update or set the values of environment variables that will be defined for the containers.
 
@@ -32,7 +32,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-secret-updates:
+  container_secret_updates:
     description: >
       Use this to update or set the values of secrets variables that will be
       defined for the containers.
@@ -45,7 +45,7 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  container-docker-label-updates:
+  container_docker_label_updates:
     description: >
       Use this to update or set the values of docker label variables that will be defined for the containers.
       (Existing secrets variables not included in this parameter will not be removed)
@@ -56,31 +56,37 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
-  profile-name:
+  profile_name:
     description: AWS profile name to be configured.
     type: string
-    default: ''
-  previous-revision-number:
+    default: "default"
+  previous_revision_number:
     description: Optional previous task's revision number
     type: string
     default: ''
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
 steps:
   - run:
       name: Retrieve previous task definition and prepare new task definition values
-      command: <<include(scripts/get-prev-task.sh)>>
+      command: <<include(scripts/get_prev_task.sh)>>
       environment:
-        ECS_PARAM_FAMILY: <<parameters.family>>
-        ECS_PARAM_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container-image-name-updates>>
-        ECS_PARAM_CONTAINER_ENV_VAR_UPDATES: <<parameters.container-env-var-updates>>
-        ECS_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
-        ECS_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
-        ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
-        ECS_PARAM_PREVIOUS_REVISION_NUMBER: <<parameters.previous-revision-number>>
-        ECS_PARAM_CONTAINER_SECRET_UPDATES: <<parameters.container-secret-updates>>
-        ECS_PARAM_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container-docker-label-updates >>
+        ORB_STR_FAMILY: <<parameters.family>>
+        ORB_STR_CONTAINER_IMAGE_NAME_UPDATES: <<parameters.container_image_name_updates>>
+        ORB_STR_CONTAINER_ENV_VAR_UPDATE: <<parameters.container_env_var_updates>>
+        ORB_SCRIPT_UPDATE_CONTAINER_DEFS: <<include(scripts/update_container_defs.py)>>
+        ORB_SCRIPT_GET_TASK_DFN_VAL: <<include(scripts/get_task_dfn_val.py)>>
+        ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_STR_PREVIOUS_REVISION_NUMBER: <<parameters.previous_revision_number>>
+        ORB_AWS_REGION: << parameters.region >>
+        ORB_STR_CONTAINER_SECRET_UPDATES: <<parameters.container_secret_updates>>
+        ORB_STR_CONTAINER_DOCKER_LABEL_UPDATES: << parameters.container_docker_label_updates >>
   - run:
       name: Register new task definition
-      command: <<include(scripts/register-new-task-def.sh)>>
+      command: <<include(scripts/register_new_task_def.sh)>>
       environment:
-        ECS_PARAM_FAMILY: <<parameters.family>>
-        ECS_PARAM_PROFILE_NAME: <<parameters.profile-name>>
+        ORB_STR_FAMILY: <<parameters.family>>
+        ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_AWS_REGION: << parameters.region >>

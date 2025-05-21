@@ -1,6 +1,6 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 COPY ./demo-app /opt/
-EXPOSE 8080
+EXPOSE 80
 
 ENTRYPOINT ["/opt/demo-app"]

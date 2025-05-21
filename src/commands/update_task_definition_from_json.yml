@@ -1,0 +1,22 @@
+description: Registers a task definition based on a json file.
+parameters:
+  task_definition_json:
+    description: |
+      Location of your .json task definition file (relative or absolute).
+    type: string
+  profile_name:
+    description: AWS profile name to be configured.
+    type: string
+    default: "default"
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: $AWS_DEFAULT_REGION
+steps:
+  - run:
+      name: Register new task definition
+      command: <<include(scripts/update_task_definition_from_json.sh)>>
+      environment:
+        ORB_STR_TASK_DEFINITION_JSON: <<parameters.task_definition_json>>
+        ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
+        ORB_AWS_REGION: << parameters.region >>

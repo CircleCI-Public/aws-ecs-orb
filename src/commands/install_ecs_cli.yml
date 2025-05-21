@@ -5,11 +5,11 @@ parameters:
     description: Specify the  version of the AWS ECS CLI to install. By default, the latest version will be installed.
     type: string
     default: latest
-  install-dir:
+  install_dir:
     description: Specify the installation directory for the AWS ECS CLI. By default, the installation directory will be /usr/local/bin/ecs-cli.
     type: string
     default: /usr/local/bin/ecs-cli
-  override-installed:
+  override_installed:
     type: boolean
     default: false
     description: |
@@ -20,7 +20,7 @@ steps:
   - run:
       name: Install AWS ECS CLI
       environment:
-        ECS_PARAM_VERSION: <<parameters.version>>
-        ECS_PARAM_INSTALL_DIR: <<parameters.install-dir>>
-        ECS_PARAM_OVERRIDE_INSTALLED: <<parameters.override-installed>>
-      command: <<include(scripts/install-ecs-cli.sh)>>
+        ORB_STR_VERSION: <<parameters.version>>
+        ORB_EVAL_INSTALL_DIR: <<parameters.install_dir>>
+        ORB_BOOL_OVERRIDE_INSTALLED: <<parameters.override_installed>>
+      command: <<include(scripts/install_ecs_cli.sh)>>

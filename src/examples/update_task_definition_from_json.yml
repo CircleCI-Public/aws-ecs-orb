@@ -2,8 +2,8 @@ description: Use the AWS CLI and this orb to create a new ECS task definition ba
 usage:
   version: 2.1
   orbs:
-    aws-cli: circleci/aws-cli@3.1
-    aws-ecs: circleci/aws-ecs@3.2
+    aws-cli: circleci/aws-cli@5.1.0
+    aws-ecs: circleci/aws-ecs@6.0.0
   jobs:
     update-tag:
       docker:
@@ -11,13 +11,14 @@ usage:
       steps:
         - aws-cli/setup:
             # This example uses CircleCI's OpenID Connect Token to generate temporary AWS keys
-            role-arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
-            aws-region: AWS_REGION
-            profile-name: "OIDC-PROFILE"
-            session-duration: 3600
-            role-session-name: "example-session-name"
-        - aws-ecs/update-task-definition-from-json:
-            task-definition-json: my-app-definition.json
+            role_arn: "arn:aws:iam::123456789012:role/OIDC_ARN"
+            region: AWS_REGION
+            profile_name: "OIDC-PROFILE"
+            session_duration: "3600"
+            role_session_name: "example-session-name"
+        - aws-ecs/update_task_definition_from_json:
+            region: us-east-1
+            task_definition_json: my-app-definition.json
   workflows:
     deploy:
       jobs:

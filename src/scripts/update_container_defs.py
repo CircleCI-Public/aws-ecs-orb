@@ -20,7 +20,12 @@ def run(previous_task_definition, container_image_name_updates,
         if env_var_definitions is not None:
             for env_var_index, env_var_definition in enumerate(env_var_definitions):
                 env_var_map[env_var_definition['name']] = {'index': env_var_index}
-        container_map[container_definition['name']] = {'image': container_definition['image'], 'index': index, 'environment_map': env_var_map}
+        secret_map = {}
+        secret_definitions = container_definition.get('secrets')
+        if secret_definitions is not None:
+            for secret_index, secret_definition in enumerate(secret_definitions):
+                secret_map[secret_definition['name']] = {'index': secret_index}
+        container_map[container_definition['name']] = {'image': container_definition['image'], 'index': index, 'environment_map': env_var_map, 'secret_map': secret_map}
 
     # Expected format: container=...,name=...,value=...,container=...,name=...,value=
     try:
@@ -113,7 +118,7 @@ def run(previous_task_definition, container_image_name_updates,
                 if container_entry is None:
                     raise ValueError('The container ' + container_name + ' is not defined in the existing task definition')
                 container_index = container_entry['index']
-                secret_entry = container_entry['environment_map'].get(secret_name)
+                secret_entry = container_entry['secret_map'].get(secret_name)
                 if secret_entry is None:
                     # The existing container definition does not contain secrets variable
                     if container_definitions[container_index].get('secrets') is None:

@@ -1,0 +1,110 @@
+description: |
+  Install AWS CLI and register a task definition.
+
+parameters:
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: ${AWS_DEFAULT_REGION}
+  profile_name:
+    description: AWS profile name to be configured.
+    type: string
+    default: "default"
+  family:
+    description: Name of the task definition's family.
+    type: string
+  container_image_name_updates:
+    description: >
+      Use this to update the Docker image names and/or tag names of existing
+
+      containers that had been defined in the previous task definition.
+
+      Expected format:
+      container=<container-name>,image-and-tag=<image-name>:<tag-name>|image=<image-name>|tag=<tag-name>,container=...,image-and-tag|image|tag=...,
+
+      For each container, specify only either "image-and-tag" or "image" or
+      "tag".
+
+      If "image-and-tag" is specified, the container image will be updated to
+      the value of the name-value pair.
+
+      If "image" is specified, the image tag defined in the previous task
+      definition will be retained, if exists.
+
+      If "tag" is specified, the image name defined in the previous task
+      definition will be used.
+    type: string
+    default: ''
+  container_env_var_updates:
+    description: >
+      Use this to update or set the values of environment variables that will be
+      defined for the containers.
+
+      (Existing environment variables not included in this parameter will not be
+      removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,value=<env-var-value>,container=...,name=...,value=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
+  container_secret_updates:
+    description: >
+      Use this to update or set the values of secrets variables that will be
+      defined for the containers.
+      (Existing secrets variables not included in this parameter will not be
+      removed)
+
+      Expected format:
+      container=<container-name>,name=<env-var-name>,valueFrom=<env-var-value>,container=...,name=...,valueFrom=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
+  container_docker_label_updates:
+    description: >
+      Use this to update or set the values of docker label variables that will be defined for the containers.
+      (Existing secrets variables not included in this parameter will not be removed)
+
+      Expected format:
+      container=<container-name>,<key>=<env-var-name>,<key>=<env-var-value>,container=...,<key>=...,<key>=...,
+
+      Values should not contain commas.
+    type: string
+    default: ''
+  deploy_scheduled_task:
+    description: >
+      Set this parameter to true to deploy updated task definition to a scheduled task rule.
+    type: boolean
+    default: false
+  rule_name:
+    description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
+    default: ""
+    type: string
+  auth:
+    description: |
+      The authentication method used to access your AWS account. Import the aws-cli orb in your config and
+      provide the aws-cli/setup command to authenticate with your preferred method. View examples for more information.
+    type: steps
+  executor:
+    description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
+    type: executor
+    default: default
+executor: << parameters.executor >>
+steps:
+  - steps: << parameters.auth >>
+  - update_task_definition:
+      family: << parameters.family >>
+      container_image_name_updates: << parameters.container_image_name_updates >>
+      container_env_var_updates: << parameters.container_env_var_updates >>
+      region: << parameters.region >>
+      container_secret_updates: << parameters.container_secret_updates >>
+      container_docker_label_updates: << parameters.container_docker_label_updates >>
+      profile_name: << parameters.profile_name >>
+  - when:
+      condition: <<parameters.deploy_scheduled_task>>
+      steps:
+        - deploy_ecs_scheduled_task:
+            rule_name: <<parameters.rule_name>>
+            region: << parameters.region >>

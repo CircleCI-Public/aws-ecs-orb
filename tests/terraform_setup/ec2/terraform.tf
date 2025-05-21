@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      version = "~> 4.22.0"
+      version = "~> 4.63.0"
     }
   }
   backend "s3" {
@@ -14,9 +14,6 @@ terraform {
 }
 
 provider "aws" {
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
-  token = var.aws_session_token  
   region     = var.aws_region
 }
 
@@ -28,7 +25,7 @@ locals {
   aws_ecs_service_stack_name = "${var.aws_resource_prefix}-svc-stack"
 
   # The name of the ECR repository to be created
-  aws_ecr_repository_name = var.aws_resource_prefix
+  aws_ecr_repository_name = "${var.aws_resource_prefix}"
 
   # The name of the ECS cluster to be created
   aws_ecs_cluster_name = "${var.aws_resource_prefix}-cluster"
@@ -69,7 +66,7 @@ resource "aws_cloudformation_stack" "ecs_service" {
   parameters = {
     TaskCpu       = 1024
     TaskMemory    = 2048
-    ContainerPort = 8080
+    ContainerPort = 80
     StackName     = local.aws_vpc_stack_name
     ServiceName   = local.aws_ecs_service_name
     FamilyName    = local.aws_ecs_family_name
@@ -77,4 +74,8 @@ resource "aws_cloudformation_stack" "ecs_service" {
     # will be deployed with the 1st container using the
     # nginx image when created
   }
+}
+
+output "target_group_arn" {
+  value = aws_cloudformation_stack.ecs_service.outputs["TargetGroupArn"]
 }

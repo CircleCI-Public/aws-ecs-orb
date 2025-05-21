@@ -1,0 +1,45 @@
+description: |
+  Install AWS CLI and  a task definition from a json file.
+parameters:
+  region:
+    description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
+    type: string
+    default: ${AWS_DEFAULT_REGION}
+  profile_name:
+    description: AWS profile name to be configured.
+    type: string
+    default: "default"
+  task_definition_json:
+    description: |
+      Location of your .json task definition file (relative or absolute).
+    type: string
+  deploy_scheduled_task:
+    description: >
+      Set this parameter to true to deploy updated task definition to a scheduled task rule.
+    type: boolean
+    default: false
+  rule_name:
+    description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
+    type: string
+  auth:
+    description: |
+      The authentication method used to access your AWS account. Import the aws-cli orb in your config and
+      provide the aws-cli/setup command to authenticate with your preferred method. View examples for more information.
+    type: steps
+  executor:
+    description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
+    type: executor
+    default: default
+executor: << parameters.executor >>
+steps:
+  - steps: << parameters.auth >>
+  - update_task_definition_from_json:
+      task_definition_json: << parameters.task_definition_json >>
+      profile_name: << parameters.profile_name >>
+      region: << parameters.region >>
+  - when:
+      condition: <<parameters.deploy_scheduled_task>>
+      steps:
+        - deploy_ecs_scheduled_task:
+            rule_name: <<parameters.rule_name>>
+            region: << parameters.region >>

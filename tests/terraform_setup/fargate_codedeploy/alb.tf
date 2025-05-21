@@ -52,6 +52,9 @@ resource "aws_alb_listener" "front_end_green" {
     target_group_arn = aws_alb_target_group.green.id
     type             = "forward"
   }
+  lifecycle {
+    ignore_changes = [default_action] 
+  }
 }
 
 resource "aws_alb_listener" "front_end_blue" {
@@ -62,5 +65,8 @@ resource "aws_alb_listener" "front_end_blue" {
   default_action {
     target_group_arn = aws_alb_target_group.blue.id
     type             = "forward"
+  }
+  lifecycle {
+    ignore_changes = [default_action] 
   }
 }
