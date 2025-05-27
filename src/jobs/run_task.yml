@@ -162,7 +162,7 @@ parameters:
     description: >
       Elapsed time the command can run without output. The string is a decimal with unit suffix, such as "20m", "1.25h", "5s".
       The default is 10 minutes.
-    default: "10m"    
+    default: "10m"
   exit_code_from:
     description: Name of the container which exit code will be returned if wait_task_stopped is true. Defaults to the first container.
     type: string
