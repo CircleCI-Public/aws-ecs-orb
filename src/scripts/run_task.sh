@@ -115,6 +115,8 @@ else
     set +x
 fi
 
+echo "export ORB_STR_TASK_ARN='$ORB_STR_TASK_ARN'" >> "$BASH_ENV"
+
 if [ "$ORB_BOOL_WAIT_TASK_STOPPED" == "1" ]; then
     if [ -z "${ORB_STR_TASK_ARN}" ]; then
         exit 1
