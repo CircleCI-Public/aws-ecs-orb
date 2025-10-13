@@ -56,6 +56,22 @@ parameters:
       Values should not contain commas.
     type: string
     default: ''
+  task_definition_tags:
+    description: >
+      The metadata that you apply to the task definition to help you categorize and organize them.
+      Each tag consists of a key and an optional value, both of which you define.
+
+      (Existing tags not included in this parameter will not be removed)
+
+      Expected formats:
+        - Shorthand Syntax
+          key=string,value=string ...
+        - JSON Syntax
+         [{"key": "string","value": "string"} ... ]
+
+      Values should not contain commas.
+    type: string
+    default: ''
   profile_name:
     description: AWS profile name to be configured.
     type: string
@@ -90,3 +106,13 @@ steps:
         ORB_STR_FAMILY: <<parameters.family>>
         ORB_STR_PROFILE_NAME: <<parameters.profile_name>>
         ORB_AWS_REGION: << parameters.region >>
+  - when:
+      condition: << parameters.task_definition_tags >>
+      steps:
+        - run:
+            name: Update task definition with additional tags
+            command: <<include(scripts/update_task_definition_tags.sh>>
+            environment:
+              ORB_STR_TASK_DEFINITION_TAGS: << parameters.task_definition_tags >>
+              ORB_STR_PROFILE_NAME: << parameters.profile_name >>
+              ORB_AWS_REGION: << parameters.region >>
