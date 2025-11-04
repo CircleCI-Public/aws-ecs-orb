@@ -164,6 +164,10 @@ parameters:
     description: AWS profile name to be configured.
     type: string
     default: "default"
+  previous_revision_number:
+    description: Optional previous task's revision number
+    type: string
+    default: ''
   codedeploy_capacity_provider_name:
     description: >
       The name of AWS Capacity Provider to be added to CodeDeploy deployment.
@@ -260,6 +264,7 @@ steps:
             container_secret_updates: << parameters.container_secret_updates >>
             container_docker_label_updates: << parameters.container_docker_label_updates >>
             profile_name: << parameters.profile_name >>
+            previous_revision_number: << parameters.previous_revision_number >>
             region: << parameters.region >>
   - when:
       condition: << parameters.skip_task_definition_registration >>
