@@ -12,9 +12,14 @@ parameters:
     description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: $AWS_DEFAULT_REGION
+  extra_command_label:
+    description: Extra label that attaches to the end of every step name
+    type: string
+    default: ""
+
 steps:
   - run:
-      name: Register new task definition
+      name: Register new task definition <<parameters.extra_command_label>>
       command: <<include(scripts/update_task_definition_from_json.sh)>>
       environment:
         ORB_STR_TASK_DEFINITION_JSON: <<parameters.task_definition_json>>

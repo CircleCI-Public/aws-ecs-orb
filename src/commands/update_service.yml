@@ -252,12 +252,17 @@ parameters:
       Default to empty.
     default: ""
     type: string
+  extra_command_label:
+    description: Extra label that attaches to the end of every step name
+    type: string
+    default: ""
 
 steps:
   - unless:
       condition: << parameters.skip_task_definition_registration >>
       steps:
         - update_task_definition:
+            extra_command_label: <<parameters.extra_command_label>>
             family: << parameters.family >>
             container_image_name_updates: << parameters.container_image_name_updates >>
             container_env_var_updates: << parameters.container_env_var_updates >>
@@ -270,7 +275,7 @@ steps:
       condition: << parameters.skip_task_definition_registration >>
       steps:
         - run:
-            name: Retrieve previous task definition
+            name: Retrieve previous task definition <<parameters.extra_command_label>>
             command: |
               TASK_DEFINITION_ARN=$(aws ecs describe-task-definition \
                 --task-definition << parameters.family >> \
@@ -283,7 +288,7 @@ steps:
       condition: << parameters.task_definition_tags >>
       steps:
         - run:
-            name: Update task definition with additional tags
+            name: Update task definition with additional tags <<parameters.extra_command_label>>
             command: <<include(scripts/update_task_definition_tags.sh>>
             environment:
               ORB_STR_TASK_DEFINITION_TAGS: << parameters.task_definition_tags >>
@@ -296,7 +301,7 @@ steps:
           - << parameters.deployment_controller >>
       steps:
         - run:
-            name: Update ECS Blue/Green service with registered task definition.
+            name: Update ECS Blue/Green service with registered task definition. <<parameters.extra_command_label>>
             command: <<include(scripts/update_bluegreen_service_via_task_def.sh)>>
             no_output_timeout: << parameters.verification_timeout >>
             environment:
@@ -321,7 +326,7 @@ steps:
           - << parameters.deployment_controller >>
       steps:
         - run:
-            name: Update service with registered task definition
+            name: Update service with registered task definition <<parameters.extra_command_label>>
             command: <<include(scripts/update_service_via_task_def.sh)>>
             environment:
               ORB_STR_SERVICE_NAME: <<parameters.service_name>>
@@ -349,6 +354,7 @@ steps:
               - << parameters.deployment_controller >>
       steps:
         - verify_revision_is_deployed:
+            extra_command_label: <<parameters.extra_command_label>>
             family: << parameters.family >>
             cluster: << parameters.cluster >>
             service_name: << parameters.service_name >>

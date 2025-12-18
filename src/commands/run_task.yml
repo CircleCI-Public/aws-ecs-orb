@@ -142,9 +142,13 @@ parameters:
       Elapsed time the command can run without output. The string is a decimal with unit suffix, such as "20m", "1.25h", "5s".
       The default is 10 minutes.
     default: "10m"
+  extra_command_label:
+    description: Extra label that attaches to the end of every step name
+    type: string
+    default: ""
 steps:
   - run:
-      name: Run Task
+      name: Run Task <<parameters.extra_command_label>>
       no_output_timeout: <<parameters.no_output_timeout>>
       command: <<include(scripts/run_task.sh)>>
       environment:

@@ -9,9 +9,13 @@ parameters:
     description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: $AWS_DEFAULT_REGION
+  extra_command_label:
+    description: Extra label that attaches to the end of every step name
+    type: string
+    default: ""
 steps:
   - run:
-      name: Deploy rule with updated task definition
+      name: Deploy rule with updated task definition <<parameters.extra_command_label>>
       environment:
         ORB_STR_RULE_NAME: <<parameters.rule_name>>
         ORB_AWS_REGION: << parameters.region >>

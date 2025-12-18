@@ -38,9 +38,13 @@ parameters:
     description: AWS region to use. Defaults to AWS_DEFAULT_REGION environment variable.
     type: string
     default: $AWS_DEFAULT_REGION
+  extra_command_label:
+    description: Extra label that attaches to the end of every step name
+    type: string
+    default: ""
 steps:
   - run:
-      name: Verify that the revision is deployed and older revisions are stopped
+      name: Verify that the revision is deployed and older revisions are stopped <<parameters.extra_command_label>>
       description: |
         Poll the deployment status at intervals till the given task definition revision has reached its desired running task count and is the only one deployed for the service.
       command: <<include(scripts/verify_revision_is_deployed.sh)>>
