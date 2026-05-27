@@ -16,7 +16,7 @@ release-filters: &release-filters
 jobs:
   pytest:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     steps:
       - checkout
       - restore_cache:
@@ -194,7 +194,7 @@ jobs:
             set +x
   test-service-create:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     shell: bash -eox pipefail
     steps:
       - checkout
@@ -225,7 +225,7 @@ jobs:
           aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
   test-service-update:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     parameters:
       aws-resource-name-prefix:
         description: "Prefix that the AWS resources for this launch type share"
@@ -301,7 +301,7 @@ jobs:
                 cluster: "<< parameters.aws-resource-name-prefix >>-cluster"
   test-task_definition-update:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     parameters:
       family_name:
         description: "Family name"
@@ -332,7 +332,7 @@ jobs:
             aws ecs describe-task-definition --task-definition << parameters.family_name >> --include TAGS | grep "3072"
   set-up-run_task-test:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     parameters:
       family_name:
         description: "Family name"
@@ -358,7 +358,7 @@ jobs:
               --container-definitions "[{\"name\":\"sleep\",\"image\":\"busybox\",\"command\":[\"sleep\",\"360\"],\"memory\":256,\"essential\":true}]"
   tear-down-run_task-test:
     docker:
-      - image: cimg/python:3.10.4
+      - image: cimg/python:3.13
     parameters:
       family_name:
         description: "Family name"
