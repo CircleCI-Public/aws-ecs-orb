@@ -78,7 +78,7 @@ jobs:
           name: Register task definition
           command: |
             aws ecs register-task-definition \
-              --family ecs-orb-fgs-1-sleep360 \
+              --family "ecs-orb-fgs-1-sleep360-${CIRCLE_WORKFLOW_ID}" \
               --cpu 256 --memory 512 \
               --requires-compatibilities FARGATE \
               --network-mode awsvpc \
@@ -87,7 +87,7 @@ jobs:
           cluster: $CLUSTER_NAME
           capacity_provider_strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
           launch_type: ""
-          task_definition: ecs-orb-fgs-1-sleep360
+          task_definition: "ecs-orb-fgs-1-sleep360-${CIRCLE_WORKFLOW_ID}"
           subnet_ids: '$SUBNET_ONE, $SUBNET_TWO'
           security_group_ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
@@ -213,7 +213,7 @@ jobs:
           cluster: ecs-orb-ec2-1-cluster
           create_service: true
           skip_task_definition_registration: true
-          service_name: test-create
+          service_name: "test-create-${CIRCLE_WORKFLOW_ID}"
           desired_count: "2"
           target_group: $TARGET_GROUP_ARN
           container_name: ecs-orb-ec2-1-service
@@ -221,8 +221,8 @@ jobs:
           region: us-west-2
           profile_name: profile-create
       - run: |
-          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
-          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
+          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service "test-create-${CIRCLE_WORKFLOW_ID}" --desired-count 0 --region us-west-2 --profile profile-create
+          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service "test-create-${CIRCLE_WORKFLOW_ID}" --region us-west-2 --profile profile-create --force
   test-service-update:
     docker:
       - image: cimg/python:3.13
