@@ -96,6 +96,13 @@ parameters:
     type: enum
     enum: [OFF, LOG]
     default: OFF
+  deploy_markers_deploy_name:
+    description: >
+      Unique identifier for this deployment within the workflow.
+      Must be unique if multiple deployments are planned in the same workflow.
+      Defaults to a combination of the workflow ID and job name to guarantee uniqueness across concurrent runs.
+    type: string
+    default: "${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
   deploy_markers_environment_name:
     description: >
       Environment name shown in the CircleCI Deploys UI.
