@@ -78,7 +78,7 @@ jobs:
           name: Register task definition
           command: |
             aws ecs register-task-definition \
-              --family "ecs-orb-fgs-1-sleep360-${CIRCLE_WORKFLOW_ID}" \
+              --family ecs-orb-fgs-1-sleep360 \
               --cpu 256 --memory 512 \
               --requires-compatibilities FARGATE \
               --network-mode awsvpc \
@@ -87,7 +87,7 @@ jobs:
           cluster: $CLUSTER_NAME
           capacity_provider_strategy: capacityProvider=FARGATE,weight=1 capacityProvider=FARGATE_SPOT,weight=1
           launch_type: ""
-          task_definition: "ecs-orb-fgs-1-sleep360-${CIRCLE_WORKFLOW_ID}"
+          task_definition: ecs-orb-fgs-1-sleep360
           subnet_ids: '$SUBNET_ONE, $SUBNET_TWO'
           security_group_ids: $SECURITY_GROUP_IDS_FETCHED
   build-test-app:
@@ -213,7 +213,7 @@ jobs:
           cluster: ecs-orb-ec2-1-cluster
           create_service: true
           skip_task_definition_registration: true
-          service_name: "test-create-${CIRCLE_WORKFLOW_ID}"
+          service_name: test-create
           desired_count: "2"
           target_group: $TARGET_GROUP_ARN
           container_name: ecs-orb-ec2-1-service
@@ -221,8 +221,8 @@ jobs:
           region: us-west-2
           profile_name: profile-create
       - run: |
-          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service "test-create-${CIRCLE_WORKFLOW_ID}" --desired-count 0 --region us-west-2 --profile profile-create
-          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service "test-create-${CIRCLE_WORKFLOW_ID}" --region us-west-2 --profile profile-create --force
+          aws ecs update-service --cluster ecs-orb-ec2-1-cluster --service test-create --desired-count 0 --region us-west-2 --profile profile-create
+          aws ecs delete-service --cluster ecs-orb-ec2-1-cluster --service test-create --region us-west-2 --profile profile-create --force
   test-service-update:
     docker:
       - image: cimg/python:3.13
@@ -520,6 +520,7 @@ workflows:
           verify_revision_is_deployed: true
           max_poll_attempts: 40
           poll_interval: 10
+          deploy_markers_deploy_name: "fargate-update"
           context: [CPE-OIDC]
           post-steps:
             - test-deployment:
@@ -545,6 +546,7 @@ workflows:
           verify_revision_is_deployed: true
           max_poll_attempts: 40
           poll_interval: 10
+          deploy_markers_deploy_name: "fargate-skip-reg"
           context: [CPE-OIDC]
       - tear-down-test-env:
           name: fargate_tear-down-test-env
@@ -675,6 +677,7 @@ workflows:
           container_env_var_updates: 'container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=VERSION_INFO,value="Asterisk * expansion test ${CIRCLE_SHA1}_${CIRCLE_BUILD_NUM}",container=${AWS_RESOURCE_NAME_PREFIX_EC2}-service,name=BUILD_DATE,value=$(date)'
           verify_revision_is_deployed: true
           fail_on_verification_timeout: false
+          deploy_markers_deploy_name: "ec2-update"
           post-steps:
             - test-deployment:
                 service_name: "${AWS_RESOURCE_NAME_PREFIX_EC2}-service"
@@ -764,6 +767,7 @@ workflows:
           codedeploy_capacity_provider_base: "1"
           codedeploy_capacity_provider_weight: "2"
           verify_revision_is_deployed: false
+          deploy_markers_deploy_name: "codedeploy-fargate-update"
           context: [CPE-OIDC]
           post-steps:
             - wait-for-codedeploy-deployment:
@@ -794,6 +798,7 @@ workflows:
           codedeploy_load_balanced_container_port: "80"
           verify_revision_is_deployed: true
           verification_timeout: "12m"
+          deploy_markers_deploy_name: "codedeploy-fargate-wait"
           post-steps:
             - test-deployment:
                 service_name: "${AWS_RESOURCE_NAME_PREFIX_CODEDEPLOY_FARGATE}-service"
