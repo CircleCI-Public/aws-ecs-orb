@@ -100,9 +100,9 @@ parameters:
     description: >
       Unique identifier for this deployment within the workflow.
       Must be unique if multiple deployments are planned in the same workflow.
-      Defaults to a combination of the workflow ID and job name to guarantee uniqueness across concurrent runs.
+      Defaults to the workflow job ID, which is unique per job execution across all concurrent runs.
     type: string
-    default: "${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+    default: "${CIRCLE_WORKFLOW_JOB_ID}"
   deploy_markers_environment_name:
     description: >
       Environment name shown in the CircleCI Deploys UI.

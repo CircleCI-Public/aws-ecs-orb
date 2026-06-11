@@ -236,9 +236,9 @@ parameters:
     description: >
       Unique identifier for this deployment within the workflow. Used by PLAN and PLAN_AND_UPDATE modes.
       Must be unique if planning multiple deployments in the same workflow.
-      Defaults to a combination of the workflow ID and job name to guarantee uniqueness across concurrent runs.
+      Defaults to the workflow job ID, which is unique per job execution across all concurrent runs.
     type: string
-    default: "${CIRCLE_WORKFLOW_ID}-${CIRCLE_JOB}"
+    default: "${CIRCLE_WORKFLOW_JOB_ID}"
   deploy_markers_target_version:
     description: >
       Version identifier shown in the CircleCI Deploys UI.
