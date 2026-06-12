@@ -96,13 +96,6 @@ parameters:
     type: enum
     enum: [OFF, LOG]
     default: OFF
-  deploy_markers_deploy_name:
-    description: >
-      Unique identifier for this deployment within the workflow.
-      Must be unique if multiple deployments are planned in the same workflow.
-      Defaults to the workflow job ID, which is unique per job execution across all concurrent runs.
-    type: string
-    default: "${CIRCLE_WORKFLOW_JOB_ID}"
   deploy_markers_environment_name:
     description: >
       Environment name shown in the CircleCI Deploys UI.
@@ -112,7 +105,7 @@ parameters:
   deploy_markers_target_version:
     description: >
       Version identifier shown in the CircleCI Deploys UI.
-      Used by LOG mode. Defaults to the short commit SHA if not set.
+      Used by LOG mode. If not set, the Deploys Orb defaults to the short commit SHA.
     type: string
     default: ""
   executor:
