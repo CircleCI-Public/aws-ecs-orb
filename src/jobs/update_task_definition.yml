@@ -140,12 +140,7 @@ steps:
       condition:
         equal: [<< parameters.deploy_markers_mode >>, "LOG"]
       steps:
-        - run:
-            name: Resolve deploy marker variables
-            command: |
-              echo "export DEPLOY_COMPONENT_NAME=<< parameters.family >>" >> $BASH_ENV
-              echo "export DEPLOY_ENV_NAME=<< parameters.deploy_markers_environment_name >>" >> $BASH_ENV
         - deploys/log:
-            component_name: "$DEPLOY_COMPONENT_NAME"
-            environment_name: "$DEPLOY_ENV_NAME"
+            component_name: << parameters.family >>
+            environment_name: << parameters.deploy_markers_environment_name >>
             target_version: << parameters.deploy_markers_target_version >>

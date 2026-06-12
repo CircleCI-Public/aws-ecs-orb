@@ -319,23 +319,17 @@ steps:
           - equal: [<< parameters.deploy_markers_mode >>, "PLAN"]
           - equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
       steps:
-        - run:
-            name: Resolve deploy marker variables
-            command: |
-              echo "export DEPLOY_MARKER_NAME=<< parameters.deploy_markers_deploy_name >>" >> $BASH_ENV
-              echo "export DEPLOY_COMPONENT_NAME=<< parameters.family >>" >> $BASH_ENV
-              echo "export DEPLOY_ENV_NAME=<< parameters.cluster >>" >> $BASH_ENV
         - deploys/plan:
-            deploy_name: "$DEPLOY_MARKER_NAME"
-            component_name: "$DEPLOY_COMPONENT_NAME"
-            environment_name: "$DEPLOY_ENV_NAME"
+            deploy_name: << parameters.deploy_markers_deploy_name >>
+            component_name: << parameters.family >>
+            environment_name: << parameters.cluster >>
             target_version: << parameters.deploy_markers_target_version >>
   - when:
       condition:
         equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
       steps:
         - deploys/update_status:
-            deploy_name: "$DEPLOY_MARKER_NAME"
+            deploy_name: << parameters.deploy_markers_deploy_name >>
             status: RUNNING
             when: always
   - update_service:
@@ -387,10 +381,10 @@ steps:
         equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
       steps:
         - deploys/update_status:
-            deploy_name: "$DEPLOY_MARKER_NAME"
+            deploy_name: << parameters.deploy_markers_deploy_name >>
             status: SUCCESS
             when: on_success
         - deploys/update_status:
-            deploy_name: "$DEPLOY_MARKER_NAME"
+            deploy_name: << parameters.deploy_markers_deploy_name >>
             status: FAILED
             when: on_fail
