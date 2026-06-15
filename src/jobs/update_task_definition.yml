@@ -87,6 +87,27 @@ parameters:
       The authentication method used to access your AWS account. Import the aws-cli orb in your config and
       provide the aws-cli/setup command to authenticate with your preferred method. View examples for more information.
     type: steps
+  deploy_markers_mode:
+    description: >
+      Controls CircleCI deploy marker integration via the deploys orb.
+      OFF: no deploy markers are created (default).
+      LOG: logs a deployment event after the task definition is registered.
+      Only LOG is available for this job because task definition registration does not target a specific running environment.
+    type: enum
+    enum: [OFF, LOG]
+    default: OFF
+  deploy_markers_environment_name:
+    description: >
+      Environment name shown in the CircleCI Deploys UI.
+      Used by LOG mode. Defaults to empty if not set.
+    type: string
+    default: ""
+  deploy_markers_target_version:
+    description: >
+      Version identifier shown in the CircleCI Deploys UI.
+      Used by LOG mode. If not set, the Deploys Orb defaults to the short commit SHA.
+    type: string
+    default: ""
   executor:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
@@ -108,3 +129,11 @@ steps:
         - deploy_ecs_scheduled_task:
             rule_name: <<parameters.rule_name>>
             region: << parameters.region >>
+  - when:
+      condition:
+        equal: [<< parameters.deploy_markers_mode >>, "LOG"]
+      steps:
+        - deploys/log:
+            component_name: << parameters.family >>
+            environment_name: << parameters.deploy_markers_environment_name >>
+            target_version: << parameters.deploy_markers_target_version >>

@@ -222,6 +222,29 @@ parameters:
       The authentication method used to access your AWS account. Import the aws-cli orb in your config and
       provide the aws-cli/setup command to authenticate with your preferred method. View examples for more information.
     type: steps
+  deploy_markers_mode:
+    description: >
+      Controls CircleCI deploy marker integration via the deploys orb.
+      OFF: no deploy markers are created.
+      LOG: logs a deployment event after the ECS deploy completes.
+      PLAN: creates a planned deployment marker before the ECS deploy; status updates are left to the caller.
+      PLAN_AND_UPDATE: full lifecycle — plan before deploy, mark as running, then set SUCCESS or FAILED after (default).
+    type: enum
+    enum: [OFF, LOG, PLAN, PLAN_AND_UPDATE]
+    default: PLAN_AND_UPDATE
+  deploy_markers_deploy_name:
+    description: >
+      Unique identifier for this deployment within the workflow. Used by PLAN and PLAN_AND_UPDATE modes.
+      Must be unique if planning multiple deployments in the same workflow.
+      Defaults to the workflow job ID, which is unique per job execution across all concurrent runs.
+    type: string
+    default: "${CIRCLE_WORKFLOW_JOB_ID}"
+  deploy_markers_target_version:
+    description: >
+      Version identifier shown in the CircleCI Deploys UI.
+      Used by LOG, PLAN, and PLAN_AND_UPDATE modes. If not set, the Deploys Orb defaults to the short commit SHA.
+    type: string
+    default: ""
   executor:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
@@ -229,6 +252,25 @@ parameters:
 executor: << parameters.executor >>
 steps:
   - steps: << parameters.auth >>
+  - when:
+      condition:
+        or:
+          - equal: [<< parameters.deploy_markers_mode >>, "PLAN"]
+          - equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
+      steps:
+        - deploys/plan:
+            deploy_name: << parameters.deploy_markers_deploy_name >>
+            component_name: << parameters.family >>
+            environment_name: << parameters.cluster >>
+            target_version: << parameters.deploy_markers_target_version >>
+  - when:
+      condition:
+        equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
+      steps:
+        - deploys/update_status:
+            deploy_name: << parameters.deploy_markers_deploy_name >>
+            status: RUNNING
+            when: always
   - update_service:
       family: << parameters.family >>
       cluster: << parameters.cluster >>
@@ -257,3 +299,23 @@ steps:
       codedeploy_capacity_provider_weight: <<parameters.codedeploy_capacity_provider_weight>>
       codedeploy_capacity_provider_base: <<parameters.codedeploy_capacity_provider_base>>
       deployment_config_name: <<parameters.deployment_config_name>>
+  - when:
+      condition:
+        equal: [<< parameters.deploy_markers_mode >>, "LOG"]
+      steps:
+        - deploys/log:
+            component_name: << parameters.family >>
+            environment_name: << parameters.cluster >>
+            target_version: << parameters.deploy_markers_target_version >>
+  - when:
+      condition:
+        equal: [<< parameters.deploy_markers_mode >>, "PLAN_AND_UPDATE"]
+      steps:
+        - deploys/update_status:
+            deploy_name: << parameters.deploy_markers_deploy_name >>
+            status: SUCCESS
+            when: on_success
+        - deploys/update_status:
+            deploy_name: << parameters.deploy_markers_deploy_name >>
+            status: FAILED
+            when: on_fail
