@@ -1,0 +1,27 @@
+description: >
+  Register a new ECS task definition and log a deployment event to the
+  CircleCI Deploys UI using LOG mode. Only LOG is available for this job
+  because task definition registration does not target a specific running
+  environment.
+
+usage:
+  version: 2.1
+
+  orbs:
+    aws-ecs: circleci/aws-ecs@6.0.0
+    aws-cli: circleci/aws-cli@5.1.0
+
+  workflows:
+    deploy:
+      jobs:
+        # LOG mode — log a deployment event after the task definition is registered
+        - aws-ecs/update_task_definition:
+            name: register-task-def
+            family: my-app-service
+            deploy_markers_mode: LOG
+            deploy_markers_environment_name: production
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}

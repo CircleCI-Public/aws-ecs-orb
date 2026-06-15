@@ -6,3 +6,6 @@ description: >
 display:
   home_url: "https://aws.amazon.com/ecs/"
   source_url: "https://github.com/CircleCI-Public/aws-ecs-orb"
+
+orbs:
+  deploys: circleci/deploys@1.0
