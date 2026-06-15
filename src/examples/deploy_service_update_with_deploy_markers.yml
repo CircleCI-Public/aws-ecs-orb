@@ -1,0 +1,54 @@
+description: >
+  Deploy an ECS service with CircleCI deploy markers.
+  Four modes are available via the deploy_markers_mode parameter:
+    OFF             - no deploy markers
+    LOG             - log a deployment event after the ECS deploy
+    PLAN            - create a planned marker before the ECS deploy; caller manages status updates
+    PLAN_AND_UPDATE - full lifecycle: plan → running → success/failed (default)
+
+usage:
+  version: 2.1
+
+  orbs:
+    aws-ecs: circleci/aws-ecs@6.0.0
+    aws-ecr: circleci/aws-ecr@9.3.4
+    aws-cli: circleci/aws-cli@5.1.0
+
+  workflows:
+    deploy:
+      jobs:
+        # LOG mode — log a deployment event after the ECS deploy completes
+        - aws-ecs/deploy_service_update:
+            name: deploy-log
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy_markers_mode: LOG
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # PLAN mode — create a planned marker before deploy; status updates are left to the caller
+        - aws-ecs/deploy_service_update:
+            name: deploy-plan
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy_markers_mode: PLAN
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # PLAN_AND_UPDATE mode — full lifecycle managed by the orb
+        - aws-ecs/deploy_service_update:
+            name: deploy-full
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy_markers_mode: PLAN_AND_UPDATE
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
