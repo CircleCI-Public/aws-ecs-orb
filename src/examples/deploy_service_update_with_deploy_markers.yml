@@ -7,8 +7,7 @@ description: >
   This example shows the optional parameters available to customize deploy marker behavior:
     deploy_markers_target_version  - version label shown in the CircleCI Deploys UI (defaults to short commit SHA)
     deploy_markers_deploy_name     - unique identifier for this deployment; defaults to the workflow job ID,
-                                     which is already unique per execution, but can be set explicitly for
-                                     a more readable name in the CircleCI Deploys UI
+                                     which is already unique per execution, but can be set explicitly
     deploy_markers_mode            - override the default PLAN_AND_UPDATE mode when needed:
                                        LOG             - log a deployment event after the ECS deploy (no planned marker)
                                        PLAN            - create a planned marker before deploy; caller manages status updates
