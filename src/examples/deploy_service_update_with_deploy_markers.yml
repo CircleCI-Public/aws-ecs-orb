@@ -14,6 +14,10 @@ description: >
                                        PLAN            - create a planned marker before deploy; caller manages status updates
                                        OFF             - disable deploy markers entirely
 
+  By default, the component name is taken from the task definition family and the
+  environment name is set to "default". Use deploy_markers_component_name and
+  deploy_markers_environment_name to override these values.
+
 usage:
   version: 2.1
 
@@ -74,6 +78,20 @@ usage:
             family: my-app-service
             cluster: my-app-cluster
             deploy_markers_mode: OFF
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # PLAN_AND_UPDATE mode — with explicit component and environment names
+        - aws-ecs/deploy_service_update:
+            name: deploy-named
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy_markers_mode: PLAN_AND_UPDATE
+            deploy_markers_component_name: my-app
+            deploy_markers_environment_name: production
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
             container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
             auth:
               - aws-cli/setup:
