@@ -1,6 +1,9 @@
 description: |
   Update an ECS service using OIDC for authentication.
   Import the aws-cli orb and authenticate using the aws-cli/setup command with a valid role_arn for OIDC authentication.
+  Deploy markers are enabled by default (PLAN_AND_UPDATE mode): a CircleCI deploy marker is created before the deploy,
+  marked as running when it starts, and automatically updated to success or failed when the job completes.
+  The target version defaults to the short commit SHA and is shown in the CircleCI Deploys UI.
 usage:
   version: 2.1
   orbs:

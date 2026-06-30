@@ -96,10 +96,16 @@ parameters:
     type: enum
     enum: [OFF, LOG]
     default: OFF
+  deploy_markers_component_name:
+    description: >
+      Component name shown in the CircleCI Deploys UI.
+      Used by LOG mode. When not set, defaults to the task definition family name.
+    type: string
+    default: ""
   deploy_markers_environment_name:
     description: >
       Environment name shown in the CircleCI Deploys UI.
-      Used by LOG mode. Defaults to empty if not set.
+      Used by LOG mode. When not set, defaults to "default".
     type: string
     default: ""
   deploy_markers_target_version:
@@ -134,6 +140,6 @@ steps:
         equal: [<< parameters.deploy_markers_mode >>, "LOG"]
       steps:
         - deploys/log:
-            component_name: << parameters.family >>
-            environment_name: << parameters.deploy_markers_environment_name >>
+            component_name: <<# parameters.deploy_markers_component_name >><< parameters.deploy_markers_component_name >><</ parameters.deploy_markers_component_name >><<^ parameters.deploy_markers_component_name >><< parameters.family >><</ parameters.deploy_markers_component_name >>
+            environment_name: <<# parameters.deploy_markers_environment_name >><< parameters.deploy_markers_environment_name >><</ parameters.deploy_markers_environment_name >><<^ parameters.deploy_markers_environment_name >>default<</ parameters.deploy_markers_environment_name >>
             target_version: << parameters.deploy_markers_target_version >>
