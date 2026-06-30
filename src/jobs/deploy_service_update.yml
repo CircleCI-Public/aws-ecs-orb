@@ -245,6 +245,20 @@ parameters:
       Used by LOG, PLAN, and PLAN_AND_UPDATE modes. If not set, the Deploys Orb defaults to the short commit SHA.
     type: string
     default: ""
+  deploy_markers_component_name:
+    description: >
+      Component name shown in the CircleCI Deploys UI.
+      Used by LOG, PLAN, and PLAN_AND_UPDATE modes.
+      When not set, defaults to the task definition family name.
+    type: string
+    default: ""
+  deploy_markers_environment_name:
+    description: >
+      Environment name shown in the CircleCI Deploys UI.
+      Used by LOG, PLAN, and PLAN_AND_UPDATE modes.
+      When not set, defaults to "default".
+    type: string
+    default: "default"
   executor:
     description: The executor to use for this job. By default, this will use the "default" executor provided by this orb.
     type: executor
@@ -260,8 +274,8 @@ steps:
       steps:
         - deploys/plan:
             deploy_name: << parameters.deploy_markers_deploy_name >>
-            component_name: << parameters.family >>
-            environment_name: << parameters.cluster >>
+            component_name: <<# parameters.deploy_markers_component_name >><< parameters.deploy_markers_component_name >><</ parameters.deploy_markers_component_name >><<^ parameters.deploy_markers_component_name >><< parameters.family >><</ parameters.deploy_markers_component_name >>
+            environment_name: << parameters.deploy_markers_environment_name >>
             target_version: << parameters.deploy_markers_target_version >>
   - when:
       condition:
@@ -304,8 +318,8 @@ steps:
         equal: [<< parameters.deploy_markers_mode >>, "LOG"]
       steps:
         - deploys/log:
-            component_name: << parameters.family >>
-            environment_name: << parameters.cluster >>
+            component_name: <<# parameters.deploy_markers_component_name >><< parameters.deploy_markers_component_name >><</ parameters.deploy_markers_component_name >><<^ parameters.deploy_markers_component_name >><< parameters.family >><</ parameters.deploy_markers_component_name >>
+            environment_name: << parameters.deploy_markers_environment_name >>
             target_version: << parameters.deploy_markers_target_version >>
   - when:
       condition:

@@ -1,10 +1,21 @@
 description: >
-  Deploy an ECS service with CircleCI deploy markers.
-  Four modes are available via the deploy_markers_mode parameter:
-    OFF             - no deploy markers
-    LOG             - log a deployment event after the ECS deploy
-    PLAN            - create a planned marker before the ECS deploy; caller manages status updates
-    PLAN_AND_UPDATE - full lifecycle: plan → running → success/failed (default)
+  Deploy an ECS service with CircleCI deploy markers (enabled by default via PLAN_AND_UPDATE mode).
+  The default PLAN_AND_UPDATE lifecycle creates a planned marker before the deploy, marks it as
+  running when the deploy starts, and automatically sets it to success or failed when the job
+  completes — no extra configuration required.
+
+  This example shows the optional parameters available to customize deploy marker behavior:
+    deploy_markers_target_version  - version label shown in the CircleCI Deploys UI (defaults to short commit SHA)
+    deploy_markers_deploy_name     - unique identifier for this deployment; defaults to the workflow job ID,
+                                     which is already unique per execution, but can be set explicitly
+    deploy_markers_mode            - override the default PLAN_AND_UPDATE mode when needed:
+                                       LOG             - log a deployment event after the ECS deploy (no planned marker)
+                                       PLAN            - create a planned marker before deploy; caller manages status updates
+                                       OFF             - disable deploy markers entirely
+
+  By default, the component name is taken from the task definition family and the
+  environment name is set to "default". Use deploy_markers_component_name and
+  deploy_markers_environment_name to override these values.
 
 usage:
   version: 2.1
@@ -17,36 +28,68 @@ usage:
   workflows:
     deploy:
       jobs:
-        # LOG mode — log a deployment event after the ECS deploy completes
+        # Default usage — deploy markers are on (PLAN_AND_UPDATE), target version defaults to short commit SHA
+        - aws-ecs/deploy_service_update:
+            name: deploy-service
+            family: my-app-service
+            cluster: my-app-cluster
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # Multiple deploys in the same workflow — optionally set deploy_markers_deploy_name for clearer identification
+        - aws-ecs/deploy_service_update:
+            name: deploy-service-a
+            family: my-app-service-a
+            cluster: my-app-cluster
+            deploy_markers_target_version: '${CIRCLE_SHA1}'
+            deploy_markers_deploy_name: deploy-service-a
+            container_image_name_updates: container=my-app-service-a,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+        - aws-ecs/deploy_service_update:
+            name: deploy-service-b
+            family: my-app-service-b
+            cluster: my-app-cluster
+            deploy_markers_target_version: '${CIRCLE_SHA1}'
+            deploy_markers_deploy_name: deploy-service-b
+            container_image_name_updates: container=my-app-service-b,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # LOG mode — records a deployment event after the deploy completes; no planned marker is created
         - aws-ecs/deploy_service_update:
             name: deploy-log
             family: my-app-service
             cluster: my-app-cluster
             deploy_markers_mode: LOG
-            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
             container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
             auth:
               - aws-cli/setup:
                   role_arn: ${AWS_ROLE_ARN}
 
-        # PLAN mode — create a planned marker before deploy; status updates are left to the caller
+        # Opting out — disable deploy markers with deploy_markers_mode: OFF
         - aws-ecs/deploy_service_update:
-            name: deploy-plan
+            name: deploy-no-markers
             family: my-app-service
             cluster: my-app-cluster
-            deploy_markers_mode: PLAN
-            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            deploy_markers_mode: OFF
             container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
             auth:
               - aws-cli/setup:
                   role_arn: ${AWS_ROLE_ARN}
 
-        # PLAN_AND_UPDATE mode — full lifecycle managed by the orb
+        # PLAN_AND_UPDATE mode — with explicit component and environment names
         - aws-ecs/deploy_service_update:
-            name: deploy-full
+            name: deploy-named
             family: my-app-service
             cluster: my-app-cluster
             deploy_markers_mode: PLAN_AND_UPDATE
+            deploy_markers_component_name: my-app
+            deploy_markers_environment_name: production
             deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
             container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
             auth:

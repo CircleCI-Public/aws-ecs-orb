@@ -4,6 +4,10 @@ description: >
   because task definition registration does not target a specific running
   environment.
 
+  By default, the component name is taken from the task definition family and
+  the environment name is set to "default". Use deploy_markers_component_name
+  and deploy_markers_environment_name to override these values.
+
 usage:
   version: 2.1
 
@@ -14,11 +18,23 @@ usage:
   workflows:
     deploy:
       jobs:
-        # LOG mode — log a deployment event after the task definition is registered
+        # LOG mode — defaults: component = family, environment = "default"
         - aws-ecs/update_task_definition:
             name: register-task-def
             family: my-app-service
             deploy_markers_mode: LOG
+            deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
+            container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
+            auth:
+              - aws-cli/setup:
+                  role_arn: ${AWS_ROLE_ARN}
+
+        # LOG mode — with explicit component and environment names
+        - aws-ecs/update_task_definition:
+            name: register-task-def-named
+            family: my-app-service
+            deploy_markers_mode: LOG
+            deploy_markers_component_name: my-app
             deploy_markers_environment_name: production
             deploy_markers_target_version: ${CIRCLE_SHA1:0:7}
             container_image_name_updates: container=my-app-service,tag=${CIRCLE_SHA1}
