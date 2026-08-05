@@ -14,5 +14,5 @@ func mainHandler() http.HandlerFunc {
 
 func main() {
 	http.HandleFunc("/", mainHandler())
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":80", nil)
 }

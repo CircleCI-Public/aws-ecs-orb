@@ -18,11 +18,11 @@ variable "health_check_path" {
 }
 
 variable "container_port" {
-  default = "8080"
+  default = "80"
 }
 
 variable "host_port" {
-  default = "8080"
+  default = "80"
 }
 
 variable "app_port" {
