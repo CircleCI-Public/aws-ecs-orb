@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   aws-ecs: circleci/aws-ecs@dev:<<pipeline.git.revision>>
   orb-tools: circleci/orb-tools@11.1
-  aws-cli: circleci/aws-cli@3.1
+  aws-cli: circleci/aws-cli@5.1.1
   jq: circleci/jq@2.2
 
 filters: &filters
@@ -45,8 +45,8 @@ jobs:
         default: ''  
     steps:
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile-name >>
+          role_arn: << parameters.role-arn >>
       - jq/install
       - run:
           name: Get cluster info
@@ -160,8 +160,8 @@ jobs:
           condition: << parameters.role-arn >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>
+                profile_name: << parameters.profile-name >>
+                role_arn: << parameters.role-arn >>
       - run:
           name: terraform init
           command: |
@@ -221,8 +221,8 @@ jobs:
       - attach_workspace:
           at: workspace
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
-          role-arn: << parameters.role-arn >>
+          profile_name: << parameters.profile-name >>
+          role_arn: << parameters.role-arn >>
       - run:
           name: Load image
           command: |
@@ -243,8 +243,8 @@ jobs:
           condition: << parameters.skip-service-update >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>          
+                profile_name: << parameters.profile-name >>
+                role_arn: << parameters.role-arn >>          
             - aws-ecs/update-service:
                 family: "<< parameters.family-name >>"
                 service-name: "<< parameters.service-name >>"
@@ -273,9 +273,9 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
-          role-arn: << parameters.role-arn >>
-          aws-region: AWS_REGION
+          profile_name: << parameters.profile-name >>
+          role_arn: << parameters.role-arn >>
+          region: ${AWS_REGION}
       - run:
           name: Get existing task definition
           command: |
@@ -306,9 +306,9 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          role-arn: << parameters.role-arn >>
-          profile-name: << parameters.profile-name >>
-          aws-region: AWS_REGION
+          role_arn: << parameters.role-arn >>
+          profile_name: << parameters.profile-name >>
+          region: ${AWS_REGION}
       - run:
           name: Register task definition
           command: |
@@ -332,9 +332,9 @@ jobs:
     steps:
       - checkout
       - aws-cli/setup:
-          profile-name: << parameters.profile-name >>
-          role-arn: << parameters.role-arn >>
-          aws-region: AWS_REGION
+          profile_name: << parameters.profile-name >>
+          role_arn: << parameters.role-arn >>
+          region: ${AWS_REGION}
       - run:
           name: Deregister task definition
           command: |
@@ -377,8 +377,8 @@ jobs:
           condition: << parameters.role-arn >>
           steps:
             - aws-cli/setup:
-                profile-name: << parameters.profile-name >>
-                role-arn: << parameters.role-arn >>   
+                profile_name: << parameters.profile-name >>
+                role_arn: << parameters.role-arn >>   
       - run:
           name: terraform init
           command: |
@@ -843,7 +843,8 @@ commands:
 executors:
   mac:
     macos:
-      xcode: 13.3.1
+      xcode: 26.2.0
+    resource_class: m4pro.medium
   linux:
     docker:
       - image: cimg/base:current
