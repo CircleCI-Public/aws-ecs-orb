@@ -1,0 +1,34 @@
+description: >
+  Register a new ECS task definition and log a deployment event to the
+  CircleCI Deploys UI using LOG mode. Only LOG is available for this job
+  because task definition registration does not target a specific running
+  environment.
+
+  By default, the component name is taken from the task definition family and
+  the environment name is set to "default". Use deploy-markers-component-name
+  and deploy-markers-environment-name to override these values.
+
+usage:
+  version: 2.1
+  orbs:
+    aws-ecs: circleci/aws-ecs@3.2
+  workflows:
+    deploy:
+      jobs:
+        # LOG mode — defaults: component = family, environment = "default"
+        - aws-ecs/update-task-definition:
+            name: register-task-def
+            family: my-app-service
+            deploy-markers-mode: LOG
+            deploy-markers-target-version: '${CIRCLE_SHA1:0:7}'
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'
+
+        # LOG mode — with explicit component and environment names
+        - aws-ecs/update-task-definition:
+            name: register-task-def-named
+            family: my-app-service
+            deploy-markers-mode: LOG
+            deploy-markers-component-name: my-app
+            deploy-markers-environment-name: production
+            deploy-markers-target-version: '${CIRCLE_SHA1:0:7}'
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'

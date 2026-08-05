@@ -111,6 +111,33 @@ parameters:
   rule-name:
     description: The name of the scheduled task's rule to update. Must be a valid ECS Rule.
     type: string
+  deploy-markers-mode:
+    description: >
+      Controls CircleCI deploy marker integration via the deploys orb.
+      OFF: no deploy markers are created (default).
+      LOG: logs a deployment event after the task definition is registered.
+      Only LOG is available for this job because task definition registration does not target a specific running environment.
+    type: enum
+    enum: [OFF, LOG]
+    default: OFF
+  deploy-markers-component-name:
+    description: >
+      Component name shown in the CircleCI Deploys UI.
+      Used by LOG mode. When not set, defaults to the task definition family name.
+    type: string
+    default: ''
+  deploy-markers-environment-name:
+    description: >
+      Environment name shown in the CircleCI Deploys UI.
+      Used by LOG mode. When not set, defaults to "default".
+    type: string
+    default: ''
+  deploy-markers-target-version:
+    description: >
+      Version identifier shown in the CircleCI Deploys UI.
+      Used by LOG mode. If not set, the Deploys Orb defaults to the short commit SHA.
+    type: string
+    default: ''
 steps:
   - when:
       condition: <<parameters.role-arn>>
@@ -141,3 +168,11 @@ steps:
       steps:
         - deploy-ecs-scheduled-task:
             rule-name: <<parameters.rule-name>>
+  - when:
+      condition:
+        equal: [<< parameters.deploy-markers-mode >>, "LOG"]
+      steps:
+        - deploys/log:
+            component_name: <<# parameters.deploy-markers-component-name >><< parameters.deploy-markers-component-name >><</ parameters.deploy-markers-component-name >><<^ parameters.deploy-markers-component-name >><< parameters.family >><</ parameters.deploy-markers-component-name >>
+            environment_name: <<# parameters.deploy-markers-environment-name >><< parameters.deploy-markers-environment-name >><</ parameters.deploy-markers-environment-name >><<^ parameters.deploy-markers-environment-name >>default<</ parameters.deploy-markers-environment-name >>
+            target_version: << parameters.deploy-markers-target-version >>

@@ -1,4 +1,9 @@
-description: Update an ECS service.
+description: >
+  Update an ECS service.
+  Deploy markers are enabled by default (PLAN_AND_UPDATE mode): a CircleCI deploy marker is created before the deploy,
+  marked as running when it starts, and automatically updated to success or failed when the job completes.
+  The target version defaults to the short commit SHA and is shown in the CircleCI Deploys UI.
+  See the deploy-service-update-with-deploy-markers example for configuration options.
 usage:
   version: 2.1
   orbs:

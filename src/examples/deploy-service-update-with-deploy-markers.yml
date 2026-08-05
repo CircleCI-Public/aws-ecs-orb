@@ -1,0 +1,76 @@
+description: >
+  Deploy an ECS service with CircleCI deploy markers (enabled by default via PLAN_AND_UPDATE mode).
+  The default PLAN_AND_UPDATE lifecycle creates a planned marker before the deploy, marks it as
+  running when the deploy starts, and automatically sets it to success or failed when the job
+  completes — no extra configuration required.
+
+  This example shows the optional parameters available to customize deploy marker behavior:
+    deploy-markers-target-version  - version label shown in the CircleCI Deploys UI (defaults to short commit SHA)
+    deploy-markers-deploy-name     - unique identifier for this deployment; defaults to the workflow job ID,
+                                     which is already unique per execution, but can be set explicitly
+    deploy-markers-mode            - override the default PLAN_AND_UPDATE mode when needed:
+                                       LOG             - log a deployment event after the ECS deploy (no planned marker)
+                                       PLAN            - create a planned marker before deploy; caller manages status updates
+                                       OFF             - disable deploy markers entirely
+
+  By default, the component name is taken from the task definition family and the
+  environment name is set to "default". Use deploy-markers-component-name and
+  deploy-markers-environment-name to override these values.
+
+usage:
+  version: 2.1
+  orbs:
+    aws-ecr: circleci/aws-ecr@8.1
+    aws-ecs: circleci/aws-ecs@3.2
+  workflows:
+    deploy:
+      jobs:
+        # Default usage — deploy markers are on (PLAN_AND_UPDATE), target version defaults to short commit SHA
+        - aws-ecs/deploy-service-update:
+            name: deploy-service
+            family: my-app-service
+            cluster: my-app-cluster
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'
+
+        # Multiple deploys in the same workflow — optionally set deploy-markers-deploy-name for clearer identification
+        - aws-ecs/deploy-service-update:
+            name: deploy-service-a
+            family: my-app-service-a
+            cluster: my-app-cluster
+            deploy-markers-target-version: '${CIRCLE_SHA1}'
+            deploy-markers-deploy-name: deploy-service-a
+            container-image-name-updates: 'container=my-app-service-a,tag=${CIRCLE_SHA1}'
+        - aws-ecs/deploy-service-update:
+            name: deploy-service-b
+            family: my-app-service-b
+            cluster: my-app-cluster
+            deploy-markers-target-version: '${CIRCLE_SHA1}'
+            deploy-markers-deploy-name: deploy-service-b
+            container-image-name-updates: 'container=my-app-service-b,tag=${CIRCLE_SHA1}'
+
+        # LOG mode — records a deployment event after the deploy completes; no planned marker is created
+        - aws-ecs/deploy-service-update:
+            name: deploy-log
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy-markers-mode: LOG
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'
+
+        # Opting out — disable deploy markers with deploy-markers-mode: OFF
+        - aws-ecs/deploy-service-update:
+            name: deploy-no-markers
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy-markers-mode: OFF
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'
+
+        # PLAN_AND_UPDATE mode — with explicit component and environment names
+        - aws-ecs/deploy-service-update:
+            name: deploy-named
+            family: my-app-service
+            cluster: my-app-cluster
+            deploy-markers-mode: PLAN_AND_UPDATE
+            deploy-markers-component-name: my-app
+            deploy-markers-environment-name: production
+            deploy-markers-target-version: '${CIRCLE_SHA1:0:7}'
+            container-image-name-updates: 'container=my-app-service,tag=${CIRCLE_SHA1}'
