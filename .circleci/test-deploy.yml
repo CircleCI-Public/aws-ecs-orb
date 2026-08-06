@@ -859,7 +859,8 @@ commands:
 executors:
   mac:
     macos:
-      xcode: 13.4.1
+      xcode: 26.2.0
+    resource_class: m4pro.medium
   linux:
     docker:
       - image: cimg/base:current
