@@ -457,7 +457,7 @@ workflows:
     jobs:
       # Make sure to include "filters: *filters" in every test job you want to run as part of your deployment.
       - integration-test-ecs-cli-install:
-          version: "v1.9.0"
+          version: "v1.21.0"
           matrix:
             parameters:
               executor: [linux, mac]
